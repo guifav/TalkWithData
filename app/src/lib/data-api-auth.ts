@@ -37,7 +37,8 @@ export async function verifyDataApiRequest(
   const sessionToken = request.cookies.get(cookieName)?.value;
   let authenticated = false;
 
-  if (sessionToken && verifyDashSessionToken(dashboardId, sessionToken)) {
+  const isReadMethod = request.method === "GET" || request.method === "HEAD";
+  if (isReadMethod && sessionToken && verifyDashSessionToken(dashboardId, sessionToken, "read")) {
     authenticated = true;
   }
 
