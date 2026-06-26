@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase/admin";
 import { isAllowedEmailDomain } from "@/lib/auth-domain";
 
-const AUTH_COOKIE_NAME = "app_auth";
+const AUTH_COOKIE_NAME = "twd_auth";
 
 export type UserRole = "user" | "admin" | "superadmin";
 

@@ -136,7 +136,7 @@ export async function GET(
     if (isHtml) {
       let html = prepareDashboardHtmlForRender(asset.buffer.toString("utf-8"));
       // Inject data API bootstrap for interactive multi-page apps
-      const dataApiScript = `<script>window.__DASHS_DASHBOARD_ID__="${id}";window.__DASHS_DATA_API__="/api/dashboards/${id}/data";</script>`;
+      const dataApiScript = `<script>window.__TWD_DASHBOARD_ID__="${id}";window.__TWD_DATA_API__="/api/dashboards/${id}/data";</script>`;
       if (/<head[^>]*>/i.test(html)) {
         html = html.replace(/(<head[^>]*>)/i, `$1\n    ${dataApiScript}`);
       } else {
