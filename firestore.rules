@@ -6,12 +6,21 @@ service cloud.firestore {
       // IMPORTANT: replace example.com with your deployed ALLOWED_AUTH_DOMAIN before deploying rules.
     }
 
+    function userDepartment() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department;
+    }
+
     // Dashboards collection
     match /dashboards/{dashboardId} {
       allow read: if isAuthorizedUser() && (
         request.auth.uid == resource.data.createdBy ||
         resource.data.visibility == "team" ||
-        (request.auth.token.email in resource.data.allowedEmails)
+        (request.auth.token.email in resource.data.allowedEmails) ||
+        (
+          resource.data.allowedDepartments is list &&
+          userDepartment() != null &&
+          resource.data.allowedDepartments.hasAny([userDepartment()])
+        )
       );
       // Dashboard creation is server-only (Admin SDK via /api/upload)
       allow create: if false;

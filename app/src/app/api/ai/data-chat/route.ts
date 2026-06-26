@@ -96,8 +96,10 @@ function buildToolsFromServers(
   return { tools, toolToEndpoint, toolToServerId };
 }
 
+type ClientMessageRole = "user" | "assistant" | "system";
+
 interface ChatMessage {
-  role: "user" | "assistant";
+  role: ClientMessageRole;
   content: string | ContentBlock[];
 }
 
@@ -338,7 +340,7 @@ export async function POST(request: NextRequest) {
           role: "user" as const,
           content: `<attached_file name="${f.name}" type="${f.type}">${f.summary}\n\n${f.content}</attached_file>`,
         }));
-        const clientMessages = body.messages.filter((m) => (m as { role?: string }).role !== "system");
+        const clientMessages = body.messages.filter((m) => m.role !== "system");
         let messages = [...fileMessages, ...clientMessages];
         let continueLoop = true;
 
