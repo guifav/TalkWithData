@@ -299,7 +299,7 @@ export function McpServersTab({ isSuperAdmin }: McpServersTabProps) {
             ) : (
               <Sprout className="size-4 mr-1" />
             )}
-            Seed Analytics MCPs
+            Seed MCPs
           </Button>
           <Button
             variant="outline"
@@ -369,7 +369,7 @@ export function McpServersTab({ isSuperAdmin }: McpServersTabProps) {
                     onChange={(e) =>
                       setFormData((p) => ({ ...p, endpoint: e.target.value }))
                     }
-                    placeholder="https://mcp.example.com/api/mcp/..."
+                    placeholder="https://your-mcp-server.com/api/mcp/..."
                   />
                 </div>
                 <div className="space-y-2">
@@ -413,7 +413,7 @@ export function McpServersTab({ isSuperAdmin }: McpServersTabProps) {
             <p>No MCP servers registered yet.</p>
             {isSuperAdmin && (
               <p className="mt-2 text-sm">
-                Click &quot;Seed Analytics MCPs&quot; to populate with known
+                Click &quot;Seed MCPs&quot; to populate with known
                 endpoints.
               </p>
             )}

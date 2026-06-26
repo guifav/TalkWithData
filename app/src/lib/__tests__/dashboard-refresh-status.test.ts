@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { deriveDashboardRefreshStatus } from "@/lib/dashboard-refresh-status";
+process.env.ALLOWED_AUTH_DOMAIN = "example.com";
+process.env.STORAGE_BUCKET_NAME = "test-bucket";
 
 const NOW = Date.parse("2026-04-29T12:00:00.000Z");
 const ONE_HOUR = 60 * 60 * 1000;

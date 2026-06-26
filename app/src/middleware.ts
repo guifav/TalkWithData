@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAllowedAuthDomain } from "@/lib/auth-domain";
 
 const PUBLIC_PATHS = ["/login", "/api/auth", "/api/health"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  getAllowedAuthDomain();
 
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();

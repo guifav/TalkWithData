@@ -5,22 +5,22 @@ import { isAllowedMcpHost } from "@/lib/mcp-hosts";
  * MCP Proxy — internal-only route for server-to-server MCP calls.
  *
  * NOT callable from the browser. Protected by X-Internal-Key header
- * that only the chat route knows (derived from MCP_MCP_API_KEY).
+ * that only the chat route knows (derived from MCP_API_KEY).
  * This prevents authenticated users from bypassing MCP access control
  * by calling the proxy directly.
  */
 export async function POST(request: NextRequest) {
   // Internal-only: verify caller is our own chat route, not a browser
   const internalKey = request.headers.get("x-internal-key");
-  const expectedKey = process.env.MCP_MCP_API_KEY;
+  const expectedKey = process.env.MCP_API_KEY;
   if (!internalKey || !expectedKey || internalKey !== expectedKey) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const mcpKey = process.env.MCP_MCP_API_KEY;
+  const mcpKey = process.env.MCP_API_KEY;
 
   if (!mcpKey) {
-    console.error("[MCP Proxy] Missing MCP_MCP_API_KEY");
+    console.error("[MCP Proxy] Missing MCP_API_KEY");
     return NextResponse.json(
       { error: "MCP service not configured" },
       { status: 503 }
@@ -43,10 +43,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Resolve target URL: explicit endpoint or fallback to env
-    const targetUrl = endpoint || process.env.MCP_MCP_URL;
+    const targetUrl = endpoint || process.env.MCP_URL;
     if (!targetUrl) {
       return NextResponse.json(
-        { error: "No MCP endpoint provided and MCP_MCP_URL not set" },
+        { error: "No MCP endpoint provided and MCP_URL not set" },
         { status: 400 }
       );
     }
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Analytics MCP Full expects tools/call with { name, arguments }
+    // MCP Full expects tools/call with { name, arguments }
     // We wrap the tool name into the standard MCP protocol
     const jsonRpcPayload = {
       jsonrpc: "2.0",

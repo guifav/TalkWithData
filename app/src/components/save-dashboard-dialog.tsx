@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { useCategories } from "@/hooks/use-categories";
+import { getAllowedAuthDomain, isAllowedEmailDomain } from "@/lib/auth-domain";
 
 export interface SaveDashboardData {
   title: string;
@@ -42,6 +43,7 @@ export function SaveDashboardDialog({
   defaultTitle = "",
   editMode = false,
 }: SaveDashboardDialogProps) {
+  const allowedAuthDomain = getAllowedAuthDomain();
   const [title, setTitle] = useState(defaultTitle);
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("Other");
@@ -72,7 +74,7 @@ export function SaveDashboardDialog({
           ? allowedEmails
               .split(/[\n,]+/)
               .map((e) => e.trim().toLowerCase())
-              .filter((e) => e.endsWith("@example.com"))
+              .filter(isAllowedEmailDomain)
           : [],
     });
   };
@@ -150,7 +152,7 @@ export function SaveDashboardDialog({
                   onChange={() => setVisibility("team")}
                   className="accent-primary"
                 />
-                <span className="text-sm">All internal team</span>
+                <span className="text-sm">All team</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -175,7 +177,7 @@ export function SaveDashboardDialog({
                   rows={3}
                 />
                 <p className="text-xs text-muted-foreground">
-                  One @example.com email per line. Non-internal emails will be ignored.
+                  {`One @${allowedAuthDomain} email per line. External emails will be ignored.`}
                 </p>
               </div>
             )}

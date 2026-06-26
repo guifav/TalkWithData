@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase/admin";
+import { isAllowedEmailDomain } from "@/lib/auth-domain";
 
-const ALLOWED_DOMAIN = "example.com";
 const AUTH_COOKIE_NAME = "app_auth";
 
 export type UserRole = "user" | "admin" | "superadmin";
@@ -23,19 +23,22 @@ export async function verifyRequest(
     : cookieToken;
   if (!token) return null;
 
+  let decoded: Awaited<ReturnType<typeof adminAuth.verifyIdToken>>;
   try {
     // SA is from a different project, so we need checkRevoked=false
     // The projectId in initializeApp handles audience validation
-    const decoded = await adminAuth.verifyIdToken(token, false);
-    if (!decoded.email?.endsWith(`@${ALLOWED_DOMAIN}`)) {
-      console.log(`[Auth] Domain mismatch: ${decoded.email}`);
-      return null;
-    }
-    return { uid: decoded.uid, email: decoded.email, name: decoded.name };
+    decoded = await adminAuth.verifyIdToken(token, false);
   } catch (err) {
     console.error("[Auth] verifyIdToken failed:", err instanceof Error ? err.message : err);
     return null;
   }
+
+  if (!decoded.email || !isAllowedEmailDomain(decoded.email)) {
+    console.log(`[Auth] Domain mismatch: ${decoded.email}`);
+    return null;
+  }
+
+  return { uid: decoded.uid, email: decoded.email, name: decoded.name };
 }
 
 /**

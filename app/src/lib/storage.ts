@@ -1,7 +1,7 @@
 import { adminStorage } from "@/lib/firebase/admin";
 import AdmZip from "adm-zip";
+import { getStorageBucketName } from "@/lib/storage-bucket";
 
-const BUCKET_NAME = "example-uploads";
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB per single file
 const MAX_ZIP_SIZE = 50 * 1024 * 1024; // 50MB for ZIP packages
 const MAX_ZIP_FILES = 200; // max files inside a ZIP
@@ -51,7 +51,7 @@ export async function uploadHtmlFile(
   }
 
   const storagePath = `dashboards/${userId}/${dashboardId}/${fileName}`;
-  const bucket = adminStorage.bucket(BUCKET_NAME);
+  const bucket = adminStorage.bucket(getStorageBucketName());
   const file = bucket.file(storagePath);
 
   await file.save(buffer, {
@@ -65,14 +65,14 @@ export async function uploadHtmlFile(
 }
 
 export async function getHtmlFile(storagePath: string): Promise<Buffer> {
-  const bucket = adminStorage.bucket(BUCKET_NAME);
+  const bucket = adminStorage.bucket(getStorageBucketName());
   const file = bucket.file(storagePath);
   const [contents] = await file.download();
   return contents;
 }
 
 export async function deleteHtmlFile(storagePath: string): Promise<void> {
-  const bucket = adminStorage.bucket(BUCKET_NAME);
+  const bucket = adminStorage.bucket(getStorageBucketName());
   const file = bucket.file(storagePath);
   await file.delete({ ignoreNotFound: true });
 }
@@ -187,7 +187,7 @@ export async function uploadZipDashboard(
 
   // Upload files to GCS with uncompressed size guard.
   // Extract and upload sequentially to avoid materializing entire ZIP in memory.
-  const bucket = adminStorage.bucket(BUCKET_NAME);
+  const bucket = adminStorage.bucket(getStorageBucketName());
   const storagePrefix = `dashboards/${userId}/${dashboardId}/`;
   let totalSizeBytes = 0;
 
@@ -237,7 +237,7 @@ export async function getDashboardAsset(
   }
 
   const gcsPath = `${storagePrefix}${relativePath}`;
-  const bucket = adminStorage.bucket(BUCKET_NAME);
+  const bucket = adminStorage.bucket(getStorageBucketName());
   const file = bucket.file(gcsPath);
 
   try {
@@ -257,7 +257,7 @@ export async function getDashboardAsset(
  * Delete all files under a storage prefix (for multi-page dashboard cleanup).
  */
 export async function deleteDashboardFiles(storagePrefix: string): Promise<void> {
-  const bucket = adminStorage.bucket(BUCKET_NAME);
+  const bucket = adminStorage.bucket(getStorageBucketName());
   await bucket.deleteFiles({ prefix: storagePrefix, force: true });
 }
 

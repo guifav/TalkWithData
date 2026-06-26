@@ -11,10 +11,10 @@ import { FieldValue } from "firebase-admin/firestore";
 import { extractTextFromHtml, MAX_SEARCHABLE_TEXT } from "@/lib/html-text";
 import { triggerThumbnailGeneration } from "@/lib/thumbnail";
 import { archiveCurrentVersion } from "@/lib/versions";
+import { getStorageBucketName } from "@/lib/storage-bucket";
 
 const MAX_HTML_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_ZIP_SIZE = 50 * 1024 * 1024; // 50MB
-const BUCKET_NAME = "example-uploads";
 
 export async function POST(
   request: NextRequest,
@@ -126,14 +126,14 @@ export async function POST(
     if (wasMultiPage && Array.isArray(data!.files)) {
       // Delete specific old ZIP files (not prefix-wide, to avoid deleting the new HTML)
       const oldPrefix = `dashboards/${data!.createdBy}/${id}/`;
-      const bucket = adminStorage.bucket(BUCKET_NAME);
+      const bucket = adminStorage.bucket(getStorageBucketName());
       await Promise.all(
         (data!.files as string[]).map((f) =>
           bucket.file(`${oldPrefix}${f}`).delete({ ignoreNotFound: true }).catch(() => {})
         )
       );
     } else if (oldStoragePath && oldStoragePath !== storagePath) {
-      await adminStorage.bucket(BUCKET_NAME)
+      await adminStorage.bucket(getStorageBucketName())
         .file(oldStoragePath)
         .delete({ ignoreNotFound: true })
         .catch((err) => console.warn(`[Replace] Failed to delete old file:`, err));
@@ -225,7 +225,7 @@ async function handleZipReplace({
     const oldPrefix = `dashboards/${data.createdBy || auth.uid}/${id}/`;
     const orphaned = (data.files as string[]).filter((f) => !newFiles.has(f));
     if (orphaned.length > 0) {
-      const bucket = adminStorage.bucket(BUCKET_NAME);
+      const bucket = adminStorage.bucket(getStorageBucketName());
       await Promise.all(
         orphaned.map((f) =>
           bucket.file(`${oldPrefix}${f}`).delete({ ignoreNotFound: true }).catch(() => {})
@@ -233,7 +233,7 @@ async function handleZipReplace({
       );
     }
   } else if (!wasMultiPage && data.storagePath) {
-    await adminStorage.bucket(BUCKET_NAME)
+    await adminStorage.bucket(getStorageBucketName())
       .file(data.storagePath as string)
       .delete({ ignoreNotFound: true })
       .catch(() => {});

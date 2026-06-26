@@ -1,14 +1,14 @@
 const CHART_JS_V4_CDN =
   "https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js";
-const CHART_COMPAT_MARKER = "data-gri-chart-compat";
+const CHART_COMPAT_MARKER = "data-chart-compat";
 
 const CHART_COMPAT_SHIM = `<script ${CHART_COMPAT_MARKER}="true">
 (function () {
-  if (typeof window === "undefined" || window.__griChartCompatInstalled) {
+  if (typeof window === "undefined" || window.__chartCompatInstalled) {
     return;
   }
 
-  window.__griChartCompatInstalled = true;
+  window.__chartCompatInstalled = true;
 
   function normalizeAxis(axis) {
     if (!axis || typeof axis !== "object" || Array.isArray(axis)) {
@@ -244,8 +244,8 @@ function rewriteLegacyChartConfig(html: string): string {
   }
 
   // Step 4: Inject safety CSS to prevent canvas infinite growth
-  if (!result.includes('data-gri-chart-safety')) {
-    const safetyCSS = '<style data-gri-chart-safety>canvas{max-height:500px!important}</style>';
+  if (!result.includes('data-chart-safety')) {
+    const safetyCSS = '<style data-chart-safety>canvas{max-height:500px!important}</style>';
     const headClose = result.indexOf('</head>');
     if (headClose !== -1) {
       result = result.slice(0, headClose) + safetyCSS + result.slice(headClose);
@@ -269,7 +269,7 @@ export function prepareDashboardHtmlForRender(html: string): string {
   // Step 3: Inject runtime compat shim (handles remaining edge cases)
   if (
     result.includes(CHART_COMPAT_MARKER) ||
-    result.includes("__griChartCompatInstalled")
+    result.includes("__chartCompatInstalled")
   ) {
     return result;
   }

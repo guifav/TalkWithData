@@ -2,7 +2,7 @@ export type PromptKey =
   | "builder.platform_rules"
   | "builder.mcp_freshness"
   | "builder.dynamic_dashboard"
-  | "builder.gri_playbook"
+  | "builder.platform_playbook"
   | "builder.db_playbook"
   | "refresh.system"
   | "data_chat.system";
@@ -151,7 +151,7 @@ export const PROMPT_GOVERNANCE: Record<PromptKey, PromptGovernance> = {
     ],
     composition: [
       "Primeira camada do buildSystemPrompt().",
-      "Vem antes de freshness, dinamismo, playbook internal, fontes MCP e database.",
+      "Vem antes de freshness, dinamismo, playbook da plataforma, fontes MCP e database.",
     ],
     dependencies: ["save_dashboard_html", "Chart.js v4", "MCP tools"],
     impact:
@@ -230,9 +230,9 @@ export const PROMPT_GOVERNANCE: Record<PromptKey, PromptGovernance> = {
     ],
     badges: ["Usado no Builder", "Afeta narrativa de dinamismo"],
   },
-  "builder.gri_playbook": {
+  "builder.platform_playbook": {
     purpose:
-      "Fornece contexto institucional, identidade visual e padroes minimos de dashboards para o the project.",
+      "Fornece contexto institucional, identidade visual e padroes minimos de dashboards para o Talk With Data.",
     consumers: ["Builder"],
     sourceFiles: [
       "app/src/lib/ai-prompt.ts",

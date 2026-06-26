@@ -64,7 +64,7 @@ export async function POST(
     const forwardedProto = request.headers.get("x-forwarded-proto") || "https";
     const origin = forwardedHost
       ? `${forwardedProto}://${forwardedHost}`
-      : "https://app.example.com";
+      : (process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "");
     const embedUrl = `${origin}/embed/${id}?token=${token}`;
 
     return NextResponse.json({ embedUrl, token, expiresIn: "7 days" });

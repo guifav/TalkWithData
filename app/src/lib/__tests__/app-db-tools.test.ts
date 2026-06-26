@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { APP_DB_TOOLS, APP_DB_TOOL_NAMES, isAppDbTool } from "@/lib/app-db/tools";
+process.env.ALLOWED_AUTH_DOMAIN = "example.com";
+process.env.STORAGE_BUCKET_NAME = "test-bucket";
 
 describe("APP_DB_TOOLS", () => {
   it("has exactly 9 tools", () => {

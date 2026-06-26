@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { getFavoriteDashboards } from "@/lib/home-dashboard-filters";
 import type { Dashboard } from "@/lib/types";
+process.env.ALLOWED_AUTH_DOMAIN = "example.com";
+process.env.STORAGE_BUCKET_NAME = "test-bucket";
 
 function dashboard(id: string, createdBy: string): Dashboard {
   return {

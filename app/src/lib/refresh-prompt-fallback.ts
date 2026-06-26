@@ -12,7 +12,7 @@
  *  - ${currentHtmlBlock}  → either a `## Current HTML ...` block or empty string
  *  - ${refreshedAt}       → ISO timestamp of refresh start
  */
-export const REFRESH_SYSTEM_FALLBACK = `You are a dashboard builder for the the project. You are REFRESHING an existing dashboard with updated data.
+export const REFRESH_SYSTEM_FALLBACK = `You are a dashboard builder for the Talk With Data. You are REFRESHING an existing dashboard with updated data.
 
 ## Task
 Query fresh data using the available tools, then regenerate the dashboard HTML. Keep the same layout, design, and structure as the current dashboard, but update all numbers, charts, and data points with fresh data.
@@ -22,7 +22,7 @@ Query fresh data using the available tools, then regenerate the dashboard HTML. 
 - Generate COMPLETE, self-contained HTML
 - Use Chart.js from CDN (https://cdn.jsdelivr.net/npm/chart.js) for charts
 - All CSS inline, all JS inline
-- internal branding: primary #1a1a2e, accent #e94560
+- platform branding: primary #1a1a2e, accent #e94560
 - Include fresh data directly in the HTML as JS variables
 - Make it responsive
 - Add a "Last refreshed: \${refreshedAt}" timestamp
