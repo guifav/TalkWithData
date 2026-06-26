@@ -349,9 +349,9 @@ export async function POST(request: NextRequest) {
         let messages = [...fileMessages, ...filteredMessages];
         let continueLoop = true;
         let toolLoopCount = 0;
-    while (continueLoop && toolLoopCount < MAX_TOOL_LOOPS) {
+        while (continueLoop && toolLoopCount < MAX_TOOL_LOOPS) {
           toolLoopCount++;
-        continueLoop = false;
+          continueLoop = false;
 
           let result: Awaited<ReturnType<typeof aiAdapter.chat>>;
           try {
