@@ -18,7 +18,7 @@ function TokenEmbed({ id, token }: { id: string; token: string }) {
   return (
     <iframe
       src={`/api/dashboards/${id}/view?embed_token=${token}&v=${bust}`}
-      sandbox="allow-scripts allow-same-origin"
+      sandbox="allow-scripts"
       className="h-screen w-screen border-0"
       title="Dashboard"
     />
@@ -80,7 +80,7 @@ function AuthEmbed({ id }: { id: string }) {
     <iframe
       key={`${dashboard.id}:${liveVersion}`}
       src={`/api/dashboards/${dashboard.id}/view?v=${liveVersion}`}
-      sandbox="allow-scripts allow-same-origin"
+      sandbox="allow-scripts"
       className="h-screen w-screen border-0"
       title={dashboard.title}
     />

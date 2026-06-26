@@ -146,20 +146,21 @@ You have access to database tools that let you create tables and manage data for
 - **IMPORTANT:** After setting up the database, you MUST still generate and save the HTML dashboard. The database is the backend; the HTML is the frontend that the user sees.
 - Note: the server-side refresh feature re-queries MCP tools and reloads attached files, but does not re-read database rows. If the dashboard depends on database state, the user needs to edit it to update the HTML.
 
-### Runtime Data Access (HTML ↔ Database)
-The HTML you generate runs in the browser and can read/write the dashboard's database in real time:
+### Runtime Data Access (HTML <-> Database)
+The HTML you generate runs in the browser and can read/write the dashboard's database in real time.
+All fetch calls MUST include the Authorization header with the injected token:
 
-- **Read rows:** \`fetch(window.__TWD_DATA_API__ + '/' + tableName)\` → GET returns \`{ rows, totalCount }\`
-- **Insert rows:** \`fetch(window.__TWD_DATA_API__ + '/' + tableName, { method: 'POST', body: JSON.stringify({ rows: [...] }) })\`
-- **Update row:** \`fetch(window.__TWD_DATA_API__ + '/' + tableName + '/' + rowId, { method: 'PATCH', body: JSON.stringify({ data: {...} }) })\`
-- **Delete row:** \`fetch(window.__TWD_DATA_API__ + '/' + tableName + '/' + rowId, { method: 'DELETE' })\`
+- **Read rows:** \`fetch(window.__TWD_DATA_API__ + '/' + tableName, { headers: { Authorization: 'Bearer ' + window.__TWD_DATA_TOKEN__ } })\` -> GET returns \`{ rows, totalCount }\`
+- **Insert rows:** \`fetch(window.__TWD_DATA_API__ + '/' + tableName, { method: 'POST', headers: { Authorization: 'Bearer ' + window.__TWD_DATA_TOKEN__ }, body: JSON.stringify({ rows: [...] }) })\`
+- **Update row:** \`fetch(window.__TWD_DATA_API__ + '/' + tableName + '/' + rowId, { method: 'PATCH', headers: { Authorization: 'Bearer ' + window.__TWD_DATA_TOKEN__ }, body: JSON.stringify({ data: {...} }) })\`
+- **Delete row:** \`fetch(window.__TWD_DATA_API__ + '/' + tableName + '/' + rowId, { method: 'DELETE', headers: { Authorization: 'Bearer ' + window.__TWD_DATA_TOKEN__ } })\`
 
-The variables \`window.__TWD_DASHBOARD_ID__\` and \`window.__TWD_DATA_API__\` are automatically injected when the dashboard is served. Auth is handled via session cookie — no tokens needed in the HTML.
+The variables \`window.__TWD_DASHBOARD_ID__\`, \`window.__TWD_DATA_API__\`, and \`window.__TWD_DATA_TOKEN__\` are automatically injected when the dashboard is served.
 
-**Preview mode:** During create/edit, \`window.__TWD_PREVIEW__\` is \`true\` and Data API calls will fail (no session cookie in preview). Your HTML MUST handle this gracefully:
+**Preview mode:** During create/edit, \`window.__TWD_PREVIEW__\` is \`true\` and Data API calls will fail (no token in preview). Your HTML MUST handle this gracefully:
 - Check \`if (window.__TWD_PREVIEW__)\` before making fetch calls
 - In preview mode, show the UI layout with embedded sample data from the generation step
-- In live mode (after save), use fetch to read/write from the database
+- In live mode (after save), use fetch with the token to read/write from the database
 
 Use this to create **interactive apps**: CRMs, kanban boards, forms, trackers. MCP data can be embedded at generation time for read-only context; the database handles mutable user state.
 

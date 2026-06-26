@@ -4,7 +4,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { getDashboardAsset } from "@/lib/storage";
 import { verifyEmbedToken } from "@/lib/embed-tokens";
 import { prepareDashboardHtmlForRender } from "@/lib/dashboard-html";
-import { verifyDashSessionToken } from "@/lib/dash-session";
+import { verifyDashSessionToken, createDashSessionToken } from "@/lib/dash-session";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -136,7 +136,8 @@ export async function GET(
     if (isHtml) {
       let html = prepareDashboardHtmlForRender(asset.buffer.toString("utf-8"));
       // Inject data API bootstrap for interactive multi-page apps
-      const dataApiScript = `<script>window.__TWD_DASHBOARD_ID__="${id}";window.__TWD_DATA_API__="/api/dashboards/${id}/data";</script>`;
+      const sessionToken = createDashSessionToken(id);
+      const dataApiScript = `<script>window.__TWD_DASHBOARD_ID__="${id}";window.__TWD_DATA_API__="/api/dashboards/${id}/data";window.__TWD_DATA_TOKEN__="${sessionToken}";</script>`;
       if (/<head[^>]*>/i.test(html)) {
         html = html.replace(/(<head[^>]*>)/i, `$1\n    ${dataApiScript}`);
       } else {
