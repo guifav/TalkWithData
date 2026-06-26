@@ -15,7 +15,7 @@ service cloud.firestore {
       allow read: if isAuthorizedUser() && (
         request.auth.uid == resource.data.createdBy ||
         resource.data.visibility == "team" ||
-        (request.auth.token.email in resource.data.allowedEmails) ||
+        (('allowedEmails' in resource.data) && resource.data.allowedEmails is list && request.auth.token.email in resource.data.allowedEmails) ||
         (
           resource.data.allowedDepartments is list &&
           userDepartment() != null &&

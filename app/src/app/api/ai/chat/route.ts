@@ -376,11 +376,11 @@ export async function POST(request: NextRequest) {
           role: "user" as const,
           content: `<attached_file name="${f.name}" type="${f.type}">${f.summary}\n\n${f.content}</attached_file>`,
         }));
-        const clientMessages = body.messages.filter(
+        const filteredMessages = body.messages.filter(
           (m): m is { role: ClientMessageRole; content: string | ContentBlock[] } =>
             m.role === "user" || m.role === "assistant"
         );
-        let messages = [...fileMessages, ...clientMessages];
+        let messages = [...fileMessages, ...filteredMessages];
         let continueLoop = true;
         let toolLoopCount = 0;
         const MAX_TOOL_LOOPS = 25; // Safety limit to prevent infinite tool loops
