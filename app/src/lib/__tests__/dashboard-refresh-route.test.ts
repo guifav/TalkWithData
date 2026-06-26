@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+process.env.ALLOWED_AUTH_DOMAIN = "example.com";
+process.env.STORAGE_BUCKET_NAME = "test-bucket";
 
 const mockVerifyRequest = vi.fn();
 const mockCanViewViaSharedFolder = vi.fn();
@@ -66,7 +68,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockVerifyRequest.mockResolvedValue({
     uid: "owner-uid",
-    email: "owner@griinstitute.org",
+    email: "owner@example.com",
     name: "Owner",
   });
   mockCanViewViaSharedFolder.mockResolvedValue({ allowed: false });
@@ -115,7 +117,7 @@ describe("dashboard refresh route", () => {
       expect.objectContaining({
         "refreshJob.status": "running",
         "refreshJob.startedBy": "owner-uid",
-        "refreshJob.startedByEmail": "owner@griinstitute.org",
+        "refreshJob.startedByEmail": "owner@example.com",
       })
     );
     expect(mockStartDashboardRefreshWorker).toHaveBeenCalledWith(

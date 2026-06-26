@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+process.env.ALLOWED_AUTH_DOMAIN = "example.com";
+process.env.STORAGE_BUCKET_NAME = "test-bucket";
 
 const mockDocGet = vi.fn();
 
@@ -39,7 +41,7 @@ describe("buildSystemPrompt composition", () => {
       getCatalogEntry("builder.platform_rules").fallback
     );
     expect(built.prompt).toContain(
-      getCatalogEntry("builder.gri_playbook").fallback
+      getCatalogEntry("builder.platform_playbook").fallback
     );
     expect(built.prompt).toContain("Available Data Sources");
     expect(built.prompt).toContain("**TestServer**");
@@ -49,7 +51,7 @@ describe("buildSystemPrompt composition", () => {
       "builder.platform_rules": null,
       "builder.mcp_freshness": null,
       "builder.dynamic_dashboard": null,
-      "builder.gri_playbook": null,
+      "builder.platform_playbook": null,
     });
   });
 
@@ -72,7 +74,7 @@ describe("buildSystemPrompt composition", () => {
       "builder.platform_rules",
       "builder.mcp_freshness",
       "builder.dynamic_dashboard",
-      "builder.gri_playbook",
+      "builder.platform_playbook",
     ]) {
       expect(built.promptVersions[key]).toBe(7);
     }

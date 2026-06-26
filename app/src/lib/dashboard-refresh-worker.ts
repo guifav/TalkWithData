@@ -6,6 +6,7 @@ import { uploadHtmlFile } from "@/lib/storage";
 import { archiveCurrentVersion } from "@/lib/versions";
 import { extractTextFromHtml, MAX_SEARCHABLE_TEXT } from "@/lib/html-text";
 import { triggerThumbnailGeneration } from "@/lib/thumbnail";
+import { getStorageBucketName } from "@/lib/storage-bucket";
 import { isAllowedMcpHost } from "@/lib/mcp-hosts";
 import { resolvePrompt } from "@/lib/prompt-registry";
 import { renderRefreshSystemPrompt } from "@/lib/refresh-prompt-fallback";
@@ -204,7 +205,7 @@ export async function runDashboardRefreshJob({
     let layoutUnavailable = false;
     try {
       const { adminStorage } = await import("@/lib/firebase/admin");
-      const bucket = adminStorage.bucket("gri-dashs-uploads");
+      const bucket = adminStorage.bucket(getStorageBucketName());
       const [buffer] = await bucket.file(dashData.storagePath as string).download();
       currentHtml = buffer.toString("utf-8");
     } catch (err) {

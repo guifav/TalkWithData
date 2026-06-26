@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+process.env.ALLOWED_AUTH_DOMAIN = "example.com";
+process.env.STORAGE_BUCKET_NAME = "test-bucket";
 
 /**
  * Tests for multi-page dashboard serving logic.
@@ -68,7 +70,7 @@ describe("referer-based auth for sub-resources", () => {
   it("accepts referer from same dashboard view", () => {
     expect(
       isValidReferer(
-        "https://dashs.griinstitute.org/api/dashboards/abc123/view",
+        "https://dashs.example.com/api/dashboards/abc123/view",
         "abc123"
       )
     ).toBe(true);
@@ -77,7 +79,7 @@ describe("referer-based auth for sub-resources", () => {
   it("accepts referer from same dashboard with embed token", () => {
     expect(
       isValidReferer(
-        "https://dashs.griinstitute.org/api/dashboards/abc123/view?embed_token=xxx",
+        "https://dashs.example.com/api/dashboards/abc123/view?embed_token=xxx",
         "abc123"
       )
     ).toBe(true);
@@ -86,7 +88,7 @@ describe("referer-based auth for sub-resources", () => {
   it("rejects referer from different dashboard", () => {
     expect(
       isValidReferer(
-        "https://dashs.griinstitute.org/api/dashboards/other-id/view",
+        "https://dashs.example.com/api/dashboards/other-id/view",
         "abc123"
       )
     ).toBe(false);

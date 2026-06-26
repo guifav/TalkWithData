@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
+process.env.ALLOWED_AUTH_DOMAIN = "example.com";
+process.env.STORAGE_BUCKET_NAME = "test-bucket";
 
 // Mock the Firebase admin module before importing api-auth.
 // adminAuth and adminDb are consumed via module-level import in api-auth.ts,
@@ -44,7 +46,7 @@ function makeRequest(token?: string, method = "GET", url = "http://localhost/api
 function setupAuth(role: "user" | "admin" | "superadmin") {
   mockVerifyIdToken.mockResolvedValueOnce({
     uid: `uid-${role}`,
-    email: `${role}@griinstitute.org`,
+    email: `${role}@example.com`,
     name: `Test ${role}`,
   });
   mockDocGet.mockResolvedValueOnce({
@@ -54,6 +56,7 @@ function setupAuth(role: "user" | "admin" | "superadmin") {
 }
 
 beforeEach(() => {
+  process.env.ALLOWED_AUTH_DOMAIN = "example.com";
   vi.clearAllMocks();
   mockCollectionGet.mockResolvedValue({ docs: [] });
   mockOrderBy.mockReturnValue({ get: mockCollectionGet });
@@ -67,7 +70,7 @@ describe("verifyRequest", () => {
     expect(result).toBeNull();
   });
 
-  it("returns null when token is for non-griinstitute.org domain", async () => {
+  it("returns null when token is for non-example.com domain", async () => {
     mockVerifyIdToken.mockResolvedValueOnce({
       uid: "uid-1",
       email: "user@gmail.com",
@@ -76,16 +79,32 @@ describe("verifyRequest", () => {
     expect(result).toBeNull();
   });
 
-  it("returns AuthResult for valid griinstitute.org token", async () => {
+  it("returns AuthResult for valid example.com token", async () => {
     mockVerifyIdToken.mockResolvedValueOnce({
       uid: "uid-1",
-      email: "user@griinstitute.org",
+      email: "user@example.com",
       name: "Test User",
     });
     const result = await verifyRequest(makeRequest("valid-token"));
     expect(result).not.toBeNull();
     expect(result?.uid).toBe("uid-1");
-    expect(result?.email).toBe("user@griinstitute.org");
+    expect(result?.email).toBe("user@example.com");
+  });
+
+  it("throws when ALLOWED_AUTH_DOMAIN is missing", async () => {
+    const previous = process.env.ALLOWED_AUTH_DOMAIN;
+    delete process.env.ALLOWED_AUTH_DOMAIN;
+    mockVerifyIdToken.mockResolvedValueOnce({
+      uid: "uid-1",
+      email: "user@example.com",
+      name: "Test User",
+    });
+
+    await expect(verifyRequest(makeRequest("valid-token"))).rejects.toThrow(
+      "ALLOWED_AUTH_DOMAIN env var is required"
+    );
+
+    process.env.ALLOWED_AUTH_DOMAIN = previous;
   });
 });
 

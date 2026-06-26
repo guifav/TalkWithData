@@ -1,9 +1,9 @@
 import { adminDb } from "@/lib/firebase/admin";
 import { adminStorage } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
+import { getStorageBucketName } from "@/lib/storage-bucket";
 
 const MAX_VERSIONS = 10;
-const BUCKET_NAME = "gri-dashs-uploads";
 
 /**
  * Archive the current live dashboard file as a version before replacing/restoring.
@@ -42,7 +42,7 @@ export async function archiveCurrentVersion(
   const oldStoragePath = data.storagePath as string;
   const versionedPath = `versions/${dashboardId}/${nextVersion}/${data.fileName}`;
 
-  const bucket = adminStorage.bucket(BUCKET_NAME);
+  const bucket = adminStorage.bucket(getStorageBucketName());
   const oldFile = bucket.file(oldStoragePath);
 
   try {

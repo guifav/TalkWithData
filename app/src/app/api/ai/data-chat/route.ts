@@ -115,7 +115,7 @@ async function callMcpTool(
   args: Record<string, unknown>,
   endpoint: string
 ): Promise<string> {
-  const mcpKey = process.env.CULKIN_MCP_API_KEY;
+  const mcpKey = process.env.MCP_API_KEY;
   if (!mcpKey) {
     return JSON.stringify({ error: "MCP API key not configured" });
   }

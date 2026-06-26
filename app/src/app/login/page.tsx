@@ -16,8 +16,10 @@ import { LayoutDashboard } from "lucide-react";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getAllowedAuthDomain } from "@/lib/auth-domain";
 
 export default function LoginPage() {
+  const allowedAuthDomain = getAllowedAuthDomain();
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
 
@@ -64,15 +66,15 @@ export default function LoginPage() {
             </div>
           </div>
           <div>
-            <CardTitle className="text-2xl">GRI Dashboards</CardTitle>
+            <CardTitle className="text-2xl">Talk With Data</CardTitle>
             <CardDescription className="mt-2">
-              GRI Institute Dashboards
+              Talk With Data Dashboards
             </CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground text-center">
-            Sign in with your GRI Institute Google account to continue.
+            Sign in with your Talk With Data Google account to continue.
           </p>
           <Button onClick={handleLogin} className="w-full" size="lg">
             <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -96,7 +98,7 @@ export default function LoginPage() {
             Sign in with Google
           </Button>
           <p className="text-xs text-muted-foreground text-center">
-            Restricted to @griinstitute.org accounts
+            {`Restricted to @${allowedAuthDomain} accounts`}
           </p>
         </CardContent>
       </Card>

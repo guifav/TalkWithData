@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+process.env.ALLOWED_AUTH_DOMAIN = "example.com";
+process.env.STORAGE_BUCKET_NAME = "test-bucket";
 
 const mockVerifyIdToken = vi.fn();
 const mockCreateEmbedToken = vi.fn();
@@ -15,7 +17,7 @@ type Role = "user" | "admin" | "superadmin";
 
 const authUser = {
   uid: "uid-user",
-  email: "user@griinstitute.org",
+  email: "user@example.com",
   name: "Test User",
 };
 
@@ -231,7 +233,7 @@ describe("role contract routes", () => {
     const res = await patchDashboard(
       authedRequest("PATCH", "http://localhost/api/dashboards/dash-id", {
         visibility: "specific",
-        allowedEmails: [authUser.email, "new.person@griinstitute.org"],
+        allowedEmails: [authUser.email, "new.person@example.com"],
         allowedDepartments: [],
       }),
       { params: Promise.resolve({ id: "dash-id" }) }
@@ -240,7 +242,7 @@ describe("role contract routes", () => {
     expect(res.status).toBe(200);
     expect(mockDashboardUpdate).toHaveBeenCalledWith(expect.objectContaining({
       visibility: "specific",
-      allowedEmails: [authUser.email, "new.person@griinstitute.org"],
+      allowedEmails: [authUser.email, "new.person@example.com"],
       allowedDepartments: [],
     }));
   });
@@ -259,7 +261,7 @@ describe("role contract routes", () => {
     const res = await patchDashboard(
       authedRequest("PATCH", "http://localhost/api/dashboards/dash-id", {
         visibility: "specific",
-        allowedEmails: [authUser.email, "new.person@griinstitute.org"],
+        allowedEmails: [authUser.email, "new.person@example.com"],
       }),
       { params: Promise.resolve({ id: "dash-id" }) }
     );

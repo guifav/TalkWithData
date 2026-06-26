@@ -17,6 +17,8 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { NextRequest } from "next/server";
+process.env.ALLOWED_AUTH_DOMAIN = "example.com";
+process.env.STORAGE_BUCKET_NAME = "test-bucket";
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -89,7 +91,7 @@ function setupMocks(role: Role | "unauth") {
   } else {
     mockVerifyIdToken.mockResolvedValue({
       uid: `uid-${role}`,
-      email: `${role}@griinstitute.org`,
+      email: `${role}@example.com`,
       name: `Test ${role}`,
     });
     mockDocGet.mockResolvedValue({

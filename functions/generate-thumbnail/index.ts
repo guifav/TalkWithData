@@ -4,7 +4,7 @@ import { Firestore } from "@google-cloud/firestore";
 import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
 
-const BUCKET_NAME = process.env.GCS_BUCKET || "gri-dashs-uploads";
+const BUCKET_NAME = process.env.STORAGE_BUCKET_NAME || process.env.GCS_BUCKET || "";
 const THUMBNAIL_SECRET = process.env.THUMBNAIL_SECRET || "";
 
 const storage = new Storage();

@@ -4,8 +4,8 @@ import { adminDb } from "@/lib/firebase/admin";
 import { adminStorage } from "@/lib/firebase/admin";
 import { archiveCurrentVersion } from "@/lib/versions";
 import { extractTextFromHtml, MAX_SEARCHABLE_TEXT } from "@/lib/html-text";
+import { getStorageBucketName } from "@/lib/storage-bucket";
 
-const BUCKET_NAME = "gri-dashs-uploads";
 
 export async function GET(
   request: NextRequest,
@@ -110,7 +110,7 @@ export async function POST(
       );
     }
 
-    const bucket = adminStorage.bucket(BUCKET_NAME);
+    const bucket = adminStorage.bucket(getStorageBucketName());
 
     // Archive the current live file BEFORE restoring (so it's not lost)
     // Pass versionId as protectVersionId so FIFO cleanup won't delete

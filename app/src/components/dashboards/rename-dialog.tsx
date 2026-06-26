@@ -78,7 +78,7 @@ export function RenameDialog({ dashboard, open, onOpenChange }: RenameDialogProp
           <div className="space-y-2">
             <Label htmlFor="rename-slug">URL slug</Label>
             <div className="flex items-center gap-1">
-              <span className="text-xs text-muted-foreground shrink-0">dashs.mygri.com/view/</span>
+              <span className="text-xs text-muted-foreground shrink-0">/view/</span>
               <Input
                 id="rename-slug"
                 value={slug}

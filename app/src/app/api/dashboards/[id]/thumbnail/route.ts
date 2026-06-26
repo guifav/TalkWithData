@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyRequest } from "@/lib/api-auth";
 import { adminDb, adminStorage } from "@/lib/firebase/admin";
 import { canViewDashboardViaSharedFolder } from "@/lib/permissions";
+import { getStorageBucketName } from "@/lib/storage-bucket";
 
-const BUCKET_NAME = "gri-dashs-uploads";
 const THUMBNAIL_PREFIX = "thumbnails/";
 const MAX_SIZE = 1024 * 1024; // 1MB max
 
@@ -98,7 +98,7 @@ export async function GET(
       return NextResponse.json({ error: "Thumbnail not found" }, { status: 404 });
     }
 
-    const bucket = adminStorage.bucket(BUCKET_NAME);
+    const bucket = adminStorage.bucket(getStorageBucketName());
     const [buffer] = await bucket.file(dashData.thumbnailStoragePath).download();
 
     return new NextResponse(new Uint8Array(buffer), {
@@ -154,7 +154,7 @@ export async function POST(
       return NextResponse.json({ error: "Thumbnail too large" }, { status: 400 });
     }
 
-    const bucket = adminStorage.bucket(BUCKET_NAME);
+    const bucket = adminStorage.bucket(getStorageBucketName());
     const timestamp = Date.now();
     const newPath = `${THUMBNAIL_PREFIX}${id}_${timestamp}.${extension}`;
     const newFile = bucket.file(newPath);
