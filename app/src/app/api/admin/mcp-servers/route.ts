@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
 
     if (!isAllowedMcpHost(endpoint.trim())) {
       return NextResponse.json(
-        { error: "Endpoint host not in allowlist. Only mcp.example.com is permitted." },
+        { error: "Endpoint host not in allowlist. Only your-mcp-server.com is permitted." },
         { status: 400 }
       );
     }
@@ -144,7 +144,7 @@ export async function PATCH(request: NextRequest) {
     // Validate endpoint host if being changed
     if (updates.endpoint && !isAllowedMcpHost(updates.endpoint.trim())) {
       return NextResponse.json(
-        { error: "Endpoint host not in allowlist. Only mcp.example.com is permitted." },
+        { error: "Endpoint host not in allowlist. Only your-mcp-server.com is permitted." },
         { status: 400 }
       );
     }

@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+process.env.ALLOWED_AUTH_DOMAIN = "example.com";
+process.env.STORAGE_BUCKET_NAME = "test-bucket";
 
 const mockDocGet = vi.fn();
 
@@ -31,7 +33,7 @@ describe("renderDataChatSystemPrompt", () => {
     const out = renderDataChatSystemPrompt(DATA_CHAT_SYSTEM_FALLBACK, baseVars);
     expect(out).toContain("[FRESHNESS]");
     expect(out).not.toContain("${mcpFreshness}");
-    expect(out).toContain("data analyst for the the project");
+    expect(out).toContain("data analyst for the Talk With Data");
   });
 
   it("does NOT re-substitute placeholder syntax that appears inside a value", () => {
@@ -75,7 +77,7 @@ describe("buildDataChatSystemPrompt", () => {
     const built = await buildDataChatSystemPrompt(servers);
 
     // Fallback content present
-    expect(built.prompt).toContain("data analyst for the the project");
+    expect(built.prompt).toContain("data analyst for the Talk With Data");
     // mcpFreshness layer was substituted (no leftover placeholder)
     expect(built.prompt).not.toContain("${mcpFreshness}");
     expect(built.prompt).toContain(
@@ -115,7 +117,7 @@ describe("buildDataChatSystemPrompt", () => {
     expect(built.prompt).toContain("OVERRIDDEN_BASE FRESH_OVERRIDE");
     // mcpFreshness placeholder fully substituted (no leftover literal)
     expect(built.prompt).not.toContain("${mcpFreshness}");
-    expect(built.prompt).not.toContain("data analyst for the the project");
+    expect(built.prompt).not.toContain("data analyst for the Talk With Data");
     expect(built.promptVersions["data_chat.system"]).toBe(4);
     expect(built.promptVersions["builder.mcp_freshness"]).toBe(9);
   });
@@ -124,7 +126,7 @@ describe("buildDataChatSystemPrompt", () => {
     mockDocGet.mockResolvedValue({ exists: false, data: () => null });
 
     const built = await buildDataChatSystemPrompt([
-      { name: "Analytics", description: "internal analytics", tools: [{ name: "x" }] },
+      { name: "MCP", description: "available analytics", tools: [{ name: "x" }] },
       {
         name: "Marketing",
         description: "Ads + SEO",
@@ -132,7 +134,7 @@ describe("buildDataChatSystemPrompt", () => {
       },
     ]);
 
-    expect(built.prompt).toContain("- **Analytics**: internal analytics (1 tools)");
+    expect(built.prompt).toContain("- **MCP**: available analytics (1 tools)");
     expect(built.prompt).toContain("- **Marketing**: Ads + SEO (2 tools)");
   });
 });

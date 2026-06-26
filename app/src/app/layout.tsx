@@ -9,9 +9,9 @@ import { Toaster } from "@/components/ui/sonner";
 const inter = Inter({ subsets: ["latin"], variable: "--font-geist-sans" });
 
 export const metadata: Metadata = {
-  title: "internal Dashboards - the project",
+  title: "Talk With Data - Talk With Data",
   description:
-    "Internal the project platform for dashboards and reports.",
+    "Internal Talk With Data platform for dashboards and reports.",
   icons: {
     icon: "/favicon.svg",
   },

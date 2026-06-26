@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { signScope, verifyScope, buildScopeHeaders } from "@/lib/app-db/scope-signature";
+process.env.ALLOWED_AUTH_DOMAIN = "example.com";
+process.env.STORAGE_BUCKET_NAME = "test-bucket";
 
 const SECRET = "test-secret-key-for-hmac";
 

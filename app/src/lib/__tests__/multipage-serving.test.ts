@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+process.env.ALLOWED_AUTH_DOMAIN = "example.com";
+process.env.STORAGE_BUCKET_NAME = "test-bucket";
 
 /**
  * Tests for multi-page dashboard serving logic.

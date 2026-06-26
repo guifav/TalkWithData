@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
+process.env.ALLOWED_AUTH_DOMAIN = "example.com";
+process.env.STORAGE_BUCKET_NAME = "test-bucket";
 
 // Mock the Firebase admin module before importing api-auth.
 // adminAuth and adminDb are consumed via module-level import in api-auth.ts,
@@ -54,6 +56,7 @@ function setupAuth(role: "user" | "admin" | "superadmin") {
 }
 
 beforeEach(() => {
+  process.env.ALLOWED_AUTH_DOMAIN = "example.com";
   vi.clearAllMocks();
   mockCollectionGet.mockResolvedValue({ docs: [] });
   mockOrderBy.mockReturnValue({ get: mockCollectionGet });
@@ -86,6 +89,22 @@ describe("verifyRequest", () => {
     expect(result).not.toBeNull();
     expect(result?.uid).toBe("uid-1");
     expect(result?.email).toBe("user@example.com");
+  });
+
+  it("throws when ALLOWED_AUTH_DOMAIN is missing", async () => {
+    const previous = process.env.ALLOWED_AUTH_DOMAIN;
+    delete process.env.ALLOWED_AUTH_DOMAIN;
+    mockVerifyIdToken.mockResolvedValueOnce({
+      uid: "uid-1",
+      email: "user@example.com",
+      name: "Test User",
+    });
+
+    await expect(verifyRequest(makeRequest("valid-token"))).rejects.toThrow(
+      "ALLOWED_AUTH_DOMAIN env var is required"
+    );
+
+    process.env.ALLOWED_AUTH_DOMAIN = previous;
   });
 });
 

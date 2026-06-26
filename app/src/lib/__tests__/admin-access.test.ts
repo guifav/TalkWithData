@@ -17,6 +17,8 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { NextRequest } from "next/server";
+process.env.ALLOWED_AUTH_DOMAIN = "example.com";
+process.env.STORAGE_BUCKET_NAME = "test-bucket";
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 

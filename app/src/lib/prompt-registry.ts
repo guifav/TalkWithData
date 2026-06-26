@@ -17,7 +17,7 @@ import {
   PLATFORM_RULES,
   MCP_FRESHNESS,
   DYNAMIC_DASHBOARD,
-  internal_PLAYBOOK,
+  PLATFORM_PLAYBOOK,
   DB_PLAYBOOK,
 } from "@/lib/ai-prompt";
 import { REFRESH_SYSTEM_FALLBACK } from "@/lib/refresh-prompt-fallback";
@@ -81,11 +81,11 @@ export const PROMPT_CATALOG: PromptCatalogEntry[] = [
     globalVariables: GLOBAL_PROMPT_VARIABLES,
   },
   {
-    key: "builder.gri_playbook",
-    label: "Builder — internal playbook",
+    key: "builder.platform_playbook",
+    label: "Builder — Platform playbook",
     description: "Institutional context, brand colors, dashboard standards.",
-    fallback: internal_PLAYBOOK,
-    governance: PROMPT_GOVERNANCE["builder.gri_playbook"],
+    fallback: PLATFORM_PLAYBOOK,
+    governance: PROMPT_GOVERNANCE["builder.platform_playbook"],
     globalVariables: GLOBAL_PROMPT_VARIABLES,
   },
   {

@@ -20,11 +20,13 @@ import {
 import { Upload, X, FileText, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useCategories } from "@/hooks/use-categories";
+import { getAllowedAuthDomain } from "@/lib/auth-domain";
 
 const MAX_HTML_SIZE = 10 * 1024 * 1024; // 10MB for single HTML
 const MAX_ZIP_SIZE = 50 * 1024 * 1024;  // 50MB for ZIP packages
 
 export default function UploadPage() {
+  const allowedAuthDomain = getAllowedAuthDomain();
   const { firebaseUser, isAuthenticated, loading } = useAuth();
   const { categories, loading: categoriesLoading } = useCategories();
   const router = useRouter();
@@ -299,7 +301,7 @@ export default function UploadPage() {
                     onChange={() => setVisibility("team")}
                     className="accent-primary"
                   />
-                  <span className="text-sm">All internal team</span>
+                  <span className="text-sm">All team</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -324,7 +326,7 @@ export default function UploadPage() {
                     rows={3}
                   />
                   <p className="text-xs text-muted-foreground">
-                    One email per line. Only @example.com addresses.
+                    One email per line. {`Only @${allowedAuthDomain} addresses.`}
                   </p>
                 </div>
               )}

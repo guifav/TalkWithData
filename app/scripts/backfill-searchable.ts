@@ -14,7 +14,6 @@
  *   SA_KEY_JSON='...' npx tsx scripts/backfill-searchable.ts
  *   SA_KEY_JSON='...' npx tsx scripts/backfill-searchable.ts --dry-run
  *
- * GitHub Issue: https://github.com/example-org/app/issues/144
  */
 
 import { initializeApp, cert, getApps } from "firebase-admin/app";
@@ -23,8 +22,8 @@ import { getStorage } from "firebase-admin/storage";
 
 // ── Config ──────────────────────────────────────────────────────────────────
 
-const PROJECT_ID = "example-project";
-const BUCKET_NAME = "example-uploads";
+const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || "";
+const BUCKET_NAME = process.env.STORAGE_BUCKET_NAME || "";
 const MAX_SEARCHABLE_TEXT = 100_000;
 const DEFAULT_CATEGORY = "Other";
 const DRY_RUN = process.argv.includes("--dry-run");
@@ -35,8 +34,8 @@ function initAdmin() {
   if (getApps().length > 0) return;
 
   const saJson = process.env.SA_KEY_JSON;
-  if (!saJson) {
-    console.error("SA_KEY_JSON env var is required");
+  if (!saJson || !PROJECT_ID || !BUCKET_NAME) {
+    console.error("SA_KEY_JSON, FIREBASE_PROJECT_ID, and STORAGE_BUCKET_NAME env vars are required");
     process.exit(1);
   }
 

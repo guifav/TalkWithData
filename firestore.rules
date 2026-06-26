@@ -1,21 +1,21 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isGriUser() {
-      return request.auth != null && request.auth.token.email.matches('.*@example-org[.]org');
+    function isAuthorizedUser() {
+      return request.auth != null && request.auth.token.email.matches('.*@example[.]com');
     }
 
     // Dashboards collection
     match /dashboards/{dashboardId} {
-      allow read: if isGriUser();
+      allow read: if isAuthorizedUser();
       // Dashboard creation is server-only (Admin SDK via /api/upload)
       allow create: if false;
       // Only the dashboard owner can update (ownership fields protected)
-      allow update: if isGriUser() && request.auth.uid == resource.data.createdBy
+      allow update: if isAuthorizedUser() && request.auth.uid == resource.data.createdBy
         && !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['createdBy', 'createdByEmail', 'createdByName']);
       // Only the dashboard owner can delete
-      allow delete: if isGriUser() && request.auth.uid == resource.data.createdBy;
+      allow delete: if isAuthorizedUser() && request.auth.uid == resource.data.createdBy;
 
       // Version history — server-only (Admin SDK bypasses rules)
       // API routes handle owner-only access checks
@@ -37,37 +37,37 @@ service cloud.firestore {
       }
     }
 
-    // Users collection — all access requires @example.com domain
+    // Users collection — all access requires authorized email domain
     match /users/{userId} {
-      allow read: if isGriUser();
-      // internal users can create their own doc — role field BLOCKED (set server-side via Admin SDK)
-      allow create: if isGriUser() && request.auth.uid == userId
+      allow read: if isAuthorizedUser();
+      // Authorized users can create their own doc — role field BLOCKED (set server-side via Admin SDK)
+      allow create: if isAuthorizedUser() && request.auth.uid == userId
         && !request.resource.data.keys().hasAny(['role']);
       // Updates cannot change role (admin-only via Admin SDK)
-      allow update: if isGriUser() && request.auth.uid == userId
+      allow update: if isAuthorizedUser() && request.auth.uid == userId
         && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']);
 
-      // Favorites subcollection — internal user can read/write their own
+      // Favorites subcollection — Authorized user can read/write their own
       match /favorites/{dashboardId} {
-        allow read: if isGriUser() && request.auth.uid == userId;
-        allow write: if isGriUser() && request.auth.uid == userId;
+        allow read: if isAuthorizedUser() && request.auth.uid == userId;
+        allow write: if isAuthorizedUser() && request.auth.uid == userId;
       }
 
-      // Recently viewed subcollection — internal user can read/write their own
+      // Recently viewed subcollection — Authorized user can read/write their own
       match /recent/{dashboardId} {
-        allow read: if isGriUser() && request.auth.uid == userId;
-        allow write: if isGriUser() && request.auth.uid == userId;
+        allow read: if isAuthorizedUser() && request.auth.uid == userId;
+        allow write: if isAuthorizedUser() && request.auth.uid == userId;
       }
 
-      // Viewed timestamps for "Updated" badge (Sprint 2) — internal user reads own, server writes
+      // Viewed timestamps for "Updated" badge (Sprint 2) — Authorized user reads own, server writes
       match /viewed/{dashboardId} {
-        allow read: if isGriUser() && request.auth.uid == userId;
+        allow read: if isAuthorizedUser() && request.auth.uid == userId;
       }
 
-      // Personal folders — internal user can read/write their own
+      // Personal folders — Authorized user can read/write their own
       match /folders/{folderId} {
-        allow read: if isGriUser() && request.auth.uid == userId;
-        allow write: if isGriUser() && request.auth.uid == userId;
+        allow read: if isAuthorizedUser() && request.auth.uid == userId;
+        allow write: if isAuthorizedUser() && request.auth.uid == userId;
       }
     }
 
@@ -83,15 +83,15 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Pending roles — internal users can read (for first login role assignment)
+    // Pending roles — Authorized users can read (for first login role assignment)
     match /pendingRoles/{docId} {
-      allow read: if isGriUser();
+      allow read: if isAuthorizedUser();
       allow write: if false;
     }
 
-    // Settings — internal users can read, server writes only
+    // Settings — Authorized users can read, server writes only
     match /settings/{docId} {
-      allow read: if isGriUser();
+      allow read: if isAuthorizedUser();
       allow write: if false;
     }
 

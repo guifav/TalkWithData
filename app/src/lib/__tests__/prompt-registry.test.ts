@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+process.env.ALLOWED_AUTH_DOMAIN = "example.com";
+process.env.STORAGE_BUCKET_NAME = "test-bucket";
 
 const mockDocGet = vi.fn();
 
@@ -31,7 +33,7 @@ describe("prompt-registry catalog", () => {
       [
         "builder.db_playbook",
         "builder.dynamic_dashboard",
-        "builder.gri_playbook",
+        "builder.platform_playbook",
         "builder.mcp_freshness",
         "builder.platform_rules",
         "data_chat.system",
@@ -100,11 +102,11 @@ describe("resolvePrompt", () => {
   it("falls back to hardcoded when doc does not exist", async () => {
     mockDocGet.mockResolvedValueOnce({ exists: false, data: () => null });
 
-    const resolved = await resolvePrompt("builder.gri_playbook");
+    const resolved = await resolvePrompt("builder.platform_playbook");
     expect(resolved.source).toBe("fallback");
     expect(resolved.version).toBeNull();
     expect(resolved.content).toBe(
-      getCatalogEntry("builder.gri_playbook").fallback
+      getCatalogEntry("builder.platform_playbook").fallback
     );
   });
 

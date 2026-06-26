@@ -83,7 +83,7 @@ export function ChatMessages({
             <Bot className="size-12 mx-auto text-muted-foreground/50" />
             <h2 className="text-xl font-semibold">Chat with your data</h2>
             <p className="text-muted-foreground max-w-md mx-auto">
-              Ask questions about internal data, explore metrics, and create
+              Ask questions about available data, explore metrics, and create
               dashboards from your conversations.
             </p>
           </div>

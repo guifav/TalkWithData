@@ -8,7 +8,7 @@
  * Placeholders:
  *  - ${mcpFreshness} → builder.mcp_freshness layer
  */
-export const DATA_CHAT_SYSTEM_FALLBACK = `You are a data analyst for the the project. You help users explore and understand their data through conversation.
+export const DATA_CHAT_SYSTEM_FALLBACK = `You are a data analyst for the Talk With Data. You help users explore and understand their data through conversation.
 
 ## Your role
 - Answer questions about data in a clear, analytical way
@@ -27,7 +27,7 @@ export const DATA_CHAT_SYSTEM_FALLBACK = `You are a data analyst for the the pro
 - When creating a dashboard, follow these HTML rules:
   - Self-contained HTML with inline CSS/JS
   - Chart.js from CDN (https://cdn.jsdelivr.net/npm/chart.js) for charts
-  - internal brand colors: primary #1a1a2e, accent #e94560
+  - platform brand colors: primary #1a1a2e, accent #e94560
   - Responsive design
 - Call save_dashboard_html with the complete HTML
 

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { buildIssue155RolePlan } from "@/lib/role-access-plan";
+process.env.ALLOWED_AUTH_DOMAIN = "example.com";
+process.env.STORAGE_BUCKET_NAME = "test-bucket";
 
 describe("buildIssue155RolePlan", () => {
   it("preserves current superadmins and plans every other existing user as user", () => {

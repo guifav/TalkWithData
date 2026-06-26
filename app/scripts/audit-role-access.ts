@@ -11,7 +11,7 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
 import { buildIssue155RolePlan } from "../src/lib/role-access-plan";
 
-const PROJECT_ID = "example-project";
+const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || "";
 const APPLY = process.argv.includes("--apply");
 const CONFIRMED = process.argv.includes("--confirm-issue-155");
 
@@ -19,8 +19,8 @@ function initAdmin() {
   if (getApps().length > 0) return;
 
   const saJson = process.env.SA_KEY_JSON;
-  if (!saJson) {
-    console.error("SA_KEY_JSON env var is required");
+  if (!saJson || !PROJECT_ID) {
+    console.error("SA_KEY_JSON and FIREBASE_PROJECT_ID env vars are required");
     process.exit(1);
   }
 

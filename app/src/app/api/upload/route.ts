@@ -7,6 +7,7 @@ import { generateSlug, reserveUniqueSlug, releaseSlug } from "@/lib/slug";
 import { isValidCategory } from "@/lib/categories";
 import { extractTextFromHtml, MAX_SEARCHABLE_TEXT } from "@/lib/html-text";
 import { triggerThumbnailGeneration } from "@/lib/thumbnail";
+import { isAllowedEmailDomain } from "@/lib/auth-domain";
 
 const MAX_HTML_SIZE = 10 * 1024 * 1024; // 10MB for single HTML
 const MAX_ZIP_SIZE = 50 * 1024 * 1024; // 50MB for ZIP packages
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
         ? allowedEmailsRaw
             .split(/[\n,]/)
             .map((e) => e.trim().toLowerCase())
-            .filter((e) => e.endsWith("@example.com"))
+            .filter(isAllowedEmailDomain)
         : [];
 
     // Allocate doc ID upfront (no write yet)

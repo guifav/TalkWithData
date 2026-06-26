@@ -1,5 +1,5 @@
 /**
- * internal Dashs — AI system prompt layers
+ * Talk With Data — AI system prompt layers
  *
  * Split into composable layers so each concern can be evolved
  * independently without touching route logic:
@@ -7,13 +7,13 @@
  *  1. PLATFORM_RULES    — fixed technical constraints for HTML/Chart.js generation
  *  2. MCP_FRESHNESS     — MCP data freshness contract (#125)
  *  3. DYNAMIC_DASHBOARD — dynamic dashboard capabilities (#126)
- *  4. internal_PLAYBOOK      — fixed institutional context and brand standards
+ *  4. PLATFORM_PLAYBOOK      — fixed institutional context and brand standards
  *  5. DB_PLAYBOOK       — rules for apps with database persistence (#124)
  *  6. buildSystemPrompt() — assembles all layers with dynamic data
  */
 
 /** Layer 1: Technical constraints that never change regardless of request. */
-export const PLATFORM_RULES = `You are a dashboard and app builder for the the project. You create self-contained HTML dashboards and data-driven applications using data from internal's analytics platform.
+export const PLATFORM_RULES = `You are a dashboard and app builder for the Talk With Data. You create self-contained HTML dashboards and data-driven applications using data from your analytics platform.
 
 ## Tools
 Use the provided tools to explore available data, understand schemas, and query actual data.
@@ -88,18 +88,18 @@ Dashs is NOT a static file host. It's a **dashboard platform** with server-side 
   4. Scheduled automatic refresh (daily/weekly) is on the roadmap but not yet implemented
 - Design dashboard layouts that work well with periodic refresh: include timestamps, use relative date labels, and avoid hardcoded date ranges.`;
 
-/** Layer 4: Fixed institutional context for the the project brand and product. */
-export const internal_PLAYBOOK = `## the project Playbook
+/** Layer 4: Fixed institutional context for the Talk With Data brand and product. */
+export const PLATFORM_PLAYBOOK = `## Talk With Data Playbook
 
 ### Visual Identity
-- Use a clean, professional design with internal branding: dark header (#1a1a2e), white body
-- internal brand colors: primary #1a1a2e, accent #e94560
+- Use a clean, professional design with platform branding: dark header (#1a1a2e), white body
+- platform brand colors: primary #1a1a2e, accent #e94560
 - Include a title/header section on every dashboard
 
 ### Dashboard Standards
 - Always include a data update timestamp showing when data was last refreshed
 - Show a clear empty state message when data is unavailable (e.g. "Sem dados disponíveis para este período")
-- Target audience: the project analysts and institutional partners
+- Target audience: Talk With Data analysts and institutional partners
 - Dashboards should be self-explanatory without requiring external documentation
 - Maintain visual consistency: spacing, font sizes, and chart colors should be uniform across sections`;
 
@@ -201,7 +201,7 @@ export async function buildSystemPrompt(
     "builder.platform_rules",
     "builder.mcp_freshness",
     "builder.dynamic_dashboard",
-    "builder.gri_playbook",
+    "builder.platform_playbook",
   ] as const;
   const dbKey = "builder.db_playbook" as const;
 
@@ -216,7 +216,7 @@ export async function buildSystemPrompt(
     `${resolved["builder.platform_rules"].content}\n\n` +
     `${resolved["builder.mcp_freshness"].content}\n\n` +
     `${resolved["builder.dynamic_dashboard"].content}\n\n` +
-    `${resolved["builder.gri_playbook"].content}\n\n` +
+    `${resolved["builder.platform_playbook"].content}\n\n` +
     `## Available Data Sources\n${dataSources}`;
 
   if (options?.hasDatabase) {

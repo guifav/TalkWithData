@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { shouldPollDashboardRefresh } from "@/lib/dashboard-refresh-client";
+process.env.ALLOWED_AUTH_DOMAIN = "example.com";
+process.env.STORAGE_BUCKET_NAME = "test-bucket";
 
 describe("shouldPollDashboardRefresh", () => {
   it("continues polling after async start states", () => {
