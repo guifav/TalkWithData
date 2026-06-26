@@ -44,7 +44,27 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ id: doc.id, ...doc.data() });
+    const data = doc.data()!;
+    const { departmentIds } = await getUserRoleAndDepartments(auth.uid);
+    const directAccess = canViewDashboard(
+      {
+        createdBy: data.createdBy,
+        visibility: data.visibility,
+        allowedEmails: Array.isArray(data.allowedEmails) ? data.allowedEmails : [],
+        allowedDepartments: Array.isArray(data.allowedDepartments) ? data.allowedDepartments : [],
+      },
+      auth,
+      departmentIds
+    );
+    const folderAccess = directAccess
+      ? false
+      : (await canViewDashboardViaSharedFolder(id, auth, adminDb)).allowed;
+
+    if (!directAccess && !folderAccess) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    return NextResponse.json({ id: doc.id, ...data });
   } catch (error) {
     console.error("Failed to get dashboard:", error);
     return NextResponse.json(

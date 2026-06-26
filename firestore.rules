@@ -3,11 +3,16 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function isAuthorizedUser() {
       return request.auth != null && request.auth.token.email.matches('.*@example[.]com');
+      // IMPORTANT: replace example.com with your deployed ALLOWED_AUTH_DOMAIN before deploying rules.
     }
 
     // Dashboards collection
     match /dashboards/{dashboardId} {
-      allow read: if isAuthorizedUser();
+      allow read: if isAuthorizedUser() && (
+        request.auth.uid == resource.data.createdBy ||
+        resource.data.visibility == "team" ||
+        (request.auth.token.email in resource.data.allowedEmails)
+      );
       // Dashboard creation is server-only (Admin SDK via /api/upload)
       allow create: if false;
       // Only the dashboard owner can update (ownership fields protected)
@@ -39,13 +44,13 @@ service cloud.firestore {
 
     // Users collection — all access requires authorized email domain
     match /users/{userId} {
-      allow read: if isAuthorizedUser();
+      allow read: if isAuthorizedUser() && request.auth.uid == userId;
       // Authorized users can create their own doc — role field BLOCKED (set server-side via Admin SDK)
       allow create: if isAuthorizedUser() && request.auth.uid == userId
-        && !request.resource.data.keys().hasAny(['role']);
+        && !request.resource.data.keys().hasAny(['role', 'department', 'aiConfig']);
       // Updates cannot change role (admin-only via Admin SDK)
       allow update: if isAuthorizedUser() && request.auth.uid == userId
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']);
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'department', 'aiConfig']);
 
       // Favorites subcollection — Authorized user can read/write their own
       match /favorites/{dashboardId} {

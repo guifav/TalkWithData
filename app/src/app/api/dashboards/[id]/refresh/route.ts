@@ -145,6 +145,16 @@ export async function POST(
     if ("error" in loaded) return loaded.error;
 
     const { docRef, dashData } = loaded;
+    const requesterDoc = await adminDb.collection("users").doc(auth.uid).get();
+    const requesterRole = requesterDoc.data()?.role;
+    const canMutate =
+      dashData.createdBy === auth.uid ||
+      requesterRole === "admin" ||
+      requesterRole === "superadmin";
+    if (!canMutate) {
+      return NextResponse.json({ error: "Only the dashboard owner or an admin can refresh" }, { status: 403 });
+    }
+
     const aiRecipe = dashData.aiRecipe as AiRecipe | undefined;
 
     if (dashData.source !== "ai") {

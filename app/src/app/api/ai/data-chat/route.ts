@@ -338,7 +338,8 @@ export async function POST(request: NextRequest) {
           role: "user" as const,
           content: `<attached_file name="${f.name}" type="${f.type}">${f.summary}\n\n${f.content}</attached_file>`,
         }));
-        let messages = [...fileMessages, ...body.messages];
+        const clientMessages = body.messages.filter((m) => (m as { role?: string }).role !== "system");
+        let messages = [...fileMessages, ...clientMessages];
         let continueLoop = true;
 
         while (continueLoop) {
