@@ -137,7 +137,12 @@ export async function GET(
       let html = prepareDashboardHtmlForRender(asset.buffer.toString("utf-8"));
       // Inject data API bootstrap for interactive multi-page apps
       const sessionToken = createDashSessionToken(id);
-      const dataApiScript = `<script>window.__TWD_DASHBOARD_ID__="${id}";window.__TWD_DATA_API__="/api/dashboards/${id}/data";window.__TWD_DATA_TOKEN__="${sessionToken}";</script>`;
+      const bootstrap = {
+        dashboardId: id,
+        dataApi: `/api/dashboards/${id}/data`,
+        dataToken: sessionToken,
+      };
+      const dataApiScript = `<script>window.__TWD_DASHBOARD_ID__=${JSON.stringify(bootstrap.dashboardId)};window.__TWD_DATA_API__=${JSON.stringify(bootstrap.dataApi)};window.__TWD_DATA_TOKEN__=${JSON.stringify(bootstrap.dataToken)};</script>`;
       if (/<head[^>]*>/i.test(html)) {
         html = html.replace(/(<head[^>]*>)/i, `$1\n    ${dataApiScript}`);
       } else {

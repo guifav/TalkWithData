@@ -38,8 +38,8 @@ function setAuthTokenCookie(token: string | null) {
 
   // NOTE: twd_auth is a client-side Firebase ID token cookie, not HttpOnly.
   // This is a known limitation of client-side Firebase Auth. The iframe sandbox
-  // fix (sandbox="allow-scripts" without allow-same-origin) mitigates XSS risk
-  // by preventing dashboard HTML from accessing the parent cookie.
+  // fix (sandbox="allow-scripts" without allow-same-origin) prevents untrusted
+  // dashboard HTML from acting as the app origin with the user's session.
   // Full fix requires server-side Firebase session cookies (larger refactor).
   document.cookie = `${AUTH_COOKIE_NAME}=${token}; Path=/; Max-Age=3600; SameSite=Strict${secure}`;
 }
