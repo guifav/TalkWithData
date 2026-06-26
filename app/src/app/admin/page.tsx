@@ -40,6 +40,8 @@ import { McpAccessTab } from "@/components/admin/mcp-access-tab";
 import type { Department } from "@/lib/types";
 import { DepartmentsTab } from "@/components/admin/departments-tab";
 import { PromptsTab } from "@/components/admin/prompts-tab";
+import { AiConfigTab } from "@/components/admin/ai-config-tab";
+import type { AiProvider } from "@/lib/ai-provider-metadata";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -107,6 +109,12 @@ interface UserRow {
   displayName: string;
   role: string;
   department?: string;
+  aiConfig?: {
+    provider: AiProvider;
+    model: string;
+    baseUrl?: string;
+    apiKeyConfigured?: boolean;
+  } | null;
   dashboardsCreated: number;
   totalViewsGenerated: number;
   lastLoginAt: string | null;
@@ -625,6 +633,10 @@ export default function AdminPage() {
                 <TabsTrigger value="prompts">
                   <Sparkles className="size-4 mr-1" />
                   Prompts
+                </TabsTrigger>
+                <TabsTrigger value="ai-config">
+                  <Sparkles className="size-4 mr-1" />
+                  AI Models
                 </TabsTrigger>
               </>
             )}
@@ -1413,11 +1425,14 @@ export default function AdminPage() {
           </TabsContent>}
 
           {/* ---- Prompts (superadmin only) ---- */}
-          {isSuperAdmin && (
-            <TabsContent value="prompts">
-              <PromptsTab />
-            </TabsContent>
-          )}
+          {isSuperAdmin && <TabsContent value="prompts">
+            <PromptsTab />
+          </TabsContent>}
+
+          {/* ---- AI Models (superadmin only) ---- */}
+          {isSuperAdmin && <TabsContent value="ai-config">
+            <AiConfigTab users={users} onUsersUpdate={(updated) => setUsers(updated as UserRow[])} />
+          </TabsContent>}
         </Tabs>
       </div>
     </AppShell>

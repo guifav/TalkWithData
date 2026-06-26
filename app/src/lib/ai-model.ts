@@ -1,65 +1,96 @@
 /**
- * AI Model Resolver — centralizes model selection for all AI routes.
+ * AI Model Resolver, centralizes provider and model selection for all AI routes.
  *
- * Replaces hardcoded `const MODEL = "claude-opus-4-20250514"` with
- * per-user configuration stored in Firestore users/{uid}.aiConfig.
- *
- * V1: Anthropic only. Google Gemini requires a separate request adapter
- * (different endpoint, auth header, payload format, response parsing).
- *
- * Issue #114
+ * Priority:
+ *   1. User aiConfig in Firestore users/{uid}.aiConfig
+ *   2. AI_DEFAULT_PROVIDER / AI_DEFAULT_MODEL env vars
+ *   3. Built-in Anthropic default
  */
 
 import { adminDb } from "@/lib/firebase/admin";
+import {
+  AI_PROVIDER_LABELS,
+  AI_PROVIDER_VALUES,
+  DEFAULT_MODEL,
+  DEFAULT_PROVIDER,
+  SUPPORTED_MODELS,
+  isAiProvider,
+  type AiProvider,
+} from "@/lib/ai-provider-metadata";
 
-// ── Supported providers and models ───────────────────────────────────────────
-
-/**
- * V1 = Anthropic only. Adding a new provider requires implementing
- * the corresponding request adapter in the AI routes.
- */
-export type AiProvider = "anthropic";
+export type { AiProvider };
+export { AI_PROVIDER_LABELS, AI_PROVIDER_VALUES, SUPPORTED_MODELS };
 
 export interface AiModelConfig {
   provider: AiProvider;
   model: string;
+  /** Server-side only. For custom providers this is stored in Firestore. */
+  apiKey?: string;
+  /** Server-side only. Required for custom OpenAI-compatible providers. */
+  baseUrl?: string;
 }
 
-export const SUPPORTED_MODELS: Record<AiProvider, string[]> = {
-  anthropic: [
-    "claude-opus-4-20250514",
-    "claude-sonnet-4-20250514",
-  ],
-};
-
-export const DEFAULT_CONFIG: AiModelConfig = {
-  provider: "anthropic",
-  model: "claude-opus-4-20250514",
-};
-
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-
-const PROVIDER_KEY_ENV: Record<AiProvider, string> = {
+const PROVIDER_KEY_ENV: Partial<Record<AiProvider, string>> = {
   anthropic: "ANTHROPIC_API_KEY",
+  openai: "OPENAI_API_KEY",
+  google: "GOOGLE_AI_API_KEY",
+  kimi: "KIMI_API_KEY",
+  glm: "GLM_API_KEY",
 };
+
+export function getProviderApiKeyEnv(provider: AiProvider): string | undefined {
+  return PROVIDER_KEY_ENV[provider];
+}
+
+function getDefaultConfig(): AiModelConfig {
+  const provider = isAiProvider(process.env.AI_DEFAULT_PROVIDER)
+    ? process.env.AI_DEFAULT_PROVIDER
+    : DEFAULT_PROVIDER;
+  const envModel = process.env.AI_DEFAULT_MODEL;
+  const models = SUPPORTED_MODELS[provider];
+  const model = envModel && (provider === "custom" || models.includes(envModel))
+    ? envModel
+    : provider === DEFAULT_PROVIDER
+      ? DEFAULT_MODEL
+      : models[0];
+
+  return { provider, model };
+}
+
+export const DEFAULT_CONFIG: AiModelConfig = getDefaultConfig();
+
+function withCredentials(config: AiModelConfig): AiModelConfig {
+  if (config.provider === "custom") {
+    if (!config.baseUrl?.trim()) {
+      throw new Error("Custom AI provider requires baseUrl in users/{uid}.aiConfig.");
+    }
+    if (!config.apiKey?.trim()) {
+      throw new Error("Custom AI provider requires apiKey in users/{uid}.aiConfig.");
+    }
+    return config;
+  }
+
+  const envKey = PROVIDER_KEY_ENV[config.provider];
+  const apiKey = envKey ? process.env[envKey] : undefined;
+  if (!apiKey) {
+    throw new Error(
+      `AI provider "${config.provider}" is not configured. Set ${envKey} environment variable.`
+    );
+  }
+  return { ...config, apiKey };
+}
 
 // ── Resolver ─────────────────────────────────────────────────────────────────
 
 /**
  * Resolve the AI model config for a user.
- *
- * Priority:
- *   1. User's aiConfig in Firestore (set by superadmin)
- *   2. Default (claude-opus-4-20250514)
- *
- * Throws if the resolved provider's API key is not configured.
  */
 export async function resolveUserModel(uid: string): Promise<{
   config: AiModelConfig;
   apiKey: string;
-  apiUrl: string;
+  apiUrl?: string;
 }> {
-  let config = DEFAULT_CONFIG;
+  let config = getDefaultConfig();
 
   try {
     const userDoc = await adminDb.collection("users").doc(uid).get();
@@ -74,45 +105,42 @@ export async function resolveUserModel(uid: string): Promise<{
     console.error("[AI Model] Failed to read user config, using default:", err);
   }
 
-  const apiKey = process.env[PROVIDER_KEY_ENV[config.provider]];
-  if (!apiKey) {
-    throw new Error(
-      `AI provider "${config.provider}" is not configured. ` +
-      `Set ${PROVIDER_KEY_ENV[config.provider]} environment variable.`
-    );
-  }
-
+  const configWithCredentials = withCredentials(config);
   return {
-    config,
-    apiKey,
-    apiUrl: ANTHROPIC_API_URL,
+    config: configWithCredentials,
+    apiKey: configWithCredentials.apiKey || "",
   };
 }
 
 /**
- * Resolve model for refresh — uses the model saved in aiRecipe if available,
- * otherwise falls back to the dashboard owner's config.
+ * Resolve model for refresh. Uses the provider/model saved in aiRecipe when
+ * available, otherwise falls back to the dashboard owner's config.
  */
 export async function resolveRefreshModel(
   ownerUid: string,
-  savedModel?: string
+  savedModel?: string,
+  savedProvider?: string
 ): Promise<{
   config: AiModelConfig;
   apiKey: string;
-  apiUrl: string;
+  apiUrl?: string;
 }> {
   if (savedModel) {
-    for (const [provider, models] of Object.entries(SUPPORTED_MODELS)) {
-      if (models.includes(savedModel)) {
-        const envKey = PROVIDER_KEY_ENV[provider as AiProvider];
-        const apiKey = process.env[envKey];
-        if (apiKey) {
-          return {
-            config: { provider: provider as AiProvider, model: savedModel },
-            apiKey,
-            apiUrl: ANTHROPIC_API_URL,
-          };
-        }
+    const providerCandidates = isAiProvider(savedProvider)
+      ? [savedProvider]
+      : (Object.keys(SUPPORTED_MODELS) as AiProvider[]).filter((provider) =>
+          provider === "custom" || SUPPORTED_MODELS[provider].includes(savedModel)
+        );
+
+    for (const provider of providerCandidates) {
+      if (provider === "custom") continue;
+      const envKey = PROVIDER_KEY_ENV[provider];
+      const apiKey = envKey ? process.env[envKey] : undefined;
+      if (apiKey) {
+        return {
+          config: { provider, model: savedModel, apiKey },
+          apiKey,
+        };
       }
     }
     console.warn(`[AI Model] Saved model "${savedModel}" not available, falling back to owner config`);
@@ -126,32 +154,41 @@ export async function resolveRefreshModel(
 export function isValidConfig(config: unknown): config is AiModelConfig {
   if (!config || typeof config !== "object") return false;
   const c = config as Record<string, unknown>;
-  if (typeof c.provider !== "string" || typeof c.model !== "string") return false;
-  const provider = c.provider as AiProvider;
-  if (!SUPPORTED_MODELS[provider]) return false;
-  return SUPPORTED_MODELS[provider].includes(c.model as string);
+  if (!isAiProvider(c.provider)) return false;
+  if (typeof c.model !== "string" || !c.model.trim()) return false;
+
+  if (c.provider !== "custom" && !SUPPORTED_MODELS[c.provider].includes(c.model)) {
+    return false;
+  }
+
+  if (c.apiKey !== undefined && typeof c.apiKey !== "string") return false;
+  if (c.baseUrl !== undefined && typeof c.baseUrl !== "string") return false;
+  if (c.provider === "custom" && !c.baseUrl?.toString().trim()) return false;
+
+  return true;
+}
+
+export function sanitizeAiConfig(config: AiModelConfig | null | undefined) {
+  if (!config) return null;
+  return {
+    provider: config.provider,
+    model: config.model,
+    baseUrl: config.baseUrl,
+    apiKeyConfigured: Boolean(config.apiKey),
+  };
 }
 
 export function getSupportedModels(): Array<{ provider: AiProvider; model: string; label: string }> {
   const models: Array<{ provider: AiProvider; model: string; label: string }> = [];
   for (const [provider, modelList] of Object.entries(SUPPORTED_MODELS)) {
     for (const model of modelList) {
+      const typedProvider = provider as AiProvider;
       models.push({
-        provider: provider as AiProvider,
+        provider: typedProvider,
         model,
-        label: `Anthropic — ${model}`,
+        label: `${AI_PROVIDER_LABELS[typedProvider]} - ${model}`,
       });
     }
   }
   return models;
-}
-
-// ── Anthropic request helpers ────────────────────────────────────────────────
-
-export function buildAnthropicHeaders(apiKey: string): Record<string, string> {
-  return {
-    "Content-Type": "application/json",
-    "x-api-key": apiKey,
-    "anthropic-version": "2023-06-01",
-  };
 }

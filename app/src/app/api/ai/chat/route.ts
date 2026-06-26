@@ -7,7 +7,8 @@ import { summarizeIfNeeded } from "@/lib/tool-result-utils";
 import { APP_DB_TOOLS, isAppDbTool } from "@/lib/app-db/tools";
 import { executeAppDbTool, type DbContext } from "@/lib/app-db/executor";
 import { getInstanceWithTables } from "@/lib/app-db/registry";
-import { resolveUserModel, buildAnthropicHeaders } from "@/lib/ai-model";
+import { resolveUserModel } from "@/lib/ai-model";
+import { AiProviderError, getAiAdapter } from "@/lib/ai-providers";
 
 
 // The save_dashboard_html tool is always included
@@ -229,6 +230,7 @@ export async function POST(request: NextRequest) {
       { status: 503, headers: { "Content-Type": "application/json" } }
     );
   }
+  const aiAdapter = getAiAdapter(aiModel.config.provider);
 
   let body: {
     messages: ChatMessage[];
@@ -382,62 +384,47 @@ export async function POST(request: NextRequest) {
           toolLoopCount++;
 
           // Call AI provider (non-streaming for tool loop simplicity)
-          const anthropicRes = await fetch(aiModel.apiUrl, {
-            method: "POST",
-            headers: buildAnthropicHeaders(aiModel.apiKey),
-            body: JSON.stringify({
-              model: aiModel.config.model,
-              max_tokens: 16384,
+          let result: Awaited<ReturnType<typeof aiAdapter.chat>>;
+          try {
+            result = await aiAdapter.chat(messages, aiModel.config, {
+              maxTokens: 16384,
               system: systemPrompt,
               tools: TOOLS,
-              messages,
-            }),
-          });
-
-          if (!anthropicRes.ok) {
-            const errText = await anthropicRes.text();
-            let errorType = "unknown_error";
-            let errorMessage = `Anthropic API error: ${anthropicRes.status}`;
-            let retryable = false;
-
-            try {
-              const errBody = JSON.parse(errText);
-              errorType = errBody.error?.type || errBody.type || "unknown_error";
-              errorMessage = errBody.error?.message || errBody.message || errorMessage;
-            } catch {}
-
+            });
+          } catch (err) {
+            const providerErr = err instanceof AiProviderError ? err : null;
+            const errorType = providerErr?.type || "unknown_error";
+            const errorMessage = err instanceof Error ? err.message : "AI provider error";
+            const status = providerErr?.status || 500;
+            const retryable = status === 429 || status === 529 || errorType === "overloaded_error";
             const userMessage = (() => {
               if (errorType === "invalid_request_error" && errorMessage.includes("prompt is too long")) {
                 return "Your conversation is too long. Please start a new chat or ask for a simpler dashboard.";
               }
-              if (anthropicRes.status === 529 || errorType === "overloaded_error") {
-                retryable = true;
-                return "Claude is currently overloaded. Please try again in a moment.";
+              if (status === 529 || errorType === "overloaded_error") {
+                return "The selected AI provider is currently overloaded. Please try again in a moment.";
               }
-              if (anthropicRes.status === 429) {
-                retryable = true;
+              if (status === 429) {
                 return "Rate limit reached. Please wait a moment before trying again.";
               }
-              if (anthropicRes.status === 401) {
+              if (status === 401) {
                 return "Authentication error. Please contact support.";
               }
               return "Something went wrong while processing your request. Please try again.";
             })();
 
-            console.error(`[AI Chat] Anthropic ${anthropicRes.status} (${errorType}): ${errorMessage}`);
+            console.error(`[AI Chat] ${aiModel.config.provider} ${status} (${errorType}): ${errorMessage}`);
             emit({ type: "error", content: userMessage, errorType, errorDetail: errorMessage, retryable });
             break;
           }
-
-          const result = await anthropicRes.json();
           const content: Array<{
             type: string;
             text?: string;
             id?: string;
             name?: string;
             input?: Record<string, unknown>;
-          }> = result.content || [];
-          const stopReason: string = result.stop_reason;
+          }> = result.rawContent || [];
+          const stopReason: string | undefined = result.stopReason;
 
           // Process content blocks
           const toolResults: ContentBlock[] = [];
