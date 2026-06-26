@@ -54,16 +54,16 @@ describe("verifyScope", () => {
 describe("buildScopeHeaders", () => {
   it("returns all required headers", () => {
     const headers = buildScopeHeaders("uid1", "user@test.com", "dash1", "usr_abc", "d_abc", SECRET);
-    expect(headers["X-Dashs-User-Id"]).toBe("uid1");
-    expect(headers["X-Dashs-User-Email"]).toBe("user@test.com");
-    expect(headers["X-Dashs-Dashboard-Id"]).toBe("dash1");
-    expect(headers["X-Dashs-Schema"]).toBe("usr_abc");
-    expect(headers["X-Dashs-Table-Prefix"]).toBe("d_abc");
-    expect(headers["X-Dashs-Scope-Signature"]).toBeTruthy();
+    expect(headers["X-TWD-User-Id"]).toBe("uid1");
+    expect(headers["X-TWD-User-Email"]).toBe("user@test.com");
+    expect(headers["X-TWD-Dashboard-Id"]).toBe("dash1");
+    expect(headers["X-TWD-Schema"]).toBe("usr_abc");
+    expect(headers["X-TWD-Table-Prefix"]).toBe("d_abc");
+    expect(headers["X-TWD-Scope-Signature"]).toBeTruthy();
   });
 
   it("signature in headers verifies correctly", () => {
     const headers = buildScopeHeaders("uid1", "user@test.com", "dash1", "usr_abc", "d_abc", SECRET);
-    expect(verifyScope("uid1", "dash1", "usr_abc", "d_abc", headers["X-Dashs-Scope-Signature"], SECRET)).toBe(true);
+    expect(verifyScope("uid1", "dash1", "usr_abc", "d_abc", headers["X-TWD-Scope-Signature"], SECRET)).toBe(true);
   });
 });

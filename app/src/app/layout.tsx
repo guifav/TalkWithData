@@ -6,7 +6,7 @@ import { McpAccessProvider } from "@/hooks/mcp-access-context";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-geist-sans" });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: "Talk With Data - Talk With Data",
