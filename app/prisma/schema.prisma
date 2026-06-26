@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Persistent Fields (existing) ────────────────────────────────────────────
+
+model DashboardFieldSchema {
+  id          String   @id @default(uuid())
+  dashboardId String
+  key         String   // stable identifier, NOT regenerated on rename
+  name        String
+  type        String   // TEXT, NUMBER, DATE, SELECT, MULTI_SELECT, URL, BOOLEAN
+  required    Boolean  @default(false)
+  options     String[] @default([]) // for SELECT/MULTI_SELECT
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 1:1 relationship (not 1:N) — exactly one current value per field
+  value       DashboardFieldValue?
+
+  @@unique([dashboardId, key])
+  @@index([dashboardId])
+}
+
+model DashboardFieldValue {
+  id        String   @id @default(uuid())
+  fieldId   String   @unique // enforces 1:1
+  value     String?
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+
+  field     DashboardFieldSchema @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+}
+
+model DashboardFieldAudit {
+  id          String   @id @default(uuid())
+  dashboardId String
+  fieldKey    String
+  oldValue    String?
+  newValue    String?
+  changedBy   String?
+  changedAt   DateTime @default(now())
+
+  @@index([dashboardId])
+  @@index([dashboardId, fieldKey])
+}
+
+// ─── App Database (Issue #124) ───────────────────────────────────────────────
+
+/// Tracks each dashboard's database scope: schema, table prefix, lifecycle status.
+model AppDbInstance {
+  id            String   @id @default(uuid())
+  dashboardId   String   @unique           // 1:1 with Firestore dashboard
+  ownerUid      String                     // Firebase Auth UID
+  ownerEmail    String
+  userSchema    String                     // e.g. "usr_a1b2c3d4"
+  tablePrefix   String                     // e.g. "d_abc123def456"
+  status        String   @default("draft") // draft | active | deleting | deleted | orphaned
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tables        AppDbTable[]
+  migrations    AppDbMigration[]
+  audits        AppDbAudit[]
+
+  @@index([ownerUid])
+  @@index([status])
+}
+
+/// Tracks individual tables created within a dashboard's database scope.
+model AppDbTable {
+  id            String   @id @default(uuid())
+  instanceId    String
+  dashboardId   String
+  tableName     String                     // physical: "d_abc123def456__clientes"
+  logicalName   String                     // friendly: "clientes"
+  columns       Json     @default("[]")    // [{name, type, nullable, default}]
+  schemaVersion Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  instance      AppDbInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@unique([instanceId, logicalName])
+  @@index([dashboardId])
+}
+
+/// Records schema migrations for a dashboard's tables.
+model AppDbMigration {
+  id            String   @id @default(uuid())
+  instanceId    String
+  dashboardId   String
+  tableName     String
+  operation     String                     // create_table | add_columns | alter_column
+  details       Json     @default("{}")    // migration payload
+  appliedAt     DateTime @default(now())
+
+  instance      AppDbInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([dashboardId])
+}
+
+/// Audit trail for all database operations (reads excluded).
+model AppDbAudit {
+  id              String   @id @default(uuid())
+  instanceId      String
+  dashboardId     String
+  ownerUid        String
+  operationType   String                   // create_table | alter_table | insert | update | delete | drop_table
+  tableName       String?
+  rowCount        Int?                     // rows affected
+  payloadSummary  String?                  // truncated description
+  executedBy      String   @default("agent") // agent | user_action | cleanup_job
+  createdAt       DateTime @default(now())
+
+  instance        AppDbInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([dashboardId])
+  @@index([ownerUid])
+  @@index([createdAt])
+}
