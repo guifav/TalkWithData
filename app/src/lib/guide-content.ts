@@ -35,7 +35,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 
 • **Acesso:**Entre com seu e-mail corporativo da sua organizacao via login do Google via login do Google.
 • **Quem pode usar:**Todos os colaboradores do Talk With Data com conta autorizada.
-• **Página inicial:**Ao fazer login, você verá a home com abas, **Meus**(dashboards que você criou), **Compartilhados**(compartilhados com você), **Favoritos**e **Arquivados**.
+• **Página inicial:**Ao fazer login, você verá a home com abas, **Meus** (dashboards que você criou), **Compartilhados** (compartilhados com você), **Favoritos** e **Arquivados**.
 • **Favoritos:**Dashboards marcados com estrela aparecem na aba **Favoritos**.
 • **Recentes:**A seção de recentes mostra os dashboards acessados recentemente.
 • **Busca:**Use a barra de busca para encontrar qualquer dashboard por nome ou conteúdo.
@@ -46,18 +46,18 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 
 • **Access:**Sign in with your organization email via Google login.
 • **Who can use it:**All Talk With Data team members with an authorized account.
-• **Home page:**After logging in, you'll see the home page with tabs, **Mine**(dashboards you created), **Shared**(shared with you), **Favorites**, and **Archived**.
-• **Favorites:**Dashboards marked with a star appear in the **Favorites**tab.
+• **Home page:**After logging in, you'll see the home page with tabs, **Mine** (dashboards you created), **Shared** (shared with you), **Favorites**, and **Archived**.
+• **Favorites:**Dashboards marked with a star appear in the **Favorites** tab.
 • **Recent:**The recent section shows your recently viewed dashboards.
 • **Search:**Use the search bar to find any dashboard by name or content.
 • **Filters:**Filter by category or folder to find what you need.
 
-**Tip:**Star your favorite dashboards so you can find them quickly in the **Favorites**tab.`,
+**Tip:**Star your favorite dashboards so you can find them quickly in the **Favorites** tab.`,
       es: `Talk With Data es la plataforma interna del Talk With Data para crear, visualizar y compartir dashboards y reportes interactivos.
 
 • **Acceso:**Inicia sesión con tu correo corporativo de tu organizacion mediante Google vía Google.
 • **Quién puede usarlo:**Todos los colaboradores del Talk With Data con cuenta autorizada.
-• **Página inicial:**Al iniciar sesión, verás la home con pestañas, **Míos**(dashboards que creaste), **Compartidos**(compartidos contigo), **Favoritos**y **Archivados**.
+• **Página inicial:**Al iniciar sesión, verás la home con pestañas, **Míos** (dashboards que creaste), **Compartidos** (compartidos contigo), **Favoritos** y **Archivados**.
 • **Favoritos:**Los dashboards marcados con estrella aparecen en la pestaña **Favoritos**.
 • **Recientes:**La sección de recientes muestra los dashboards vistos recientemente.
 • **Búsqueda:**Usa la barra de búsqueda para encontrar cualquier dashboard por nombre o contenido.
@@ -77,7 +77,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     content: {
       pt: `A página inicial é o ponto central da plataforma. Aqui você encontra todos os seus dashboards organizados de forma intuitiva.
 
-• **Abas:**Alterne entre **Meus**(criados por você), **Compartilhados**(outros compartilharam com você), **Favoritos**e **Arquivados**(dashboards arquivados).
+• **Abas:**Alterne entre **Meus** (criados por você), **Compartilhados** (outros compartilharam com você), **Favoritos** e **Arquivados** (dashboards arquivados).
 • **Favoritos:**Dashboards marcados com estrela aparecem na aba **Favoritos**, junto das demais listas principais.
 • **Recentes:**Dashboards que você visualizou recentemente, com indicador de "Atualizado" quando o conteúdo mudou desde sua última visita.
 • **Busca:**A barra de busca pesquisa por título e conteúdo extraído do HTML.
@@ -89,8 +89,8 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 **Dica:**Combine filtros, por exemplo, selecione uma categoria E uma pasta para refinar ainda mais a visualização.`,
       en: `The home page is the central hub of the platform. Here you'll find all your dashboards organized intuitively.
 
-• **Tabs:**Switch between **Mine**(created by you), **Shared**(shared with you), **Favorites**, and **Archived**(archived dashboards).
-• **Favorites:**Dashboards you starred appear in the **Favorites**tab with the other main lists.
+• **Tabs:**Switch between **Mine** (created by you), **Shared** (shared with you), **Favorites**, and **Archived** (archived dashboards).
+• **Favorites:**Dashboards you starred appear in the **Favorites** tab with the other main lists.
 • **Recent:**Dashboards you recently viewed, with an "Updated" badge when content changed since your last visit.
 • **Search:**The search bar searches by title and extracted HTML content.
 • **Category filter:**Category chips let you filter quickly.
@@ -101,7 +101,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 **Tip:**Combine filters, for example, select a category AND a folder to further refine the view.`,
       es: `La página de inicio es el centro de la plataforma. Aquí encontrarás todos tus dashboards organizados de forma intuitiva.
 
-• **Pestañas:**Alterna entre **Míos**(creados por ti), **Compartidos**(compartidos contigo), **Favoritos**y **Archivados**(dashboards archivados).
+• **Pestañas:**Alterna entre **Míos** (creados por ti), **Compartidos** (compartidos contigo), **Favoritos** y **Archivados** (dashboards archivados).
 • **Favoritos:**Los dashboards marcados con estrella aparecen en la pestaña **Favoritos**, junto con las otras listas principales.
 • **Recientes:**Dashboards que viste recientemente, con indicador de "Actualizado" cuando el contenido cambió desde tu última visita.
 • **Búsqueda:**La barra de búsqueda busca por título y contenido extraído del HTML.
@@ -247,28 +247,28 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     content: {
       pt: `Dashboards criados pela IA podem ser editados e refinados a qualquer momento.
 
-• **Botão Editar:**Na página de visualização do dashboard, clique no botão **Editar**para reabrir o editor com IA e o contexto do dashboard atual.
+• **Botão Editar:**Na página de visualização do dashboard, clique no botão **Editar** para reabrir o editor com IA e o contexto do dashboard atual.
 • **Menu ⋮:**Você também pode acessar a edição pelo menu ⋮ do card do dashboard na página inicial.
 • **O que mudar:**Peça alterações em linguagem natural, "adicione um filtro por país", "mude as cores para azul", "inclua dados de 2024".
-• **Atualizar dados:**Use o botão **Atualizar**para re-consultar os dados ao vivo e regenerar o dashboard com números atualizados, sem precisar descrever tudo de novo.
+• **Atualizar dados:**Use o botão **Atualizar** para re-consultar os dados ao vivo e regenerar o dashboard com números atualizados, sem precisar descrever tudo de novo.
 • **Versões:**Cada edição cria uma nova versão. A versão anterior fica salva no histórico.
 
 **Dica:**A edição com IA está disponível apenas para dashboards criados pela IA (\`source: ai\`). Dashboards enviados por upload podem ser substituídos com um novo arquivo.`,
       en: `AI-created dashboards can be edited and refined at any time.
 
-• **Edit button:**On the dashboard view page, click the **Edit**button to reopen the AI editor with the current dashboard context.
+• **Edit button:**On the dashboard view page, click the **Edit** button to reopen the AI editor with the current dashboard context.
 • **⋮ menu:**You can also access editing from the ⋮ menu on the dashboard card on the home page.
 • **What to change:**Request changes in natural language, "add a filter by country", "change colors to blue", "include 2024 data".
-• **Refresh data:**Use the **Refresh**button to re-query live data and regenerate the dashboard with updated numbers, without re-describing everything.
+• **Refresh data:**Use the **Refresh** button to re-query live data and regenerate the dashboard with updated numbers, without re-describing everything.
 • **Versions:**Each edit creates a new version. The previous version is saved in the history.
 
 **Tip:**AI editing is available only for AI-created dashboards (\`source: ai\`). Uploaded dashboards can be replaced with a new file.`,
       es: `Los dashboards creados por IA pueden editarse y refinarse en cualquier momento.
 
-• **Botón Editar:**En la página de visualización del dashboard, haz clic en el botón **Editar**para reabrir el editor con IA y el contexto actual.
+• **Botón Editar:**En la página de visualización del dashboard, haz clic en el botón **Editar** para reabrir el editor con IA y el contexto actual.
 • **Menú ⋮:**También puedes acceder a la edición desde el menú ⋮ en la tarjeta del dashboard en la página principal.
 • **Qué cambiar:**Pide cambios en lenguaje natural, "agrega un filtro por país", "cambia los colores a azul", "incluye datos de 2024".
-• **Actualizar datos:**Usa el botón **Actualizar**para re-consultar los datos en vivo y regenerar el dashboard con números actualizados, sin necesidad de describir todo de nuevo.
+• **Actualizar datos:**Usa el botón **Actualizar** para re-consultar los datos en vivo y regenerar el dashboard con números actualizados, sin necesidad de describir todo de nuevo.
 • **Versiones:**Cada edición crea una nueva versión. La versión anterior queda guardada en el historial.
 
 **Consejo:**La edición con IA está disponible solo para dashboards creados por IA (\`source: ai\`). Los dashboards subidos pueden reemplazarse con un nuevo archivo.`,
@@ -361,7 +361,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     content: {
       pt: `Campos persistentes permitem adicionar metadados estruturados a qualquer dashboard, como responsável, data de atualização, status, links, etc.
 
-• **Quem pode usar:**Apenas o **dono do dashboard**(quem criou ou fez upload) pode definir campos e editar valores. Outros usuários não vîem os controles de edição.
+• **Quem pode usar:**Apenas o **dono do dashboard** (quem criou ou fez upload) pode definir campos e editar valores. Outros usuários não vîem os controles de edição.
 • **Definir campos:**Na página de visualização, clique no ícone de engrenagem para abrir o construtor de esquema. Defina os campos que o dashboard precisa.
 • **Tipos disponíveis:**Texto, Número, Data, Seleção (dropdown), Seleção múltipla, URL e Booleano.
 • **Opções:**Campos do tipo Seleção e Seleção múltipla permitem definir as opções disponíveis.
@@ -373,7 +373,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 **Dica:**Use campos para rastrear informações que mudam ao longo do tempo, por exemplo, "Última atualização", "Responsável" ou "Status da revisão".`,
       en: `Persistent fields let you add structured metadata to any dashboard, like owner, update date, status, links, etc.
 
-• **Who can use this:**Only the **dashboard owner**(the person who created or uploaded it) can define fields and edit values. Other users don't see the editing controls.
+• **Who can use this:**Only the **dashboard owner** (the person who created or uploaded it) can define fields and edit values. Other users don't see the editing controls.
 • **Define fields:**On the view page, click the gear icon to open the schema builder. Define the fields the dashboard needs.
 • **Available types:**Text, Number, Date, Select (dropdown), Multi-select, URL, and Boolean.
 • **Options:**Select and Multi-select fields let you define the available options.
@@ -385,7 +385,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 **Tip:**Use fields to track information that changes over time, for example, "Last updated", "Owner", or "Review status".`,
       es: `Los campos persistentes permiten agregar metadatos estructurados a cualquier dashboard, como responsable, fecha de actualización, estado, links, etc.
 
-• **Quién puede usarlo:**Solo el **dueño del dashboard**(quien lo creó o subió) puede definir campos y editar valores. Otros usuarios no ven los controles de edición.
+• **Quién puede usarlo:**Solo el **dueño del dashboard** (quien lo creó o subió) puede definir campos y editar valores. Otros usuarios no ven los controles de edición.
 • **Definir campos:**En la página de visualización, haz clic en el ícono de engranaje para abrir el constructor de esquema. Define los campos que el dashboard necesita.
 • **Tipos disponibles:**Texto, Número, Fecha, Selección (dropdown), Selección múltiple, URL y Booleano.
 • **Opciones:**Campos de tipo Selección y Selección múltiple permiten definir las opciones disponibles.
@@ -410,7 +410,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 
 • **Criar pasta:**Na página inicial, clique no botão de gerenciar pastas ao lado dos filtros de pasta.
 • **Adicionar à pasta:**No menu ⋮ de qualquer dashboard, selecione **Adicionar à pasta**.
-• **Favoritos:**Clique na estrela no canto de qualquer dashboard para marcá-lo como favorito. Favoritos aparecem na aba **Favoritos**da home.
+• **Favoritos:**Clique na estrela no canto de qualquer dashboard para marcá-lo como favorito. Favoritos aparecem na aba **Favoritos** da home.
 • **Categorias:**As categorias são definidas ao enviar o dashboard e servem como filtro global na página inicial.
 
 **Dica:**Use pastas para organização pessoal (ex: "Meus relatórios semanais") e categorias para organização do time.`,
@@ -418,7 +418,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 
 • **Create a folder:**On the home page, click the folder management button next to the folder filters.
 • **Add to folder:**In any dashboard's ⋮ menu, select **Add to folder**.
-• **Favorites:**Click the star on any dashboard's corner to mark it as a favorite. Favorites appear in the **Favorites**tab on the home page.
+• **Favorites:**Click the star on any dashboard's corner to mark it as a favorite. Favorites appear in the **Favorites** tab on the home page.
 • **Categories:**Categories are set when uploading a dashboard and serve as global filters on the home page.
 
 **Tip:**Use folders for personal organization (e.g., "My weekly reports") and categories for team-wide organization.`,
@@ -426,7 +426,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 
 • **Crear carpeta:**En la página principal, haz clic en el botón de gestión de carpetas al lado de los filtros.
 • **Agregar a carpeta:**En el menú ⋮ de cualquier dashboard, selecciona **Adicionar à pasta**.
-• **Favoritos:**Haz clic en la estrella en la esquina de cualquier dashboard para marcarlo como favorito. Los favoritos aparecen en la pestaña **Favoritos**de la home.
+• **Favoritos:**Haz clic en la estrella en la esquina de cualquier dashboard para marcarlo como favorito. Los favoritos aparecen en la pestaña **Favoritos** de la home.
 • **Categorías:**Las categorías se definen al subir el dashboard y sirven como filtro global en la página principal.
 
 **Consejo:**Usa carpetas para organización personal (ej: "Mis reportes semanales") y categorías para organización del equipo.`,
@@ -444,7 +444,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       pt: `Controle quem vê seus dashboards e incorpore-os em outras plataformas.
 
 • **Visibilidade:**Ao criar ou editar, escolha "Team" (todos) ou "Specific" (lista de e-mails).
-• **Compartilhamento:**No menu ⋮, clique em **Compartilhamento**para alterar a visibilidade.
+• **Compartilhamento:**No menu ⋮, clique em **Compartilhamento** para alterar a visibilidade.
 • **Link de Embed:**Qualquer usuário com acesso ao dashboard pode gerar um link de embed temporário (válido por 7 dias) pelo menu ⋮, **Copiar link de embed**.
 • **Uso do embed:**Cole o link em um iframe para exibir o dashboard em outro site ou ferramenta (Notion, Slack, etc.).
 • **Multi-página:**Embeds de dashboards ZIP usam cookie de sessão para autenticar sub-páginas automaticamente.
@@ -453,7 +453,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       en: `Control who sees your dashboards and embed them in other platforms.
 
 • **Visibility:**When creating or editing, choose "Team" (everyone) or "Specific" (email list).
-• **Sharing:**In the ⋮ menu, click **Sharing**to change visibility.
+• **Sharing:**In the ⋮ menu, click **Sharing** to change visibility.
 • **Embed link:**Any user with access to the dashboard can generate a temporary embed link (valid for 7 days) via ⋮ menu, **Copy embed link**.
 • **Using embeds:**Paste the link in an iframe to display the dashboard on another site or tool (Notion, Slack, etc.).
 • **Multi-page:**Embeds of ZIP dashboards use session cookies to authenticate sub-pages automatically.
@@ -462,7 +462,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       es: `Controla quién ve tus dashboards e incorpóralos en otras plataformas.
 
 • **Visibilidad:**Al crear o editar, elige "Team" (todos) o "Specific" (lista de correos).
-• **Compartir:**En el menú ⋮, haz clic en **Compartilhamento**para cambiar la visibilidad.
+• **Compartir:**En el menú ⋮, haz clic en **Compartilhamento** para cambiar la visibilidad.
 • **Link de Embed:**Cualquier usuario con acceso al dashboard puede generar un link de embed temporal (válido por 7 días) vía menú ⋮, **Copiar link de embed**.
 • **Uso del embed:**Pega el link en un iframe para mostrar el dashboard en otro sitio o herramienta (Notion, Slack, etc.).
 • **Multi-página:**Los embeds de dashboards ZIP usan cookie de sesión para autenticar sub-páginas automáticamente.
@@ -551,7 +551,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     content: {
       pt: `O painel de Admin é acessível para administradores e superadmins. Permite gerenciar a plataforma de forma centralizada.
 
-• **Como acessar:**Clique no ícone **Admin**no cabeçalho (visível apenas para admins).
+• **Como acessar:**Clique no ícone **Admin** no cabeçalho (visível apenas para admins).
 
 **Abas disponíveis:**
 
@@ -560,15 +560,15 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 • **Usuários**, Tabela de atividade e roles. Alterações de role são exclusivas de superadmins.
 • **Acesso**, Gráfico de visualizações diárias (diretas vs embed), top dashboards embeddados, lista de tokens.
 • **Armazenamento**, Uso por usuário/categoria, arquivos grandes, armazenamento de versões.
-• **Categorias***(superadmin)*, Gerenciar as categorias de dashboards (usadas como filtro na home).
-• **Departamentos***(superadmin)*, Gerenciar departamentos organizacionais e seus membros.
-• **Servidores MCP***(superadmin)*, Cadastrar e gerenciar fontes de dados MCP. Sincronizar ferramentas disponíveis.
-• **Acesso MCP***(superadmin)*, Atribuir acesso a servidores MCP por departamento ou usuário individual.
+• **Categorias*** (superadmin)*, Gerenciar as categorias de dashboards (usadas como filtro na home).
+• **Departamentos*** (superadmin)*, Gerenciar departamentos organizacionais e seus membros.
+• **Servidores MCP*** (superadmin)*, Cadastrar e gerenciar fontes de dados MCP. Sincronizar ferramentas disponíveis.
+• **Acesso MCP*** (superadmin)*, Atribuir acesso a servidores MCP por departamento ou usuário individual.
 
 **Dica:**Se você precisa de acesso admin ou superadmin, solicite a um superadmin da equipe de tecnologia com a justificativa operacional.`,
       en: `The Admin panel is accessible to administrators and superadmins. It provides centralized platform management.
 
-• **How to access:**Click the **Admin**icon in the header (visible only to admins).
+• **How to access:**Click the **Admin** icon in the header (visible only to admins).
 
 **Available tabs:**
 
@@ -577,15 +577,15 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 • **Users**, Activity and role table. Role changes are exclusive to superadmins.
 • **Access**, Daily views chart (direct vs embed), top embedded dashboards, token list.
 • **Storage**, Usage by user/category, large files, version storage.
-• **Categories***(superadmin)*, Manage dashboard categories (used as filters on the home page).
-• **Departments***(superadmin)*, Manage organizational departments and their members.
-• **MCP Servers***(superadmin)*, Register and manage MCP data sources. Sync available tools.
-• **MCP Access***(superadmin)*, Assign MCP server access by department or individual user.
+• **Categories*** (superadmin)*, Manage dashboard categories (used as filters on the home page).
+• **Departments*** (superadmin)*, Manage organizational departments and their members.
+• **MCP Servers*** (superadmin)*, Register and manage MCP data sources. Sync available tools.
+• **MCP Access*** (superadmin)*, Assign MCP server access by department or individual user.
 
 **Tip:**If you need admin or superadmin access, request it from a superadmin on the tech team with the operational reason.`,
       es: `El panel de Admin es accesible para administradores y superadmins. Proporciona gestión centralizada de la plataforma.
 
-• **Cómo acceder:**Haz clic en el ícono **Admin**en el encabezado (visible solo para admins).
+• **Cómo acceder:**Haz clic en el ícono **Admin** en el encabezado (visible solo para admins).
 
 **Pestañas disponibles:**
 
@@ -594,10 +594,10 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 • **Usuarios**, Tabla de actividad y roles. Los cambios de role son exclusivos de superadmins.
 • **Acceso**, Gráfico de visualizaciones diarias (directas vs embed), top dashboards embebidos, lista de tokens.
 • **Almacenamiento**, Uso por usuario/categoría, archivos grandes, almacenamiento de versiones.
-• **Categorías***(superadmin)*, Gestionar las categorías de dashboards (usadas como filtro en la página principal).
-• **Departamentos***(superadmin)*, Gestionar departamentos organizacionales y sus miembros.
-• **Servidores MCP***(superadmin)*, Registrar y gestionar fuentes de datos MCP. Sincronizar herramientas disponibles.
-• **Acceso MCP***(superadmin)*, Asignar acceso a servidores MCP por departamento o usuario individual.
+• **Categorías*** (superadmin)*, Gestionar las categorías de dashboards (usadas como filtro en la página principal).
+• **Departamentos*** (superadmin)*, Gestionar departamentos organizacionales y sus miembros.
+• **Servidores MCP*** (superadmin)*, Registrar y gestionar fuentes de datos MCP. Sincronizar herramientas disponibles.
+• **Acceso MCP*** (superadmin)*, Asignar acceso a servidores MCP por departamento o usuario individual.
 
 **Consejo:**Si necesitas acceso admin o superadmin, solicítalo a un superadmin del equipo de tecnología con la justificación operativa.`,
     },
