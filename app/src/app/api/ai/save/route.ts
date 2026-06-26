@@ -160,7 +160,11 @@ export async function POST(request: NextRequest) {
         // Persist the AI model used for this dashboard (for refresh reproducibility)
         try {
           const userModel = await resolveUserModel(auth.uid);
-          docData.aiRecipe = { ...aiRecipe, model: userModel.config.model };
+          docData.aiRecipe = {
+            ...aiRecipe,
+            provider: userModel.config.provider,
+            model: userModel.config.model,
+          };
         } catch {
           docData.aiRecipe = aiRecipe;
         }
@@ -300,6 +304,7 @@ async function handleUpdate(
     if (!aiRecipe.model) {
       try {
         const userModel = await resolveUserModel(auth.uid);
+        aiRecipe.provider = userModel.config.provider;
         aiRecipe.model = userModel.config.model;
       } catch { /* use without model */ }
     }
