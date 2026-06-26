@@ -13,6 +13,32 @@ import { sanitizeIdentifier, physicalTableName, tableMatchesPrefix } from "@/lib
 import { readRows, insertRows } from "@/lib/app-db/schema-manager";
 import { recordAudit, getInstanceTables } from "@/lib/app-db/registry";
 
+
+const DATA_API_CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "null",
+  "Access-Control-Allow-Methods": "GET,POST,PATCH,DELETE,OPTIONS",
+  "Access-Control-Allow-Headers": "authorization,content-type",
+  "Access-Control-Max-Age": "600",
+};
+
+function shouldApplyCors(request: NextRequest) {
+  return request.headers.get("origin") === "null";
+}
+
+function withCors(response: NextResponse, request: NextRequest) {
+  if (!shouldApplyCors(request)) return response;
+  for (const [key, value] of Object.entries(DATA_API_CORS_HEADERS)) {
+    response.headers.set(key, value);
+  }
+  return response;
+}
+
+export async function OPTIONS(request: NextRequest) {
+  return shouldApplyCors(request)
+    ? new NextResponse(null, { status: 204, headers: DATA_API_CORS_HEADERS })
+    : new NextResponse(null, { status: 204 });
+}
+
 interface RouteContext {
   params: Promise<{ id: string; table: string }>;
 }
@@ -26,19 +52,19 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
   const auth = await verifyDataApiRequest(request, id);
   if (!auth) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }), request);
   }
 
   const safeName = sanitizeIdentifier(logicalName);
   if (!safeName) {
-    return NextResponse.json({ error: "Invalid table name" }, { status: 400 });
+    return withCors(NextResponse.json({ error: "Invalid table name" }, { status: 400 }), request);
   }
 
   // Verify table belongs to this dashboard
   const tables = await getInstanceTables(auth.instance.id);
   const table = tables.find((t) => t.logicalName === safeName);
   if (!table) {
-    return NextResponse.json({ error: "Table not found" }, { status: 404 });
+    return withCors(NextResponse.json({ error: "Table not found" }, { status: 404 }), request);
   }
 
   try {
@@ -50,10 +76,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
       offset: Number(params.get("offset")) || 0,
     });
 
-    return NextResponse.json(result);
+    return withCors(NextResponse.json(result), request);
   } catch (error) {
     console.error("[Data API] GET failed:", error);
-    return NextResponse.json({ error: "Failed to read data" }, { status: 500 });
+    return withCors(NextResponse.json({ error: "Failed to read data" }, { status: 500 }), request);
   }
 }
 
@@ -66,28 +92,28 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   const auth = await verifyDataApiRequest(request, id);
   if (!auth) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }), request);
   }
 
   const safeName = sanitizeIdentifier(logicalName);
   if (!safeName) {
-    return NextResponse.json({ error: "Invalid table name" }, { status: 400 });
+    return withCors(NextResponse.json({ error: "Invalid table name" }, { status: 400 }), request);
   }
 
   const tables = await getInstanceTables(auth.instance.id);
   const table = tables.find((t) => t.logicalName === safeName);
   if (!table) {
-    return NextResponse.json({ error: "Table not found" }, { status: 404 });
+    return withCors(NextResponse.json({ error: "Table not found" }, { status: 404 }), request);
   }
 
   try {
     const body = await request.json();
     const rows = body.rows as Record<string, unknown>[];
     if (!Array.isArray(rows) || rows.length === 0) {
-      return NextResponse.json({ error: "rows array required" }, { status: 400 });
+      return withCors(NextResponse.json({ error: "rows array required" }, { status: 400 }), request);
     }
     if (rows.length > 100) {
-      return NextResponse.json({ error: "Max 100 rows per request" }, { status: 400 });
+      return withCors(NextResponse.json({ error: "Max 100 rows per request" }, { status: 400 }), request);
     }
 
     const inserted = await insertRows(auth.instance.userSchema, table.tableName, rows);
@@ -102,9 +128,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
       executedBy: "html_runtime",
     });
 
-    return NextResponse.json({ inserted });
+    return withCors(NextResponse.json({ inserted }), request);
   } catch (error) {
     console.error("[Data API] POST failed:", error);
-    return NextResponse.json({ error: "Failed to insert data" }, { status: 500 });
+    return withCors(NextResponse.json({ error: "Failed to insert data" }, { status: 500 }), request);
   }
 }
