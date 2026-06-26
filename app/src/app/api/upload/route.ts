@@ -14,7 +14,7 @@ const MAX_ZIP_SIZE = 50 * 1024 * 1024; // 50MB for ZIP packages
 
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("Authorization");
-  const cookieToken = request.cookies.get("dashs_auth")?.value;
+  const cookieToken = request.cookies.get("twd_auth")?.value;
   console.log(`[Upload] Auth header present: ${!!authHeader}, cookie present: ${!!cookieToken}, header prefix: ${authHeader?.slice(0, 15)}`);
 
   const auth = await verifyRequest(request);

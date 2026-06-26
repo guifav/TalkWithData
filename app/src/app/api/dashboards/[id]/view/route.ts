@@ -162,7 +162,7 @@ export async function GET(
     // Inject dashboard ID and data API base URL for runtime data access
     // Skip for raw=1 (editor loads pristine HTML to avoid persisting server injections)
     if (!isRaw) {
-      const dataApiScript = `<script>window.__DASHS_DASHBOARD_ID__="${id}";window.__DASHS_DATA_API__="/api/dashboards/${id}/data";</script>`;
+      const dataApiScript = `<script>window.__TWD_DASHBOARD_ID__="${id}";window.__TWD_DATA_API__="/api/dashboards/${id}/data";</script>`;
       if (/<head[^>]*>/i.test(html)) {
         html = html.replace(/(<head[^>]*>)/i, `$1\n    ${dataApiScript}`);
       } else {

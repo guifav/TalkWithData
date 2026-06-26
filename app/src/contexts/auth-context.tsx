@@ -25,7 +25,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
 });
 
-const AUTH_COOKIE_NAME = "dashs_auth";
+const AUTH_COOKIE_NAME = "twd_auth";
 
 function setAuthTokenCookie(token: string | null) {
   if (typeof document === "undefined") return;
