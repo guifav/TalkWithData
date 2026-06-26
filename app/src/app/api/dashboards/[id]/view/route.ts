@@ -162,7 +162,7 @@ export async function GET(
     // Inject dashboard ID, data API base URL, and session token for runtime data access
     // Skip for raw=1 (editor loads pristine HTML to avoid persisting server injections)
     if (!isRaw) {
-      const sessionToken = createDashSessionToken(id);
+      const sessionToken = createDashSessionToken(id, "write");
       const bootstrap = {
         dashboardId: id,
         dataApi: `/api/dashboards/${id}/data`,
