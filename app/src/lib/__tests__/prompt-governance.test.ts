@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import {
 process.env.ALLOWED_AUTH_DOMAIN = "example.com";
 process.env.STORAGE_BUCKET_NAME = "test-bucket";
+import {
   findUnknownGlobalVariables,
   getGlobalPromptVariableValues,
   renderGlobalPromptVariables,

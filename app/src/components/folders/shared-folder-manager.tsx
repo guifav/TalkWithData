@@ -35,8 +35,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Dashboard } from "@/lib/types";
-import {
 import { getAllowedAuthDomain, isAllowedEmailDomain } from "@/lib/auth-domain";
+import {
   addDashboardToSharedFolder,
   removeDashboardFromSharedFolder,
 } from "@/lib/firestore/shared-folders";
