@@ -10,6 +10,8 @@ import {
 import { resolveUserModel } from "@/lib/ai-model";
 import { AiProviderError, getAiAdapter } from "@/lib/ai-providers";
 
+const MAX_TOOL_LOOPS = 25;
+
 const SAVE_TOOL = {
   name: "save_dashboard_html",
   description:
@@ -346,9 +348,10 @@ export async function POST(request: NextRequest) {
         );
         let messages = [...fileMessages, ...filteredMessages];
         let continueLoop = true;
-
-        while (continueLoop) {
-          continueLoop = false;
+        let toolLoopCount = 0;
+    while (continueLoop && toolLoopCount < MAX_TOOL_LOOPS) {
+          toolLoopCount++;
+        continueLoop = false;
 
           let result: Awaited<ReturnType<typeof aiAdapter.chat>>;
           try {
@@ -454,7 +457,8 @@ export async function POST(request: NextRequest) {
               { role: "assistant", content: content as ContentBlock[] },
               { role: "user", content: toolResults },
             ];
-            continueLoop = true;
+            toolLoopCount++;
+        continueLoop = true;
           }
         }
 
