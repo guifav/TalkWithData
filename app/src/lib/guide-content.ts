@@ -560,8 +560,8 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 • **Usuários**, Tabela de atividade e roles. Alterações de role são exclusivas de superadmins.
 • **Acesso**, Gráfico de visualizações diárias (diretas vs embed), top dashboards embeddados, lista de tokens.
 • **Armazenamento**, Uso por usuário/categoria, arquivos grandes, armazenamento de versões.
-• **Categorias*** (superadmin)*, Gerenciar as categorias de dashboards (usadas como filtro na home).
-• **Departamentos*** (superadmin)*, Gerenciar departamentos organizacionais e seus membros.
+• **Categorias** (superadmin), Gerenciar as categorias de dashboards (usadas como filtro na home).
+• **Departamentos** (superadmin), Gerenciar departamentos organizacionais e seus membros.
 • **Servidores MCP*** (superadmin)*, Cadastrar e gerenciar fontes de dados MCP. Sincronizar ferramentas disponíveis.
 • **Acesso MCP*** (superadmin)*, Atribuir acesso a servidores MCP por departamento ou usuário individual.
 
@@ -577,8 +577,8 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 • **Users**, Activity and role table. Role changes are exclusive to superadmins.
 • **Access**, Daily views chart (direct vs embed), top embedded dashboards, token list.
 • **Storage**, Usage by user/category, large files, version storage.
-• **Categories*** (superadmin)*, Manage dashboard categories (used as filters on the home page).
-• **Departments*** (superadmin)*, Manage organizational departments and their members.
+• **Categories** (superadmin), Manage dashboard categories (used as filters on the home page).
+• **Departments** (superadmin), Manage organizational departments and their members.
 • **MCP Servers*** (superadmin)*, Register and manage MCP data sources. Sync available tools.
 • **MCP Access*** (superadmin)*, Assign MCP server access by department or individual user.
 
@@ -594,8 +594,8 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 • **Usuarios**, Tabla de actividad y roles. Los cambios de role son exclusivos de superadmins.
 • **Acceso**, Gráfico de visualizaciones diarias (directas vs embed), top dashboards embebidos, lista de tokens.
 • **Almacenamiento**, Uso por usuario/categoría, archivos grandes, almacenamiento de versiones.
-• **Categorías*** (superadmin)*, Gestionar las categorías de dashboards (usadas como filtro en la página principal).
-• **Departamentos*** (superadmin)*, Gestionar departamentos organizacionales y sus miembros.
+• **Categorías** (superadmin), Gestionar las categorías de dashboards (usadas como filtro en la página principal).
+• **Departamentos** (superadmin), Gestionar departamentos organizacionales y sus miembros.
 • **Servidores MCP*** (superadmin)*, Registrar y gestionar fuentes de datos MCP. Sincronizar herramientas disponibles.
 • **Acceso MCP*** (superadmin)*, Asignar acceso a servidores MCP por departamento o usuario individual.
 
