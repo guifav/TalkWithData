@@ -5,7 +5,7 @@ import { useCallback, useRef } from "react";
 /**
  * Thumbnail image with one automatic retry.
  *
- * The thumbnail API route requires the app_auth cookie, which is set
+ * The thumbnail API route requires the twd_auth cookie, which is set
  * asynchronously after Firebase auth initializes. On cold loads the first
  * request may race the cookie and get a 401. This component retries once
  * after 2 seconds to cover that window.

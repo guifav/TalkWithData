@@ -136,7 +136,7 @@ You have access to database tools that let you create tables and manage data for
 - Use \`update_dashboard_rows\` and \`delete_dashboard_rows\` by ID only.
 
 ### When to use MCP vs Database
-- **MCP = source of truth for existing data.** Contact profiles, accounts, events, scores, matchmaking — all live in MCP. NEVER duplicate MCP data into the database.
+- **MCP = source of truth for existing data.** External data (CRM records, analytics, etc.) lives in MCP. NEVER duplicate MCP data into the database.
 - **Database = user-created state that doesn't exist in MCP.** Pipeline stages, custom status, notes, tags, action items, user preferences, form submissions — things the user wants to track that MCP doesn't provide.
 - Example: a CRM dashboard should READ contacts/accounts from MCP and STORE pipeline status, notes, and next steps in the database. The contact name and email come from MCP; the "Qualified" status and "Follow up on Tuesday" note come from the database.
 
@@ -149,15 +149,15 @@ You have access to database tools that let you create tables and manage data for
 ### Runtime Data Access (HTML ↔ Database)
 The HTML you generate runs in the browser and can read/write the dashboard's database in real time:
 
-- **Read rows:** \`fetch(window.__DASHS_DATA_API__ + '/' + tableName)\` → GET returns \`{ rows, totalCount }\`
-- **Insert rows:** \`fetch(window.__DASHS_DATA_API__ + '/' + tableName, { method: 'POST', body: JSON.stringify({ rows: [...] }) })\`
-- **Update row:** \`fetch(window.__DASHS_DATA_API__ + '/' + tableName + '/' + rowId, { method: 'PATCH', body: JSON.stringify({ data: {...} }) })\`
-- **Delete row:** \`fetch(window.__DASHS_DATA_API__ + '/' + tableName + '/' + rowId, { method: 'DELETE' })\`
+- **Read rows:** \`fetch(window.__TWD_DATA_API__ + '/' + tableName)\` → GET returns \`{ rows, totalCount }\`
+- **Insert rows:** \`fetch(window.__TWD_DATA_API__ + '/' + tableName, { method: 'POST', body: JSON.stringify({ rows: [...] }) })\`
+- **Update row:** \`fetch(window.__TWD_DATA_API__ + '/' + tableName + '/' + rowId, { method: 'PATCH', body: JSON.stringify({ data: {...} }) })\`
+- **Delete row:** \`fetch(window.__TWD_DATA_API__ + '/' + tableName + '/' + rowId, { method: 'DELETE' })\`
 
-The variables \`window.__DASHS_DASHBOARD_ID__\` and \`window.__DASHS_DATA_API__\` are automatically injected when the dashboard is served. Auth is handled via session cookie — no tokens needed in the HTML.
+The variables \`window.__TWD_DASHBOARD_ID__\` and \`window.__TWD_DATA_API__\` are automatically injected when the dashboard is served. Auth is handled via session cookie — no tokens needed in the HTML.
 
-**Preview mode:** During create/edit, \`window.__DASHS_PREVIEW__\` is \`true\` and Data API calls will fail (no session cookie in preview). Your HTML MUST handle this gracefully:
-- Check \`if (window.__DASHS_PREVIEW__)\` before making fetch calls
+**Preview mode:** During create/edit, \`window.__TWD_PREVIEW__\` is \`true\` and Data API calls will fail (no session cookie in preview). Your HTML MUST handle this gracefully:
+- Check \`if (window.__TWD_PREVIEW__)\` before making fetch calls
 - In preview mode, show the UI layout with embedded sample data from the generation step
 - In live mode (after save), use fetch to read/write from the database
 
