@@ -4,7 +4,7 @@ services:
       context: ./app
       dockerfile: Dockerfile
     # Cloud Run expects PORT=8080
-      ports:
+    ports:
       - "3000:8080"
     env_file:
       - .env

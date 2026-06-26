@@ -35,7 +35,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 
 • **Acesso:** Entre com seu e-mail corporativo da sua organizacao via login do Google via login do Google.
 • **Quem pode usar:** Todos os colaboradores do Talk With Data com conta autorizada.
-• **Página inicial:** Ao fazer login, você verá a home com abas , **Meus** (dashboards que você criou), **Compartilhados** (compartilhados com você), **Favoritos** e **Arquivados**.
+• **Página inicial:** Ao fazer login, você verá a home com abas, **Meus** (dashboards que você criou), **Compartilhados** (compartilhados com você), **Favoritos** e **Arquivados**.
 • **Favoritos:** Dashboards marcados com estrela aparecem na aba **Favoritos**.
 • **Recentes:** A seção de recentes mostra os dashboards acessados recentemente.
 • **Busca:** Use a barra de busca para encontrar qualquer dashboard por nome ou conteúdo.
@@ -46,8 +46,8 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 
 • **Access:** Sign in with your organization email via Google login.
 • **Who can use it:** All Talk With Data team members with an authorized account.
-• **Home page:** After logging in, you'll see the home page with tabs , **Mine** (dashboards you created), **Shared** (shared with you), **Favorites**, and **Archived**.
-• **Favorites:** Dashboards marked with estrela appear in the **Favorites** tab.
+• **Home page:** After logging in, you'll see the home page with tabs, **Mine** (dashboards you created), **Shared** (shared with you), **Favorites**, and **Archived**.
+• **Favorites:** Dashboards marked with a star appear in the **Favorites** tab.
 • **Recent:** The recent section shows your recently viewed dashboards.
 • **Search:** Use the search bar to find any dashboard by name or content.
 • **Filters:** Filter by category or folder to find what you need.
@@ -57,13 +57,13 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 
 • **Acceso:** Inicia sesión con tu correo corporativo de tu organizacion mediante Google vía Google.
 • **Quién puede usarlo:** Todos los colaboradores del Talk With Data con cuenta autorizada.
-• **Página inicial:** Al iniciar sesión, verás la home con pestañas , **Míos** (dashboards que creaste), **Compartidos** (compartidos contigo), **Favoritos** y **Archivados**.
-• **Favoritos:** Los dashboards marcados con estrela aparecen en la pestaña **Favoritos**.
+• **Página inicial:** Al iniciar sesión, verás la home con pestañas, **Míos** (dashboards que creaste), **Compartidos** (compartidos contigo), **Favoritos** y **Archivados**.
+• **Favoritos:** Los dashboards marcados con estrella aparecen en la pestaña **Favoritos**.
 • **Recientes:** La sección de recientes muestra los dashboards vistos recientemente.
 • **Búsqueda:** Usa la barra de búsqueda para encontrar cualquier dashboard por nombre o contenido.
 • **Filtros:** Filtra por categoría o carpeta para encontrar lo que necesitas.
 
-**Consejo:** Marca tus dashboards favoritos con estrela para encontrarlos rápidamente en la pestaña **Favoritos**.`,
+**Consejo:** Marca tus dashboards favoritos con estrella para encontrarlos rápidamente en la pestaña **Favoritos**.`,
     },
   },
   {
@@ -83,34 +83,34 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 • **Busca:** A barra de busca pesquisa por título e conteúdo extraído do HTML.
 • **Filtro por categoria:** Chips de categoria (departamento) permitem filtrar rapidamente.
 • **Filtro por pasta:** Selecione uma pasta pessoal para ver apenas os dashboards organizados nela.
-• **Criar novo:** O botão no canto superior oferece três opções , **Upload de arquivo**, **Criar com IA** e **Conversar com dados**.
+• **Criar novo:** O botão no canto superior oferece três opções, **Upload de arquivo**, **Criar com IA** e **Conversar com dados**.
 • **Novo usuário:** Se você ainda não tem dashboards, a página mostra um guia de como começar.
 
-**Dica:** Combine filtros , por exemplo, selecione uma categoria E uma pasta para refinar ainda mais a visualização.`,
+**Dica:** Combine filtros, por exemplo, selecione uma categoria E uma pasta para refinar ainda mais a visualização.`,
       en: `The home page is the central hub of the platform. Here you'll find all your dashboards organized intuitively.
 
 • **Tabs:** Switch between **Mine** (created by you), **Shared** (shared with you), **Favorites**, and **Archived** (archived dashboards).
-• **Favorites:** Dashboards you starred estrela appear in the **Favorites** tab with the other main lists.
+• **Favorites:** Dashboards you starred appear in the **Favorites** tab with the other main lists.
 • **Recent:** Dashboards you recently viewed, with an "Updated" badge when content changed since your last visit.
 • **Search:** The search bar searches by title and extracted HTML content.
 • **Category filter:** Category chips let you filter quickly.
 • **Folder filter:** Select a personal folder to see only dashboards organized in it.
-• **Create new:** The button in the top corner offers three options , **Upload file**, **Create with AI**, and **Chat with data**.
+• **Create new:** The button in the top corner offers three options, **Upload file**, **Create with AI**, and **Chat with data**.
 • **New user:** If you don't have dashboards yet, the page shows a guide on how to get started.
 
-**Tip:** Combine filters , for example, select a category AND a folder to further refine the view.`,
+**Tip:** Combine filters, for example, select a category AND a folder to further refine the view.`,
       es: `La página de inicio es el centro de la plataforma. Aquí encontrarás todos tus dashboards organizados de forma intuitiva.
 
 • **Pestañas:** Alterna entre **Míos** (creados por ti), **Compartidos** (compartidos contigo), **Favoritos** y **Archivados** (dashboards archivados).
-• **Favoritos:** Los dashboards marcados con estrela aparecen en la pestaña **Favoritos**, junto con las otras listas principales.
+• **Favoritos:** Los dashboards marcados con estrella aparecen en la pestaña **Favoritos**, junto con las otras listas principales.
 • **Recientes:** Dashboards que viste recientemente, con indicador de "Actualizado" cuando el contenido cambió desde tu última visita.
 • **Búsqueda:** La barra de búsqueda busca por título y contenido extraído del HTML.
 • **Filtro por categoría:** Chips de categoría permiten filtrar rápidamente.
 • **Filtro por carpeta:** Selecciona una carpeta personal para ver solo los dashboards organizados en ella.
-• **Crear nuevo:** El botón en la esquina superior ofrece tres opciones , **Subir archivo**, **Crear con IA** y **Conversar con datos**.
+• **Crear nuevo:** El botón en la esquina superior ofrece tres opciones, **Subir archivo**, **Crear con IA** y **Conversar con datos**.
 • **Nuevo usuario:** Si aún no tienes dashboards, la página muestra una guía de cómo empezar.
 
-**Consejo:** Combina filtros , por ejemplo, selecciona una categoría Y una carpeta para refinar aún más la vista.`,
+**Consejo:** Combina filtros, por ejemplo, selecciona una categoría Y una carpeta para refinar aún más la vista.`,
     },
   },
   {
@@ -132,7 +132,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 • **Visibilidade:** "Team" torna visível para todos; "Specific" permite selecionar quem pode ver.
 • **Limite:** Até 10MB por arquivo.
 
-**Dica:** Use nomes descritivos , ajuda todo mundo a encontrar seu dashboard depois.`,
+**Dica:** Use nomes descritivos, ajuda todo mundo a encontrar seu dashboard depois.`,
       en: `Upload a ready-made HTML or ZIP file directly to the platform.
 
 • **How to upload:** Click **Upload file** in the create menu on the home page, or go to \`/upload\`.
@@ -143,7 +143,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 • **Visibility:** "Team" makes it visible to everyone; "Specific" lets you choose who can see it.
 • **Limit:** Up to 10MB per file.
 
-**Tip:** Use descriptive names , it helps everyone find your dashboard later.`,
+**Tip:** Use descriptive names, it helps everyone find your dashboard later.`,
       es: `Publica un HTML o ZIP listo directamente en la plataforma.
 
 • **Cómo subir:** Haz clic en **Subir archivo** en el menú de creación de la página principal, o ve a \`/upload\`.
@@ -154,7 +154,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 • **Visibilidad:** "Team" lo hace visible para todos; "Specific" permite elegir quién puede verlo.
 • **Límite:** Hasta 10MB por archivo.
 
-**Consejo:** Usa nombres descriptivos , ayuda a todos a encontrar tu dashboard después.`,
+**Consejo:** Usa nombres descriptivos, ayuda a todos a encontrar tu dashboard después.`,
     },
   },
   {
@@ -166,31 +166,31 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       es: "Conversar con Datos",
     },
     content: {
-      pt: `O recurso Conversar com Dados permite fazer perguntas em linguagem natural sobre os dados disponiveis , e a IA responde com análises, tabelas e gráficos.
+      pt: `O recurso Conversar com Dados permite fazer perguntas em linguagem natural sobre os dados disponiveis, e a IA responde com análises, tabelas e gráficos.
 
 • **Como acessar:** Clique em **Conversar com dados** no menu de criação da página inicial, ou acesse \`/chat\`.
 • **Pré-requisito:** Você precisa ter acesso a pelo menos uma fonte de dados (MCP). Se a opção não aparecer, solicite acesso ao administrador.
-• **O que perguntar:** Qualquer coisa sobre os dados disponíveis , membros, eventos, receita, engajamento, etc.
+• **O que perguntar:** Qualquer coisa sobre os dados disponíveis, membros, eventos, receita, engajamento, etc.
 • **Sessões:** Suas conversas ficam salvas em sessões. Você pode criar novas sessões, renomeá-las e retomar conversas anteriores pela barra lateral.
 • **MCPs (Model Context Protocol):** São as fontes de dados que a IA consulta. A plataforma conecta automaticamente aos bancos de dados autorizados para o seu perfil.
 • **Respostas:** A IA pode gerar tabelas, gráficos e insights a partir das suas perguntas.
 
 **Dica:** Seja específico nas perguntas. "Quantos membros novos entraram em março?" funciona melhor que "me fale sobre membros".`,
-      en: `The Chat with Data feature lets you ask questions in natural language about available data , and the AI responds with analyses, tables, and charts.
+      en: `The Chat with Data feature lets you ask questions in natural language about available data, and the AI responds with analyses, tables, and charts.
 
 • **How to access:** Click **Chat with data** in the create menu on the home page, or go to \`/chat\`.
 • **Prerequisite:** You need access to at least one data source (MCP). If the option doesn't appear, request access from your admin.
-• **What to ask:** Anything about available data , members, events, revenue, engagement, etc.
+• **What to ask:** Anything about available data, members, events, revenue, engagement, etc.
 • **Sessions:** Your conversations are saved in sessions. You can create new sessions, rename them, and resume previous conversations from the sidebar.
 • **MCPs (Model Context Protocol):** These are the data sources the AI queries. The platform automatically connects to databases authorized for your profile.
 • **Responses:** The AI can generate tables, charts, and insights from your questions.
 
 **Tip:** Be specific in your questions. "How many new members joined in March?" works better than "tell me about members".`,
-      es: `La función Conversar con Datos permite hacer preguntas en lenguaje natural sobre los datos disponibles , y la IA responde con análisis, tablas y gráficos.
+      es: `La función Conversar con Datos permite hacer preguntas en lenguaje natural sobre los datos disponibles, y la IA responde con análisis, tablas y gráficos.
 
 • **Cómo acceder:** Haz clic en **Conversar con datos** en el menú de creación de la página principal, o ve a \`/chat\`.
 • **Prerrequisito:** Necesitas acceso a al menos una fuente de datos (MCP). Si la opción no aparece, solicita acceso a tu administrador.
-• **Qué preguntar:** Cualquier cosa sobre los datos disponibles , miembros, eventos, ingresos, engagement, etc.
+• **Qué preguntar:** Cualquier cosa sobre los datos disponibles, miembros, eventos, ingresos, engagement, etc.
 • **Sesiones:** Tus conversaciones se guardan en sesiones. Puedes crear nuevas sesiones, renombrarlas y retomar conversaciones anteriores desde la barra lateral.
 • **MCPs (Model Context Protocol):** Son las fuentes de datos que la IA consulta. La plataforma se conecta automáticamente a las bases de datos autorizadas para tu perfil.
 • **Respuestas:** La IA puede generar tablas, gráficos e insights a partir de tus preguntas.
@@ -210,27 +210,27 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       pt: `A IA pode criar dashboards completos a partir de uma descrição em texto. Você descreve o que quer e ela gera o HTML interativo com dados reais.
 
 • **Como acessar:** Clique em **Criar com IA** no menu de criação da página inicial, ou acesse \`/create\`.
-• ** Pré-requisito:** Requer acesso MCP , você precisa ter pelo menos uma fonte de dados atribuída ao seu perfil. Sem isso, a opção não aparece. Solicite ao administrador.
-• **Fluxo:** Descreva o dashboard que precisa , a IA consulta os dados via MCP , gera um dashboard HTML interativo , você pode refinar com instruções adicionais.
-• **Fontes de dados:** A IA tem acesso aos mesmos dados do Chat , consulta bancos autorizados e cria visualizações automaticamente.
+• ** Pré-requisito:** Requer acesso MCP, você precisa ter pelo menos uma fonte de dados atribuída ao seu perfil. Sem isso, a opção não aparece. Solicite ao administrador.
+• **Fluxo:** Descreva o dashboard que precisa, a IA consulta os dados via MCP, gera um dashboard HTML interativo, você pode refinar com instruções adicionais.
+• **Fontes de dados:** A IA tem acesso aos mesmos dados do Chat, consulta bancos autorizados e cria visualizações automaticamente.
 • **Resultado:** Um dashboard HTML interativo salvo na plataforma, pronto para visualizar e compartilhar.
 
 **Dica:** Comece com uma descrição clara do objetivo. Exemplo: "Dashboard mostrando receita mensal por região nos últimos 12 meses".`,
       en: `The AI can create complete dashboards from a text description. Describe what you need and it generates interactive HTML with real data.
 
 • **How to access:** Click **Create with AI** in the create menu on the home page, or go to \`/create\`.
-• ** Prerequisite:** Requires MCP access , you need at least one data source assigned to your profile. Without it, the option won't appear. Request it from your admin.
-• **Flow:** Describe the dashboard you need , the AI queries data via MCP , generates an interactive HTML dashboard , you can refine with additional instructions.
-• **Data sources:** The AI has access to the same data as Chat , it queries authorized databases and creates visualizations automatically.
+• ** Prerequisite:** Requires MCP access, you need at least one data source assigned to your profile. Without it, the option won't appear. Request it from your admin.
+• **Flow:** Describe the dashboard you need, the AI queries data via MCP, generates an interactive HTML dashboard, you can refine with additional instructions.
+• **Data sources:** The AI has access to the same data as Chat, it queries authorized databases and creates visualizations automatically.
 • **Result:** An interactive HTML dashboard saved to the platform, ready to view and share.
 
 **Tip:** Start with a clear goal description. Example: "Dashboard showing monthly revenue by region for the last 12 months".`,
       es: `La IA puede crear dashboards completos a partir de una descripción en texto. Describe lo que necesitas y genera HTML interactivo con datos reales.
 
 • **Cómo acceder:** Haz clic en **Crear con IA** en el menú de creación de la página principal, o ve a \`/create\`.
-• ** Prerrequisito:** Requiere acceso MCP , necesitas al menos una fuente de datos asignada a tu perfil. Sin eso, la opción no aparece. Solicítalo a tu administrador.
-• **Flujo:** Describe el dashboard que necesitas , la IA consulta datos vía MCP , genera un dashboard HTML interactivo , puedes refinar con instrucciones adicionales.
-• **Fuentes de datos:** La IA tiene acceso a los mismos datos del Chat , consulta bases autorizadas y crea visualizaciones automáticamente.
+• ** Prerrequisito:** Requiere acceso MCP, necesitas al menos una fuente de datos asignada a tu perfil. Sin eso, la opción no aparece. Solicítalo a tu administrador.
+• **Flujo:** Describe el dashboard que necesitas, la IA consulta datos vía MCP, genera un dashboard HTML interactivo, puedes refinar con instrucciones adicionales.
+• **Fuentes de datos:** La IA tiene acceso a los mismos datos del Chat, consulta bases autorizadas y crea visualizaciones automáticamente.
 • **Resultado:** Un dashboard HTML interactivo guardado en la plataforma, listo para ver y compartir.
 
 **Consejo:** Empieza con una descripción clara del objetivo. Ejemplo: "Dashboard mostrando ingresos mensuales por región en los últimos 12 meses".`,
@@ -249,7 +249,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 
 • **Botão Editar:** Na página de visualização do dashboard, clique no botão **Editar** para reabrir o editor com IA e o contexto do dashboard atual.
 • **Menu ⋮:** Você também pode acessar a edição pelo menu ⋮ do card do dashboard na página inicial.
-• **O que mudar:** Peça alterações em linguagem natural , "adicione um filtro por país", "mude as cores para azul", "inclua dados de 2024".
+• **O que mudar:** Peça alterações em linguagem natural, "adicione um filtro por país", "mude as cores para azul", "inclua dados de 2024".
 • **Atualizar dados:** Use o botão **Atualizar** para re-consultar os dados ao vivo e regenerar o dashboard com números atualizados, sem precisar descrever tudo de novo.
 • **Versões:** Cada edição cria uma nova versão. A versão anterior fica salva no histórico.
 
@@ -258,7 +258,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 
 • **Edit button:** On the dashboard view page, click the **Edit** button to reopen the AI editor with the current dashboard context.
 • **⋮ menu:** You can also access editing from the ⋮ menu on the dashboard card on the home page.
-• **What to change:** Request changes in natural language , "add a filter by country", "change colors to blue", "include 2024 data".
+• **What to change:** Request changes in natural language, "add a filter by country", "change colors to blue", "include 2024 data".
 • **Refresh data:** Use the **Refresh** button to re-query live data and regenerate the dashboard with updated numbers, without re-describing everything.
 • **Versions:** Each edit creates a new version. The previous version is saved in the history.
 
@@ -267,7 +267,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 
 • **Botón Editar:** En la página de visualización del dashboard, haz clic en el botón **Editar** para reabrir el editor con IA y el contexto actual.
 • **Menú ⋮:** También puedes acceder a la edición desde el menú ⋮ en la tarjeta del dashboard en la página principal.
-• **Qué cambiar:** Pide cambios en lenguaje natural , "agrega un filtro por país", "cambia los colores a azul", "incluye datos de 2024".
+• **Qué cambiar:** Pide cambios en lenguaje natural, "agrega un filtro por país", "cambia los colores a azul", "incluye datos de 2024".
 • **Actualizar datos:** Usa el botón **Actualizar** para re-consultar los datos en vivo y regenerar el dashboard con números actualizados, sin necesidad de describir todo de nuevo.
 • **Versiones:** Cada edición crea una nueva versión. La versión anterior queda guardada en el historial.
 
@@ -290,7 +290,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 • **O que ver:** Lista de todas as fontes de dados (MCPs) conectadas ao seu perfil, incluindo as ferramentas (queries) disponíveis em cada uma.
 • **Utilidade:** Entenda quais dados existem antes de perguntar no Chat ou criar um dashboard com IA.
 
-**Dica:** Use o Explorar para descobrir os nomes exatos das ferramentas e dados , isso torna suas perguntas no Chat mais precisas.`,
+**Dica:** Use o Explorar para descobrir os nomes exatos das ferramentas e dados, isso torna suas perguntas no Chat mais precisas.`,
       en: `The Explore Data page lets you discover what data sources are available to you on the platform.
 
 • **How to access:** Click **Explore data** in the header or go to \`/explore\`.
@@ -298,7 +298,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 • **What to see:** A list of all data sources (MCPs) connected to your profile, including the tools (queries) available in each one.
 • **Use case:** Understand what data exists before asking in Chat or creating a dashboard with AI.
 
-**Tip:** Use Explore to find the exact names of tools and data , it makes your Chat questions more precise.`,
+**Tip:** Use Explore to find the exact names of tools and data, it makes your Chat questions more precise.`,
       es: `La página Explorar Datos permite descubrir qué fuentes de datos están disponibles para ti en la plataforma.
 
 • **Cómo acceder:** Haz clic en **Explorar datos** en el encabezado o ve a \`/explore\`.
@@ -306,7 +306,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 • **Qué ver:** Lista de todas las fuentes de datos (MCPs) conectadas a tu perfil, incluyendo las herramientas (queries) disponibles en cada una.
 • **Utilidad:** Entiende qué datos existen antes de preguntar en el Chat o crear un dashboard con IA.
 
-**Consejo:** Usa Explorar para descubrir los nombres exactos de herramientas y datos , eso hace tus preguntas en el Chat más precisas.`,
+**Consejo:** Usa Explorar para descubrir los nombres exactos de herramientas y datos, eso hace tus preguntas en el Chat más precisas.`,
     },
   },
   {
@@ -359,10 +359,10 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       es: "Campos del Dashboard",
     },
     content: {
-      pt: `Campos persistentes permitem adicionar metadados estruturados a qualquer dashboard , como responsável, data de atualização, status, links, etc.
+      pt: `Campos persistentes permitem adicionar metadados estruturados a qualquer dashboard, como responsável, data de atualização, status, links, etc.
 
 • **Quem pode usar:** Apenas o **dono do dashboard** (quem criou ou fez upload) pode definir campos e editar valores. Outros usuários não vîem os controles de edição.
-• **Definir campos:** Na página de visualização, clique no ícone de ⚙ (engrenagem) para abrir o construtor de esquema. Defina os campos que o dashboard precisa.
+• **Definir campos:** Na página de visualização, clique no ícone de (engrenagem) para abrir o construtor de esquema. Defina os campos que o dashboard precisa.
 • **Tipos disponíveis:** Texto, Número, Data, Seleção (dropdown), Seleção múltipla, URL e Booleano.
 • **Opções:** Campos do tipo Seleção e Seleção múltipla permitem definir as opções disponíveis.
 • **Obrigatório:** Marque campos como obrigatórios para garantir preenchimento.
@@ -370,11 +370,11 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 • **Auditoria:** Todas as alterações de valores são registradas com quem mudou e quando.
 • **Ordenação:** Arraste os campos no construtor de esquema para definir a ordem de exibição.
 
-**Dica:** Use campos para rastrear informações que mudam ao longo do tempo , por exemplo, "Última atualização", "Responsável" ou "Status da revisão".`,
-      en: `Persistent fields let you add structured metadata to any dashboard , like owner, update date, status, links, etc.
+**Dica:** Use campos para rastrear informações que mudam ao longo do tempo, por exemplo, "Última atualização", "Responsável" ou "Status da revisão".`,
+      en: `Persistent fields let you add structured metadata to any dashboard, like owner, update date, status, links, etc.
 
 • **Who can use this:** Only the **dashboard owner** (the person who created or uploaded it) can define fields and edit values. Other users don't see the editing controls.
-• **Define fields:** On the view page, click the ⚙ (gear) icon to open the schema builder. Define the fields the dashboard needs.
+• **Define fields:** On the view page, click the (gear) icon to open the schema builder. Define the fields the dashboard needs.
 • **Available types:** Text, Number, Date, Select (dropdown), Multi-select, URL, and Boolean.
 • **Options:** Select and Multi-select fields let you define the available options.
 • **Required:** Mark fields as required to ensure they're filled in.
@@ -382,11 +382,11 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 • **Audit:** All value changes are logged with who changed them and when.
 • **Ordering:** Drag fields in the schema builder to set the display order.
 
-**Tip:** Use fields to track information that changes over time , for example, "Last updated", "Owner", or "Review status".`,
-      es: `Los campos persistentes permiten agregar metadatos estructurados a cualquier dashboard , como responsable, fecha de actualización, estado, links, etc.
+**Tip:** Use fields to track information that changes over time, for example, "Last updated", "Owner", or "Review status".`,
+      es: `Los campos persistentes permiten agregar metadatos estructurados a cualquier dashboard, como responsable, fecha de actualización, estado, links, etc.
 
 • **Quién puede usarlo:** Solo el **dueño del dashboard** (quien lo creó o subió) puede definir campos y editar valores. Otros usuarios no ven los controles de edición.
-• **Definir campos:** En la página de visualización, haz clic en el ícono de ⚙ (engranaje) para abrir el constructor de esquema. Define los campos que el dashboard necesita.
+• **Definir campos:** En la página de visualización, haz clic en el ícono de (engranaje) para abrir el constructor de esquema. Define los campos que el dashboard necesita.
 • **Tipos disponibles:** Texto, Número, Fecha, Selección (dropdown), Selección múltiple, URL y Booleano.
 • **Opciones:** Campos de tipo Selección y Selección múltiple permiten definir las opciones disponibles.
 • **Obligatorio:** Marca campos como obligatorios para garantizar su llenado.
@@ -394,7 +394,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 • **Auditoría:** Todos los cambios de valores se registran con quién cambió y cuándo.
 • **Ordenación:** Arrastra los campos en el constructor de esquema para definir el orden de visualización.
 
-**Consejo:** Usa campos para rastrear información que cambia con el tiempo , por ejemplo, "Última actualización", "Responsable" o "Estado de revisión".`,
+**Consejo:** Usa campos para rastrear información que cambia con el tiempo, por ejemplo, "Última actualización", "Responsable" o "Estado de revisión".`,
     },
   },
   {
@@ -408,7 +408,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     content: {
       pt: `Organize seus dashboards em pastas pessoais e use favoritos para acesso rápido.
 
-• **Criar pasta:** Na página inicial, clique no botão de gerenciar pastas (⚙) ao lado dos filtros de pasta.
+• **Criar pasta:** Na página inicial, clique no botão de gerenciar pastas () ao lado dos filtros de pasta.
 • **Adicionar à pasta:** No menu ⋮ de qualquer dashboard, selecione **Adicionar à pasta**.
 • **Favoritos:** Clique na estrela no canto de qualquer dashboard para marcá-lo como favorito. Favoritos aparecem na aba **Favoritos** da home.
 • **Categorias:** As categorias são definidas ao enviar o dashboard e servem como filtro global na página inicial.
@@ -416,7 +416,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 **Dica:** Use pastas para organização pessoal (ex: "Meus relatórios semanais") e categorias para organização do time.`,
       en: `Organize your dashboards into personal folders and use favorites for quick access.
 
-• **Create a folder:** On the home page, click the folder management button (⚙) next to the folder filters.
+• **Create a folder:** On the home page, click the folder management button () next to the folder filters.
 • **Add to folder:** In any dashboard's ⋮ menu, select **Add to folder**.
 • **Favorites:** Click the estrela on any dashboard's corner to mark it as a favorite. Favorites appear in the **Favorites** tab on the home page.
 • **Categories:** Categories are set when uploading a dashboard and serve as global filters on the home page.
@@ -424,7 +424,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 **Tip:** Use folders for personal organization (e.g., "My weekly reports") and categories for team-wide organization.`,
       es: `Organiza tus dashboards en carpetas personales y usa favoritos para acceso rápido.
 
-• **Crear carpeta:** En la página principal, haz clic en el botón de gestión de carpetas (⚙) al lado de los filtros.
+• **Crear carpeta:** En la página principal, haz clic en el botón de gestión de carpetas () al lado de los filtros.
 • **Agregar a carpeta:** En el menú ⋮ de cualquier dashboard, selecciona **Adicionar à pasta**.
 • **Favoritos:** Haz clic en la estrela en la esquina de cualquier dashboard para marcarlo como favorito. Los favoritos aparecen en la pestaña **Favoritos** de la home.
 • **Categorías:** Las categorías se definen al subir el dashboard y sirven como filtro global en la página principal.
@@ -445,7 +445,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 
 • **Visibilidade:** Ao criar ou editar, escolha "Team" (todos) ou "Specific" (lista de e-mails).
 • **Compartilhamento:** No menu ⋮, clique em **Compartilhamento** para alterar a visibilidade.
-• **Link de Embed:** Qualquer usuário com acesso ao dashboard pode gerar um link de embed temporário (válido por 7 dias) pelo menu ⋮ , **Copiar link de embed**.
+• **Link de Embed:** Qualquer usuário com acesso ao dashboard pode gerar um link de embed temporário (válido por 7 dias) pelo menu ⋮, **Copiar link de embed**.
 • **Uso do embed:** Cole o link em um iframe para exibir o dashboard em outro site ou ferramenta (Notion, Slack, etc.).
 • **Multi-página:** Embeds de dashboards ZIP usam cookie de sessão para autenticar sub-páginas automaticamente.
 
@@ -454,7 +454,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 
 • **Visibility:** When creating or editing, choose "Team" (everyone) or "Specific" (email list).
 • **Sharing:** In the ⋮ menu, click **Sharing** to change visibility.
-• **Embed link:** Any user with access to the dashboard can generate a temporary embed link (valid for 7 days) via ⋮ menu , **Copy embed link**.
+• **Embed link:** Any user with access to the dashboard can generate a temporary embed link (valid for 7 days) via ⋮ menu, **Copy embed link**.
 • **Using embeds:** Paste the link in an iframe to display the dashboard on another site or tool (Notion, Slack, etc.).
 • **Multi-page:** Embeds of ZIP dashboards use session cookies to authenticate sub-pages automatically.
 
@@ -463,7 +463,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 
 • **Visibilidad:** Al crear o editar, elige "Team" (todos) o "Specific" (lista de correos).
 • **Compartir:** En el menú ⋮, haz clic en **Compartilhamento** para cambiar la visibilidad.
-• **Link de Embed:** Cualquier usuario con acceso al dashboard puede generar un link de embed temporal (válido por 7 días) vía menú ⋮ , **Copiar link de embed**.
+• **Link de Embed:** Cualquier usuario con acceso al dashboard puede generar un link de embed temporal (válido por 7 días) vía menú ⋮, **Copiar link de embed**.
 • **Uso del embed:** Pega el link en un iframe para mostrar el dashboard en otro sitio o herramienta (Notion, Slack, etc.).
 • **Multi-página:** Los embeds de dashboards ZIP usan cookie de sesión para autenticar sub-páginas automáticamente.
 
@@ -516,26 +516,26 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     content: {
       pt: `A plataforma usa três roles: \`user\`, \`admin\` e \`superadmin\`. Novos usuários recebem \`user\` por padrão, exceto quando existe pré-aprovação em \`pendingRoles\`.
 
-• **user** , Usa a plataforma normalmente: visualiza dashboards permitidos, cria uploads, organiza favoritos/pastas, gera links de embed para dashboards aos quais tem acesso e usa **Criar com IA**, **Conversar com dados** e **Explorar dados** quando tiver MCP access.
-• **admin** , Acessa o painel Admin operacional: visão geral, dashboards, usuários, métricas de acesso e armazenamento. Não altera roles e não gerencia configurações sensíveis.
-• **superadmin** , Gerencia configurações sensíveis: roles de usuários, AI config, Categories, Departments, MCP Servers e MCP Access.
-• **MCP access** , É independente da role. Um \`user\`, \`admin\` ou \`superadmin\` pode receber acesso a fontes de dados por usuário individual ou Department.
+• **user**, Usa a plataforma normalmente: visualiza dashboards permitidos, cria uploads, organiza favoritos/pastas, gera links de embed para dashboards aos quais tem acesso e usa **Criar com IA**, **Conversar com dados** e **Explorar dados** quando tiver MCP access.
+• **admin**, Acessa o painel Admin operacional: visão geral, dashboards, usuários, métricas de acesso e armazenamento. Não altera roles e não gerencia configurações sensíveis.
+• **superadmin**, Gerencia configurações sensíveis: roles de usuários, AI config, Categories, Departments, MCP Servers e MCP Access.
+• **MCP access**, É independente da role. Um \`user\`, \`admin\` ou \`superadmin\` pode receber acesso a fontes de dados por usuário individual ou Department.
 
 **Dica:** Solicite MCP access quando precisar usar IA com dados. Solicite role \`admin\` ou \`superadmin\` apenas quando houver necessidade operacional real.`,
       en: `The platform uses three roles: \`user\`, \`admin\`, and \`superadmin\`. New users receive \`user\` by default unless there is a pre-approved \`pendingRoles\` entry.
 
-• **user** , Uses the product normally: views permitted dashboards, uploads dashboards, organizes favorites/folders, generates embed links for dashboards they can access, and uses **Create with AI**, **Chat with data**, and **Explore data** when they have MCP access.
-• **admin** , Accesses the operational Admin panel: overview, dashboards, users, access metrics, and storage. Admins do not change roles and do not manage sensitive settings.
-• **superadmin** , Manages sensitive settings: user roles, AI config, Categories, Departments, MCP Servers, and MCP Access.
-• **MCP access** , Independent from role. A \`user\`, \`admin\`, or \`superadmin\` can receive data-source access by individual user or Department.
+• **user**, Uses the product normally: views permitted dashboards, uploads dashboards, organizes favorites/folders, generates embed links for dashboards they can access, and uses **Create with AI**, **Chat with data**, and **Explore data** when they have MCP access.
+• **admin**, Accesses the operational Admin panel: overview, dashboards, users, access metrics, and storage. Admins do not change roles and do not manage sensitive settings.
+• **superadmin**, Manages sensitive settings: user roles, AI config, Categories, Departments, MCP Servers, and MCP Access.
+• **MCP access**, Independent from role. A \`user\`, \`admin\`, or \`superadmin\` can receive data-source access by individual user or Department.
 
 **Tip:** Request MCP access when you need AI with data. Request \`admin\` or \`superadmin\` only when there is a real operational need.`,
       es: `La plataforma usa tres roles: \`user\`, \`admin\` y \`superadmin\`. Los nuevos usuarios reciben \`user\` por defecto, salvo que exista una preaprobación en \`pendingRoles\`.
 
-• **user** , Usa el producto normalmente: visualiza dashboards permitidos, sube dashboards, organiza favoritos/carpetas, genera links de embed para dashboards a los que tiene acceso y usa **Crear con IA**, **Conversar con datos** y **Explorar datos** cuando tiene MCP access.
-• **admin** , Accede al panel Admin operativo: visión general, dashboards, usuarios, métricas de acceso y almacenamiento. Los admins no cambian roles ni gestionan configuraciones sensibles.
-• **superadmin** , Gestiona configuraciones sensibles: roles de usuarios, AI config, Categories, Departments, MCP Servers y MCP Access.
-• **MCP access** , Es independiente del role. Un \`user\`, \`admin\` o \`superadmin\` puede recibir acceso a fuentes de datos por usuario individual o Department.
+• **user**, Usa el producto normalmente: visualiza dashboards permitidos, sube dashboards, organiza favoritos/carpetas, genera links de embed para dashboards a los que tiene acceso y usa **Crear con IA**, **Conversar con datos** y **Explorar datos** cuando tiene MCP access.
+• **admin**, Accede al panel Admin operativo: visión general, dashboards, usuarios, métricas de acceso y almacenamiento. Los admins no cambian roles ni gestionan configuraciones sensibles.
+• **superadmin**, Gestiona configuraciones sensibles: roles de usuarios, AI config, Categories, Departments, MCP Servers y MCP Access.
+• **MCP access**, Es independiente del role. Un \`user\`, \`admin\` o \`superadmin\` puede recibir acceso a fuentes de datos por usuario individual o Department.
 
 **Consejo:** Solicita MCP access cuando necesites IA con datos. Solicita \`admin\` o \`superadmin\` solo cuando exista una necesidad operativa real.`,
     },
@@ -551,53 +551,53 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     content: {
       pt: `O painel de Admin é acessível para administradores e superadmins. Permite gerenciar a plataforma de forma centralizada.
 
-• **Como acessar:** Clique no ícone 🛡 **Admin** no cabeçalho (visível apenas para admins).
+• **Como acessar:** Clique no ícone **Admin** no cabeçalho (visível apenas para admins).
 
 **Abas disponíveis:**
 
-• **Visão Geral** , Contadores de dashboards, usuários, visualizações, armazenamento e tokens de embed.
-• **Dashboards** , Tabela com todos os dashboards, ordenável por visualizações, armazenamento e categoria.
-• **Usuários** , Tabela de atividade e roles. Alterações de role são exclusivas de superadmins.
-• **Acesso** , Gráfico de visualizações diárias (diretas vs embed), top dashboards embeddados, lista de tokens.
-• **Armazenamento** , Uso por usuário/categoria, arquivos grandes, armazenamento de versões.
-• **Categorias** *(superadmin)* , Gerenciar as categorias de dashboards (usadas como filtro na home).
-• **Departamentos** *(superadmin)* , Gerenciar departamentos organizacionais e seus membros.
-• **Servidores MCP** *(superadmin)* , Cadastrar e gerenciar fontes de dados MCP. Sincronizar ferramentas disponíveis.
-• **Acesso MCP** *(superadmin)* , Atribuir acesso a servidores MCP por departamento ou usuário individual.
+• **Visão Geral**, Contadores de dashboards, usuários, visualizações, armazenamento e tokens de embed.
+• **Dashboards**, Tabela com todos os dashboards, ordenável por visualizações, armazenamento e categoria.
+• **Usuários**, Tabela de atividade e roles. Alterações de role são exclusivas de superadmins.
+• **Acesso**, Gráfico de visualizações diárias (diretas vs embed), top dashboards embeddados, lista de tokens.
+• **Armazenamento**, Uso por usuário/categoria, arquivos grandes, armazenamento de versões.
+• **Categorias** *(superadmin)*, Gerenciar as categorias de dashboards (usadas como filtro na home).
+• **Departamentos** *(superadmin)*, Gerenciar departamentos organizacionais e seus membros.
+• **Servidores MCP** *(superadmin)*, Cadastrar e gerenciar fontes de dados MCP. Sincronizar ferramentas disponíveis.
+• **Acesso MCP** *(superadmin)*, Atribuir acesso a servidores MCP por departamento ou usuário individual.
 
 **Dica:** Se você precisa de acesso admin ou superadmin, solicite a um superadmin da equipe de tecnologia com a justificativa operacional.`,
       en: `The Admin panel is accessible to administrators and superadmins. It provides centralized platform management.
 
-• **How to access:** Click the 🛡 **Admin** icon in the header (visible only to admins).
+• **How to access:** Click the **Admin** icon in the header (visible only to admins).
 
 **Available tabs:**
 
-• **Overview** , Dashboard, user, view, storage, and embed token counts.
-• **Dashboards** , Table of all dashboards, sortable by views, storage, and category.
-• **Users** , Activity and role table. Role changes are exclusive to superadmins.
-• **Access** , Daily views chart (direct vs embed), top embedded dashboards, token list.
-• **Storage** , Usage by user/category, large files, version storage.
-• **Categories** *(superadmin)* , Manage dashboard categories (used as filters on the home page).
-• **Departments** *(superadmin)* , Manage organizational departments and their members.
-• **MCP Servers** *(superadmin)* , Register and manage MCP data sources. Sync available tools.
-• **MCP Access** *(superadmin)* , Assign MCP server access by department or individual user.
+• **Overview**, Dashboard, user, view, storage, and embed token counts.
+• **Dashboards**, Table of all dashboards, sortable by views, storage, and category.
+• **Users**, Activity and role table. Role changes are exclusive to superadmins.
+• **Access**, Daily views chart (direct vs embed), top embedded dashboards, token list.
+• **Storage**, Usage by user/category, large files, version storage.
+• **Categories** *(superadmin)*, Manage dashboard categories (used as filters on the home page).
+• **Departments** *(superadmin)*, Manage organizational departments and their members.
+• **MCP Servers** *(superadmin)*, Register and manage MCP data sources. Sync available tools.
+• **MCP Access** *(superadmin)*, Assign MCP server access by department or individual user.
 
 **Tip:** If you need admin or superadmin access, request it from a superadmin on the tech team with the operational reason.`,
       es: `El panel de Admin es accesible para administradores y superadmins. Proporciona gestión centralizada de la plataforma.
 
-• **Cómo acceder:** Haz clic en el ícono 🛡 **Admin** en el encabezado (visible solo para admins).
+• **Cómo acceder:** Haz clic en el ícono **Admin** en el encabezado (visible solo para admins).
 
 **Pestañas disponibles:**
 
-• **Visión General** , Contadores de dashboards, usuarios, visualizaciones, almacenamiento y tokens de embed.
-• **Dashboards** , Tabla con todos los dashboards, ordenable por visualizaciones, almacenamiento y categoría.
-• **Usuarios** , Tabla de actividad y roles. Los cambios de role son exclusivos de superadmins.
-• **Acceso** , Gráfico de visualizaciones diarias (directas vs embed), top dashboards embebidos, lista de tokens.
-• **Almacenamiento** , Uso por usuario/categoría, archivos grandes, almacenamiento de versiones.
-• **Categorías** *(superadmin)* , Gestionar las categorías de dashboards (usadas como filtro en la página principal).
-• **Departamentos** *(superadmin)* , Gestionar departamentos organizacionales y sus miembros.
-• **Servidores MCP** *(superadmin)* , Registrar y gestionar fuentes de datos MCP. Sincronizar herramientas disponibles.
-• **Acceso MCP** *(superadmin)* , Asignar acceso a servidores MCP por departamento o usuario individual.
+• **Visión General**, Contadores de dashboards, usuarios, visualizaciones, almacenamiento y tokens de embed.
+• **Dashboards**, Tabla con todos los dashboards, ordenable por visualizaciones, almacenamiento y categoría.
+• **Usuarios**, Tabla de actividad y roles. Los cambios de role son exclusivos de superadmins.
+• **Acceso**, Gráfico de visualizaciones diarias (directas vs embed), top dashboards embebidos, lista de tokens.
+• **Almacenamiento**, Uso por usuario/categoría, archivos grandes, almacenamiento de versiones.
+• **Categorías** *(superadmin)*, Gestionar las categorías de dashboards (usadas como filtro en la página principal).
+• **Departamentos** *(superadmin)*, Gestionar departamentos organizacionales y sus miembros.
+• **Servidores MCP** *(superadmin)*, Registrar y gestionar fuentes de datos MCP. Sincronizar herramientas disponibles.
+• **Acceso MCP** *(superadmin)*, Asignar acceso a servidores MCP por departamento o usuario individual.
 
 **Consejo:** Si necesitas acceso admin o superadmin, solicítalo a un superadmin del equipo de tecnología con la justificación operativa.`,
     },
