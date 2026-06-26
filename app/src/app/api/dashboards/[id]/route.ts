@@ -44,7 +44,48 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ id: doc.id, ...doc.data() });
+    const data = doc.data()!;
+    const { departmentIds } = await getUserRoleAndDepartments(auth.uid);
+    const directAccess = canViewDashboard(
+      {
+        createdBy: data.createdBy,
+        visibility: data.visibility,
+        allowedEmails: Array.isArray(data.allowedEmails) ? data.allowedEmails : [],
+        allowedDepartments: Array.isArray(data.allowedDepartments) ? data.allowedDepartments : [],
+      },
+      auth,
+      departmentIds
+    );
+    const folderAccess = directAccess
+      ? false
+      : (await canViewDashboardViaSharedFolder(id, auth, adminDb)).allowed;
+
+    if (!directAccess && !folderAccess) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const isOwner = data.createdBy === auth.uid;
+    if (isOwner) {
+      return NextResponse.json({ id: doc.id, ...data });
+    }
+
+    // Sanitized response for non-owners (viewers/team/folder access)
+    return NextResponse.json({
+      id: doc.id,
+      title: data.title || "Untitled",
+      description: data.description || null,
+      category: data.category || null,
+      source: data.source || null,
+      visibility: data.visibility || "private",
+      slug: data.slug || null,
+      thumbnailUrl: data.thumbnailUrl || null,
+      viewCount: data.viewCount || 0,
+      createdAt: data.createdAt || null,
+      updatedAt: data.updatedAt || null,
+      createdBy: data.createdBy || null,
+      createdByEmail: data.createdByEmail || null,
+      createdByName: data.createdByName || null,
+    });
   } catch (error) {
     console.error("Failed to get dashboard:", error);
     return NextResponse.json(

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin, verifySuperAdmin, type UserRole } from "@/lib/api-auth";
 import { adminDb } from "@/lib/firebase/admin";
-import { isValidConfig, getSupportedModels, type AiModelConfig } from "@/lib/ai-model";
+import { isValidConfig, getSupportedModels, sanitizeAiConfig, type AiModelConfig } from "@/lib/ai-model";
 
 const VALID_ROLES: UserRole[] = ["user", "admin", "superadmin"];
 
@@ -40,7 +40,7 @@ export async function PATCH(request: NextRequest) {
         );
       }
       await adminDb.collection("users").doc(uid).update({ aiConfig });
-      return NextResponse.json({ success: true, uid, aiConfig });
+      return NextResponse.json({ success: true, uid, aiConfig: sanitizeAiConfig(aiConfig) });
     }
 
     if (!uid || !role || !VALID_ROLES.includes(role as UserRole)) {
@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
         displayName: data.displayName || "Unknown",
         role: data.role || "user",
         department: data.department || undefined,
-        aiConfig: data.aiConfig || null,
+        aiConfig: sanitizeAiConfig(data.aiConfig),
         dashboardsCreated: dashboardsPerUser.get(doc.id) || 0,
         totalViewsGenerated: viewsPerOwner.get(doc.id) || 0,
         createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
