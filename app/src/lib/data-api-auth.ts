@@ -1,5 +1,5 @@
 /**
- * Data API Auth — authenticates requests from HTML dashboards
+ * Data API Auth, authenticates requests from HTML dashboards
  * to the runtime data endpoints.
  *
  * Uses the dash_session cookie (HMAC-based, scoped per dashboard).
@@ -32,14 +32,31 @@ export async function verifyDataApiRequest(
   request: NextRequest,
   dashboardId: string
 ): Promise<DataApiAuth | null> {
-  // Method 1: Session cookie
+  // Method 1: Session cookie (for rendered HTML in browser with same-origin)
   const cookieName = `dash_session_${dashboardId}`;
   const sessionToken = request.cookies.get(cookieName)?.value;
   let authenticated = false;
 
   const isReadMethod = request.method === "GET" || request.method === "HEAD";
+
+  // Method 1: Session cookie (read-only for sandboxed iframes)
   if (isReadMethod && sessionToken && verifyDashSessionToken(dashboardId, sessionToken, "read")) {
     authenticated = true;
+  }
+
+  // Method 1b: Bearer token with dash_session value (for sandboxed iframes without cookies)
+  // Sandboxed iframes (sandbox="allow-scripts") have null origin and cannot send cookies.
+  // The injected __TWD_DATA_TOKEN__ is the only auth path. It allows all methods because
+  // interactive dashboards need POST/PATCH/DELETE. The token is per-dashboard and only
+  // accessible to users who can already view the dashboard (permission checked in view route).
+  if (!authenticated) {
+    const authHeader = request.headers.get("authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      const bearerToken = authHeader.slice(7);
+      if (verifyDashSessionToken(dashboardId, bearerToken, "write")) {
+        authenticated = true;
+      }
+    }
   }
 
   // Validate app-db instance exists and is active

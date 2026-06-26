@@ -13,6 +13,32 @@ import { sanitizeIdentifier } from "@/lib/app-db/naming";
 import { readRows, updateRows, deleteRows } from "@/lib/app-db/schema-manager";
 import { recordAudit, getInstanceTables } from "@/lib/app-db/registry";
 
+
+const DATA_API_CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "null",
+  "Access-Control-Allow-Methods": "GET,POST,PATCH,DELETE,OPTIONS",
+  "Access-Control-Allow-Headers": "authorization,content-type",
+  "Access-Control-Max-Age": "600",
+};
+
+function shouldApplyCors(request: NextRequest) {
+  return request.headers.get("origin") === "null";
+}
+
+function withCors(response: NextResponse, request: NextRequest) {
+  if (!shouldApplyCors(request)) return response;
+  for (const [key, value] of Object.entries(DATA_API_CORS_HEADERS)) {
+    response.headers.set(key, value);
+  }
+  return response;
+}
+
+export async function OPTIONS(request: NextRequest) {
+  return shouldApplyCors(request)
+    ? new NextResponse(null, { status: 204, headers: DATA_API_CORS_HEADERS })
+    : new NextResponse(null, { status: 204 });
+}
+
 interface RouteContext {
   params: Promise<{ id: string; table: string; rowId: string }>;
 }
@@ -25,18 +51,18 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
   const auth = await verifyDataApiRequest(request, id);
   if (!auth) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }), request);
   }
 
   const safeName = sanitizeIdentifier(logicalName);
   if (!safeName) {
-    return NextResponse.json({ error: "Invalid table name" }, { status: 400 });
+    return withCors(NextResponse.json({ error: "Invalid table name" }, { status: 400 }), request);
   }
 
   const tables = await getInstanceTables(auth.instance.id);
   const table = tables.find((t) => t.logicalName === safeName);
   if (!table) {
-    return NextResponse.json({ error: "Table not found" }, { status: 404 });
+    return withCors(NextResponse.json({ error: "Table not found" }, { status: 404 }), request);
   }
 
   try {
@@ -54,13 +80,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
     );
 
     if (result.length === 0) {
-      return NextResponse.json({ error: "Row not found" }, { status: 404 });
+      return withCors(NextResponse.json({ error: "Row not found" }, { status: 404 }), request);
     }
 
-    return NextResponse.json({ row: result[0] });
+    return withCors(NextResponse.json({ row: result[0] }), request);
   } catch (error) {
     console.error("[Data API] GET row failed:", error);
-    return NextResponse.json({ error: "Failed to read row" }, { status: 500 });
+    return withCors(NextResponse.json({ error: "Failed to read row" }, { status: 500 }), request);
   }
 }
 
@@ -73,25 +99,25 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
   const auth = await verifyDataApiRequest(request, id);
   if (!auth) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }), request);
   }
 
   const safeName = sanitizeIdentifier(logicalName);
   if (!safeName) {
-    return NextResponse.json({ error: "Invalid table name" }, { status: 400 });
+    return withCors(NextResponse.json({ error: "Invalid table name" }, { status: 400 }), request);
   }
 
   const tables = await getInstanceTables(auth.instance.id);
   const table = tables.find((t) => t.logicalName === safeName);
   if (!table) {
-    return NextResponse.json({ error: "Table not found" }, { status: 404 });
+    return withCors(NextResponse.json({ error: "Table not found" }, { status: 404 }), request);
   }
 
   try {
     const body = await request.json();
     const data = body.data as Record<string, unknown>;
     if (!data || typeof data !== "object") {
-      return NextResponse.json({ error: "data object required" }, { status: 400 });
+      return withCors(NextResponse.json({ error: "data object required" }, { status: 400 }), request);
     }
 
     const updated = await updateRows(auth.instance.userSchema, table.tableName, [
@@ -108,10 +134,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       executedBy: "html_runtime",
     });
 
-    return NextResponse.json({ updated });
+    return withCors(NextResponse.json({ updated }), request);
   } catch (error) {
     console.error("[Data API] PATCH failed:", error);
-    return NextResponse.json({ error: "Failed to update row" }, { status: 500 });
+    return withCors(NextResponse.json({ error: "Failed to update row" }, { status: 500 }), request);
   }
 }
 
@@ -123,18 +149,18 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
   const auth = await verifyDataApiRequest(request, id);
   if (!auth) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }), request);
   }
 
   const safeName = sanitizeIdentifier(logicalName);
   if (!safeName) {
-    return NextResponse.json({ error: "Invalid table name" }, { status: 400 });
+    return withCors(NextResponse.json({ error: "Invalid table name" }, { status: 400 }), request);
   }
 
   const tables = await getInstanceTables(auth.instance.id);
   const table = tables.find((t) => t.logicalName === safeName);
   if (!table) {
-    return NextResponse.json({ error: "Table not found" }, { status: 404 });
+    return withCors(NextResponse.json({ error: "Table not found" }, { status: 404 }), request);
   }
 
   try {
@@ -150,9 +176,9 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       executedBy: "html_runtime",
     });
 
-    return NextResponse.json({ deleted });
+    return withCors(NextResponse.json({ deleted }), request);
   } catch (error) {
     console.error("[Data API] DELETE failed:", error);
-    return NextResponse.json({ error: "Failed to delete row" }, { status: 500 });
+    return withCors(NextResponse.json({ error: "Failed to delete row" }, { status: 500 }), request);
   }
 }

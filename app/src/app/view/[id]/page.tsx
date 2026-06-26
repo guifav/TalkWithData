@@ -298,7 +298,7 @@ export default function ViewPage() {
         <iframe
           key={`${dashboard.id}:${liveVersion}`}
           src={`/api/dashboards/${dashboard.id}/view?v=${liveVersion}`}
-          sandbox="allow-scripts allow-same-origin"
+          sandbox="allow-scripts"
           className="h-full w-full border-0"
           title={dashboard.title}
         />
