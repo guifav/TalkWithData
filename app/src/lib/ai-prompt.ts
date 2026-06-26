@@ -73,7 +73,7 @@ export const DYNAMIC_DASHBOARD = `## Dashboard Dynamism
 The HTML you generate is a **self-contained snapshot** — it embeds data as JavaScript variables and renders in the browser without external API calls. This is by design: it ensures dashboards work offline, load instantly, and don't expose credentials.
 
 ### What the platform provides
-Dashs is NOT a static file host. It's a **dashboard platform** with server-side refresh:
+Talk With Data is NOT a static file host. It's a **dashboard platform** with server-side refresh:
 - The backend can re-execute your MCP queries, regenerate the HTML with fresh data, and save a new version.
 - Dashboards have a manual "refresh" capability that uses the saved recipe (queries + prompt) to update data on demand.
 - The platform tracks when dashboards were last refreshed and can flag stale ones.

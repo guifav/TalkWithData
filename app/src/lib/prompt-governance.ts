@@ -203,7 +203,7 @@ export const PROMPT_GOVERNANCE: Record<PromptKey, PromptGovernance> = {
   },
   "builder.dynamic_dashboard": {
     purpose:
-      "Alinha a resposta do Builder sobre snapshot HTML versus refresh server-side da plataforma Dashs.",
+      "Alinha a resposta do Builder sobre snapshot HTML versus refresh server-side da plataforma Talk With Data.",
     consumers: ["Builder"],
     sourceFiles: [
       "app/src/lib/ai-prompt.ts",
