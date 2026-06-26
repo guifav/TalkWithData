@@ -32,7 +32,7 @@ export async function verifyDataApiRequest(
   request: NextRequest,
   dashboardId: string
 ): Promise<DataApiAuth | null> {
-  // Method 1: Session cookie
+  // Method 1: Session cookie (for rendered HTML in browser with same-origin)
   const cookieName = `dash_session_${dashboardId}`;
   const sessionToken = request.cookies.get(cookieName)?.value;
   let authenticated = false;
@@ -40,6 +40,17 @@ export async function verifyDataApiRequest(
   const isReadMethod = request.method === "GET" || request.method === "HEAD";
   if (isReadMethod && sessionToken && verifyDashSessionToken(dashboardId, sessionToken, "read")) {
     authenticated = true;
+  }
+
+  // Method 1b: Bearer token with dash_session value (for sandboxed iframes without cookies)
+  if (!authenticated) {
+    const authHeader = request.headers.get("authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      const bearerToken = authHeader.slice(7);
+      if (verifyDashSessionToken(dashboardId, bearerToken)) {
+        authenticated = true;
+      }
+    }
   }
 
   // Validate app-db instance exists and is active
