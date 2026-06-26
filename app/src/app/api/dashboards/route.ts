@@ -42,27 +42,32 @@ export async function GET(request: NextRequest) {
       getUserDepartmentIds(auth.uid),
     ]);
 
-    const dashboards = [];
-    for (const doc of snapshot.docs) {
-      const data = doc.data();
-      const directAccess = canViewDashboard(
-        {
-          createdBy: data.createdBy,
-          visibility: data.visibility,
-          allowedEmails: Array.isArray(data.allowedEmails) ? data.allowedEmails : [],
-          allowedDepartments: Array.isArray(data.allowedDepartments) ? data.allowedDepartments : [],
-        },
-        auth,
-        userDepartmentIds
-      );
-      const folderAccess = directAccess
-        ? false
-        : (await canViewDashboardViaSharedFolder(doc.id, auth, adminDb)).allowed;
+    const visibilityResults = await Promise.all(
+      snapshot.docs.map(async (doc) => {
+        const data = doc.data();
+        const directAccess = canViewDashboard(
+          {
+            createdBy: data.createdBy,
+            visibility: data.visibility,
+            allowedEmails: Array.isArray(data.allowedEmails) ? data.allowedEmails : [],
+            allowedDepartments: Array.isArray(data.allowedDepartments) ? data.allowedDepartments : [],
+          },
+          auth,
+          userDepartmentIds
+        );
+        const folderAccess = directAccess
+          ? false
+          : (await canViewDashboardViaSharedFolder(doc.id, auth, adminDb)).allowed;
 
-      if (directAccess || folderAccess) {
-        dashboards.push(sanitizeDashboardListItem(doc.id, data));
-      }
-    }
+        return directAccess || folderAccess
+          ? sanitizeDashboardListItem(doc.id, data)
+          : null;
+      })
+    );
+
+    const dashboards = visibilityResults.filter(
+      (dashboard): dashboard is NonNullable<typeof dashboard> => Boolean(dashboard)
+    );
 
     return NextResponse.json({ dashboards });
   } catch (error) {
