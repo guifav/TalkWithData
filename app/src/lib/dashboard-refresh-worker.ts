@@ -161,7 +161,7 @@ export async function runDashboardRefreshJob({
     const sortedServers = [...servers].sort(
       (a, b) => (a.tools?.length || 0) - (b.tools?.length || 0)
     );
-    const tools: Array<{ name: string; description: string; input_schema: unknown }> = [];
+    const tools: Array<{ name: string; description: string; input_schema: Record<string, unknown> }> = [];
     const toolToEndpoint: Record<string, string> = {};
 
     for (const server of sortedServers) {
@@ -170,7 +170,7 @@ export async function runDashboardRefreshJob({
           tools.push({
             name: tool.name,
             description: tool.description || `Tool from ${server.name}`,
-            input_schema: tool.inputSchema || { type: "object", properties: {} },
+            input_schema: (tool.inputSchema ?? { type: "object", properties: {} }) as Record<string, unknown>,
           });
           toolToEndpoint[tool.name] = server.endpoint;
         }

@@ -1,23 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySuperAdmin } from "@/lib/api-auth";
 import { isKnownPromptKey, getCatalogEntry } from "@/lib/prompt-registry";
-import { resolveUserModel, buildAnthropicHeaders } from "@/lib/ai-model";
+import { resolveUserModel } from "@/lib/ai-model";
+import { getAiAdapter } from "@/lib/ai-providers";
+import type { AiMessage } from "@/lib/ai-providers";
 
 export const dynamic = "force-dynamic";
 
 // Note: compared against String.length (UTF-16 code units), not bytes.
 // Safe because we just want to prevent unbounded payloads to the AI provider.
 const MAX_CONTENT_CHARS = 200_000;
-const EXPLAIN_TIMEOUT_MS = 30_000;
 
 interface ExplainBody {
   previousContent?: unknown;
   newContent?: unknown;
-}
-
-interface AnthropicContentBlock {
-  type: string;
-  text?: string;
 }
 
 export async function POST(
@@ -84,59 +80,21 @@ Rules:
 Label: ${entry.label}
 
 --- VERSAO ANTERIOR ---
-${previous || "(vazio — nao havia versao anterior)"}
+${previous || "(vazio, nao havia versao anterior)"}
 
 --- NOVA VERSAO ---
 ${next}
 
 Resumo da mudanca:`;
 
-  const controller = new AbortController();
-  const timeoutHandle = setTimeout(
-    () => controller.abort(),
-    EXPLAIN_TIMEOUT_MS
-  );
-
   try {
-    const res = await fetch(aiModel.apiUrl, {
-      method: "POST",
-      headers: buildAnthropicHeaders(aiModel.apiKey),
-      body: JSON.stringify({
-        model: aiModel.config.model,
-        max_tokens: 400,
-        system,
-        messages: [{ role: "user", content: user }],
-      }),
-      signal: controller.signal,
+    const adapter = getAiAdapter(aiModel.config.provider);
+    const messages: AiMessage[] = [{ role: "user", content: user }];
+    const result = await adapter.chat(messages, aiModel.config, {
+      maxTokens: 400,
+      system,
     });
-
-    if (!res.ok) {
-      const text = await res.text();
-      console.error(
-        "[Prompts API] explain-change provider error:",
-        res.status,
-        text
-      );
-      const status =
-        res.status === 429
-          ? 429
-          : res.status === 401 || res.status === 403
-            ? 502
-            : res.status >= 500
-              ? 502
-              : 502;
-      return NextResponse.json(
-        { error: `AI provider responded ${res.status}` },
-        { status }
-      );
-    }
-
-    const json = (await res.json()) as { content?: AnthropicContentBlock[] };
-    const summary = (json.content || [])
-      .filter((c) => c.type === "text" && typeof c.text === "string")
-      .map((c) => c.text as string)
-      .join("\n")
-      .trim();
+    const summary = result.content.trim();
 
     if (!summary) {
       return NextResponse.json(
@@ -145,7 +103,6 @@ Resumo da mudanca:`;
       );
     }
 
-    // Enforce 500-char hard cap (matches publish validation).
     const capped = summary.length > 500 ? summary.slice(0, 500) : summary;
     return NextResponse.json({ summary: capped });
   } catch (err) {
@@ -161,7 +118,5 @@ Resumo da mudanca:`;
       { error: "Failed to generate summary" },
       { status: 500 }
     );
-  } finally {
-    clearTimeout(timeoutHandle);
   }
 }
