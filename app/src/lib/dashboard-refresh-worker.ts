@@ -6,12 +6,12 @@ import { uploadHtmlFile } from "@/lib/storage";
 import { archiveCurrentVersion } from "@/lib/versions";
 import { extractTextFromHtml, MAX_SEARCHABLE_TEXT } from "@/lib/html-text";
 import { triggerThumbnailGeneration } from "@/lib/thumbnail";
-import { getStorageBucketName } from "@/lib/storage-bucket";
 import { isAllowedMcpHost } from "@/lib/mcp-hosts";
 import { resolvePrompt } from "@/lib/prompt-registry";
 import { renderRefreshSystemPrompt } from "@/lib/refresh-prompt-fallback";
 import type { AiRecipe } from "@/lib/types";
-import { resolveRefreshModel, buildAnthropicHeaders } from "@/lib/ai-model";
+import { resolveRefreshModel } from "@/lib/ai-model";
+import { getAiAdapter } from "@/lib/ai-providers";
 
 const MAX_TOOL_LOOPS = 15;
 
@@ -191,7 +191,7 @@ export async function runDashboardRefreshJob({
 
     let aiModel: Awaited<ReturnType<typeof resolveRefreshModel>>;
     try {
-      aiModel = await resolveRefreshModel(ownerId, aiRecipe.model);
+      aiModel = await resolveRefreshModel(ownerId, aiRecipe.model, aiRecipe.provider);
     } catch (err) {
       await failRefreshJob(
         docRef,
@@ -204,9 +204,8 @@ export async function runDashboardRefreshJob({
     let currentHtml = "";
     let layoutUnavailable = false;
     try {
-      const { adminStorage } = await import("@/lib/firebase/admin");
-      const bucket = adminStorage.bucket(getStorageBucketName());
-      const [buffer] = await bucket.file(dashData.storagePath as string).download();
+      const { getHtmlFile } = await import("@/lib/storage");
+      const buffer = await getHtmlFile(dashData.storagePath as string);
       currentHtml = buffer.toString("utf-8");
     } catch (err) {
       // GCS read failed. Refresh can still run, but without the original HTML
@@ -248,7 +247,7 @@ export async function runDashboardRefreshJob({
       console.log("[Refresh] Using prompt versions:", promptVersions);
     }
 
-    let fileMessages: Array<{ role: string; content: string }> = [];
+    let fileMessages: Array<{ role: "user"; content: string }> = [];
     try {
       const convDoc = await adminDb
         .collection("dashboards")
@@ -270,7 +269,8 @@ export async function runDashboardRefreshJob({
 
     const userMessage = `Refresh the dashboard "${dashData.title}" with the latest data. Original request was: "${aiRecipe.generationPrompt}". Query fresh data and regenerate the HTML with updated numbers.`;
 
-    let anthropicMessages: Array<{ role: string; content: string | ContentBlock[] }> = [
+    const aiAdapter = getAiAdapter(aiModel.config.provider);
+    let aiMessages: Array<{ role: "user" | "assistant"; content: string | ContentBlock[] }> = [
       ...fileMessages,
       { role: "user", content: userMessage },
     ];
@@ -281,28 +281,24 @@ export async function runDashboardRefreshJob({
     while (loopCount < MAX_TOOL_LOOPS) {
       loopCount++;
 
-      const anthropicRes = await fetch(aiModel.apiUrl, {
-        method: "POST",
-        headers: buildAnthropicHeaders(aiModel.apiKey),
-        body: JSON.stringify({
-          model: aiModel.config.model,
-          max_tokens: 16384,
+      let result: Awaited<ReturnType<typeof aiAdapter.chat>>;
+      try {
+        result = await aiAdapter.chat(aiMessages, aiModel.config, {
+          maxTokens: 16384,
           system: systemPrompt,
           tools,
-          messages: anthropicMessages,
-        }),
-      });
-
-      if (!anthropicRes.ok) {
-        const errText = await anthropicRes.text();
-        console.error(`[Refresh] Anthropic ${anthropicRes.status}: ${errText}`);
-        await failRefreshJob(docRef, `AI generation failed: ${anthropicRes.status}`);
+        });
+      } catch (err) {
+        console.error(`[Refresh] ${aiModel.config.provider} failed:`, err);
+        await failRefreshJob(
+          docRef,
+          `AI generation failed: ${err instanceof Error ? err.message : "unknown error"}`
+        );
         return;
       }
 
-      const result = await anthropicRes.json();
-      const content: ContentBlock[] = result.content || [];
-      const stopReason: string = result.stop_reason;
+      const content: ContentBlock[] = (result.rawContent || []) as ContentBlock[];
+      const stopReason = result.stopReason;
 
       const toolResults: ContentBlock[] = [];
 
@@ -339,8 +335,8 @@ export async function runDashboardRefreshJob({
       if (html) break;
 
       if (stopReason === "tool_use" && toolResults.length > 0) {
-        anthropicMessages = [
-          ...anthropicMessages,
+        aiMessages = [
+          ...aiMessages,
           { role: "assistant", content },
           { role: "user", content: toolResults },
         ];
@@ -388,8 +384,9 @@ export async function runDashboardRefreshJob({
       fileSizeBytes: buffer.length,
       searchableText,
       updatedAt: FieldValue.serverTimestamp(),
-      "aiRecipe.lastRefreshedAt": completedAt,
+      "aiRecipe.lastRefreshedAt": new Date().toISOString(),
       "aiRecipe.model": aiModel.config.model,
+      "aiRecipe.provider": aiModel.config.provider,
       "aiRecipe.lastPromptVersions": promptVersions,
       refreshLockedUntil: 0,
       "refreshJob.status": "completed",
