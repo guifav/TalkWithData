@@ -20,6 +20,8 @@ export interface AiRecipe {
   staleAfterHours: number;
   /** AI model used to generate/refresh this dashboard (e.g. "claude-opus-4-20250514") */
   model?: string;
+  /** AI provider used (e.g. "anthropic", "openai") */
+  provider?: string;
   /** Files uploaded and used during generation */
   uploads?: Array<{ name: string; type: string; parsedChars: number }>;
 }
