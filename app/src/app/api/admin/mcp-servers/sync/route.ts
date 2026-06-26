@@ -27,10 +27,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const { id } = body as { id?: string };
 
-    const apiKey = process.env.CULKIN_MCP_API_KEY;
+    const apiKey = process.env.MCP_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: "CULKIN_MCP_API_KEY not configured" },
+        { error: "MCP_API_KEY not configured" },
         { status: 500 }
       );
     }

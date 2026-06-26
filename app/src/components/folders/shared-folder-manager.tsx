@@ -36,6 +36,7 @@ import {
 import { toast } from "sonner";
 import type { Dashboard } from "@/lib/types";
 import {
+import { getAllowedAuthDomain, isAllowedEmailDomain } from "@/lib/auth-domain";
   addDashboardToSharedFolder,
   removeDashboardFromSharedFolder,
 } from "@/lib/firestore/shared-folders";
@@ -58,6 +59,7 @@ function SharedFolderEditDialog({
   folder?: SharedFolder | null;
   onSaved: () => void;
 }) {
+  const allowedAuthDomain = getAllowedAuthDomain();
   const [name, setName] = useState("");
   const [emails, setEmails] = useState("");
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
@@ -97,7 +99,7 @@ function SharedFolderEditDialog({
       const parsedEmails = emails
         .split(/[\n,]/)
         .map((e) => e.trim().toLowerCase())
-        .filter((e) => e.endsWith("@griinstitute.org"));
+        .filter(isAllowedEmailDomain);
 
       if (folder) {
         await updateSharedFolder(folder.id, {
@@ -162,7 +164,7 @@ function SharedFolderEditDialog({
               rows={3}
             />
             <p className="text-xs text-muted-foreground">
-              One email per line. Only @griinstitute.org addresses.
+              One email per line. {`Only @${allowedAuthDomain} addresses.`}
             </p>
           </div>
 

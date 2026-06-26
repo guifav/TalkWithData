@@ -1,15 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import { buildIssue155RolePlan } from "@/lib/role-access-plan";
+process.env.ALLOWED_AUTH_DOMAIN = "example.com";
+process.env.STORAGE_BUCKET_NAME = "test-bucket";
 
 describe("buildIssue155RolePlan", () => {
   it("preserves current superadmins and plans every other existing user as user", () => {
     const plan = buildIssue155RolePlan([
-      { uid: "super-1", email: "super@griinstitute.org", role: "superadmin" },
-      { uid: "admin-1", email: "admin@griinstitute.org", role: "admin" },
-      { uid: "user-1", email: "user@griinstitute.org", role: "user" },
-      { uid: "missing-1", email: "missing@griinstitute.org" },
-      { uid: "invalid-1", email: "invalid@griinstitute.org", role: "owner" },
+      { uid: "super-1", email: "super@example.com", role: "superadmin" },
+      { uid: "admin-1", email: "admin@example.com", role: "admin" },
+      { uid: "user-1", email: "user@example.com", role: "user" },
+      { uid: "missing-1", email: "missing@example.com" },
+      { uid: "invalid-1", email: "invalid@example.com", role: "owner" },
     ]);
 
     expect(plan.summary).toEqual({

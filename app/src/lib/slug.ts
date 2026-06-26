@@ -1,6 +1,6 @@
 /**
  * Slug utilities for friendly dashboard URLs.
- * Pattern: dashs.mygri.com/view/my-dashboard-title
+ * Pattern: APP_URL/view/my-dashboard-title
  *
  * Uniqueness is enforced via a transactional reservation in the
  * `slugs` collection (one doc per slug, value = dashboard ID).

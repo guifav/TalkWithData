@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+process.env.ALLOWED_AUTH_DOMAIN = "example.com";
+process.env.STORAGE_BUCKET_NAME = "test-bucket";
 
 const mockVerifyIdToken = vi.fn();
 
@@ -220,7 +222,7 @@ function makeRequest(
 function setupAuth(role: "user" | "admin" | "superadmin") {
   mockVerifyIdToken.mockResolvedValue({
     uid: `uid-${role}`,
-    email: `${role}@griinstitute.org`,
+    email: `${role}@example.com`,
     name: `Test ${role}`,
   });
   userDocs.set(`uid-${role}`, { exists: true, data: { role } });
@@ -380,7 +382,7 @@ describe("Prompts API — validation", () => {
               status: "archived",
               changeSummary: "legacy",
               authorUid: "legacy",
-              authorEmail: "legacy@griinstitute.org",
+              authorEmail: "legacy@example.com",
               createdAt: new Date("2026-05-15T00:00:00.000Z"),
               restoredFromVersion: null,
             },
@@ -418,7 +420,7 @@ describe("Prompts API — validation", () => {
               status: "archived",
               changeSummary: "legacy",
               authorUid: "legacy",
-              authorEmail: "legacy@griinstitute.org",
+              authorEmail: "legacy@example.com",
               createdAt: new Date("2026-05-15T00:00:00.000Z"),
               restoredFromVersion: null,
             },

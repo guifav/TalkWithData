@@ -20,6 +20,7 @@ import type { Dashboard } from "@/lib/types";
 import type { SharedFolder } from "@/lib/firestore/shared-folders";
 import { Badge } from "@/components/ui/badge";
 import { FolderOpen } from "lucide-react";
+import { getAllowedAuthDomain, isAllowedEmailDomain } from "@/lib/auth-domain";
 
 interface DepartmentOption {
   id: string;
@@ -35,6 +36,7 @@ interface SharingDialogProps {
 }
 
 export function SharingDialog({ dashboard, open, onOpenChange, sharedFolders = [] }: SharingDialogProps) {
+  const allowedAuthDomain = getAllowedAuthDomain();
   const [visibility, setVisibility] = useState<"team" | "specific">(dashboard.visibility);
   const [emails, setEmails] = useState(dashboard.allowedEmails.join("\n"));
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>(
@@ -92,7 +94,7 @@ export function SharingDialog({ dashboard, open, onOpenChange, sharedFolders = [
           ? emails
               .split(/[\n,]/)
               .map((e) => e.trim().toLowerCase())
-              .filter((e) => e.endsWith("@griinstitute.org"))
+              .filter(isAllowedEmailDomain)
           : [];
 
       const allowedDepartments =
@@ -158,7 +160,7 @@ export function SharingDialog({ dashboard, open, onOpenChange, sharedFolders = [
                 onChange={() => setVisibility("team")}
                 className="accent-primary"
               />
-              <span className="text-sm">All GRI team</span>
+              <span className="text-sm">All team</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -184,7 +186,7 @@ export function SharingDialog({ dashboard, open, onOpenChange, sharedFolders = [
                   rows={3}
                 />
                 <p className="text-xs text-muted-foreground">
-                  One email per line. Only @griinstitute.org addresses.
+                  One email per line. {`Only @${allowedAuthDomain} addresses.`}
                 </p>
               </div>
               <div className="space-y-2">

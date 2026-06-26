@@ -11,8 +11,8 @@ function initApp(): App {
     try {
       return initializeApp({
         credential: cert(JSON.parse(saJson)),
-        projectId: "gri-dashs",
-        storageBucket: "gri-dashs-uploads",
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        storageBucket: process.env.STORAGE_BUCKET_NAME,
       });
     } catch (e) {
       console.error("Failed to init with SA_KEY_JSON:", e);
@@ -21,8 +21,8 @@ function initApp(): App {
 
   // GCP default credentials (Cloud Run)
   return initializeApp({
-    projectId: "gri-dashs",
-    storageBucket: "gri-dashs-uploads",
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    storageBucket: process.env.STORAGE_BUCKET_NAME,
   });
 }
 

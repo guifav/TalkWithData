@@ -1,6 +1,6 @@
 # generate-thumbnail
 
-Cloud Function that generates PNG thumbnails for GRI Dashs dashboards using Puppeteer.
+Cloud Function that generates PNG thumbnails for Talk With Data dashboards using Puppeteer.
 
 ## How it works
 
@@ -28,15 +28,15 @@ gcloud functions deploy generateThumbnail \
   --region southamerica-east1 \
   --memory 1GiB \
   --timeout 60s \
-  --project gri-dashs \
-  --set-env-vars THUMBNAIL_SECRET=<secret>,GCS_BUCKET=gri-dashs-uploads
+  --project <firebase-project-id> \
+  --set-env-vars THUMBNAIL_SECRET=<secret>,STORAGE_BUCKET_NAME=<storage-bucket>
 ```
 
 After deploying, set the function URL on Cloud Run:
 
 ```bash
-gcloud run services update dashs-app \
+gcloud run services update <cloud-run-service> \
   --region southamerica-east1 \
-  --project gri-dashs \
+  --project <firebase-project-id> \
   --update-env-vars THUMBNAIL_FUNCTION_URL=<function-url>,THUMBNAIL_SECRET=<secret>
 ```

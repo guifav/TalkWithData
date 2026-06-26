@@ -7,8 +7,9 @@ import {
   User as FirebaseUser,
 } from "firebase/auth";
 import { auth } from "./client";
+import { getAllowedAuthDomain, isAllowedEmailDomain } from "@/lib/auth-domain";
 
-const ALLOWED_DOMAIN = "griinstitute.org";
+const ALLOWED_DOMAIN = getAllowedAuthDomain();
 
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
@@ -19,7 +20,7 @@ export async function signInWithGoogle(): Promise<FirebaseUser> {
   const result = await signInWithPopup(auth, googleProvider);
   const email = result.user.email;
 
-  if (!email || !email.endsWith(`@${ALLOWED_DOMAIN}`)) {
+  if (!email || !isAllowedEmailDomain(email)) {
     await firebaseSignOut(auth);
     throw new Error(`Access restricted to @${ALLOWED_DOMAIN} accounts.`);
   }

@@ -16,9 +16,9 @@ export const PAGE_TITLE: I18n = {
 };
 
 export const PAGE_SUBTITLE: I18n = {
-  pt: "Tudo o que você precisa saber para usar o GRI Dashboards.",
-  en: "Everything you need to know to use GRI Dashboards.",
-  es: "Todo lo que necesitas saber para usar GRI Dashboards.",
+  pt: "Tudo o que você precisa saber para usar o Talk With Data.",
+  en: "Everything you need to know to use Talk With Data.",
+  es: "Todo lo que necesitas saber para usar Talk With Data.",
 };
 
 export const GUIDE_SECTIONS: GuideSection[] = [
@@ -31,10 +31,10 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       es: "Primeros Pasos",
     },
     content: {
-      pt: `O GRI Dashboards é a plataforma interna do GRI Institute para criar, visualizar e compartilhar dashboards e relatórios interativos.
+      pt: `O Talk With Data é a plataforma interna do Talk With Data para criar, visualizar e compartilhar dashboards e relatórios interativos.
 
-• **Acesso:** Entre com seu e-mail corporativo do GRI (@griinstitute.org) via login do Google.
-• **Quem pode usar:** Todos os colaboradores do GRI Institute com conta autorizada.
+• **Acesso:** Entre com seu e-mail corporativo da sua organizacao via login do Google via login do Google.
+• **Quem pode usar:** Todos os colaboradores do Talk With Data com conta autorizada.
 • **Página inicial:** Ao fazer login, você verá a home com abas — **Meus** (dashboards que você criou), **Compartilhados** (compartilhados com você), **Favoritos** e **Arquivados**.
 • **Favoritos:** Dashboards marcados com ⭐ aparecem na aba **Favoritos**.
 • **Recentes:** A seção de recentes mostra os dashboards acessados recentemente.
@@ -42,10 +42,10 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 • **Filtros:** Filtre por categoria (departamento) ou pasta para encontrar o que precisa.
 
 **Dica:** Marque seus dashboards favoritos com a ⭐ para encontrá-los rapidamente na aba **Favoritos**.`,
-      en: `GRI Dashboards is the GRI Institute's internal platform for creating, viewing, and sharing interactive dashboards and reports.
+      en: `Talk With Data is the Talk With Data's internal platform for creating, viewing, and sharing interactive dashboards and reports.
 
-• **Access:** Sign in with your GRI corporate email (@griinstitute.org) via Google login.
-• **Who can use it:** All GRI Institute team members with an authorized account.
+• **Access:** Sign in with your organization email via Google login.
+• **Who can use it:** All Talk With Data team members with an authorized account.
 • **Home page:** After logging in, you'll see the home page with tabs — **Mine** (dashboards you created), **Shared** (shared with you), **Favorites**, and **Archived**.
 • **Favorites:** Dashboards marked with ⭐ appear in the **Favorites** tab.
 • **Recent:** The recent section shows your recently viewed dashboards.
@@ -53,10 +53,10 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 • **Filters:** Filter by category or folder to find what you need.
 
 **Tip:** Star ⭐ your favorite dashboards so you can find them quickly in the **Favorites** tab.`,
-      es: `GRI Dashboards es la plataforma interna del GRI Institute para crear, visualizar y compartir dashboards y reportes interactivos.
+      es: `Talk With Data es la plataforma interna del Talk With Data para crear, visualizar y compartir dashboards y reportes interactivos.
 
-• **Acceso:** Inicia sesión con tu correo corporativo de GRI (@griinstitute.org) vía Google.
-• **Quién puede usarlo:** Todos los colaboradores del GRI Institute con cuenta autorizada.
+• **Acceso:** Inicia sesión con tu correo corporativo de tu organizacion mediante Google vía Google.
+• **Quién puede usarlo:** Todos los colaboradores del Talk With Data con cuenta autorizada.
 • **Página inicial:** Al iniciar sesión, verás la home con pestañas — **Míos** (dashboards que creaste), **Compartidos** (compartidos contigo), **Favoritos** y **Archivados**.
 • **Favoritos:** Los dashboards marcados con ⭐ aparecen en la pestaña **Favoritos**.
 • **Recientes:** La sección de recientes muestra los dashboards vistos recientemente.
@@ -166,7 +166,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       es: "Conversar con Datos",
     },
     content: {
-      pt: `O recurso Conversar com Dados permite fazer perguntas em linguagem natural sobre os dados do GRI — e a IA responde com análises, tabelas e gráficos.
+      pt: `O recurso Conversar com Dados permite fazer perguntas em linguagem natural sobre os dados disponiveis — e a IA responde com análises, tabelas e gráficos.
 
 • **Como acessar:** Clique em **Conversar com dados** no menu de criação da página inicial, ou acesse \`/chat\`.
 • **Pré-requisito:** Você precisa ter acesso a pelo menos uma fonte de dados (MCP). Se a opção não aparecer, solicite acesso ao administrador.
@@ -176,7 +176,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 • **Respostas:** A IA pode gerar tabelas, gráficos e insights a partir das suas perguntas.
 
 **Dica:** Seja específico nas perguntas. "Quantos membros novos entraram em março?" funciona melhor que "me fale sobre membros".`,
-      en: `The Chat with Data feature lets you ask questions in natural language about GRI data — and the AI responds with analyses, tables, and charts.
+      en: `The Chat with Data feature lets you ask questions in natural language about available data — and the AI responds with analyses, tables, and charts.
 
 • **How to access:** Click **Chat with data** in the create menu on the home page, or go to \`/chat\`.
 • **Prerequisite:** You need access to at least one data source (MCP). If the option doesn't appear, request access from your admin.
@@ -186,7 +186,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 • **Responses:** The AI can generate tables, charts, and insights from your questions.
 
 **Tip:** Be specific in your questions. "How many new members joined in March?" works better than "tell me about members".`,
-      es: `La función Conversar con Datos permite hacer preguntas en lenguaje natural sobre los datos de GRI — y la IA responde con análisis, tablas y gráficos.
+      es: `La función Conversar con Datos permite hacer preguntas en lenguaje natural sobre los datos disponibles — y la IA responde con análisis, tablas y gráficos.
 
 • **Cómo acceder:** Haz clic en **Conversar con datos** en el menú de creación de la página principal, o ve a \`/chat\`.
 • **Prerrequisito:** Necesitas acceso a al menos una fuente de datos (MCP). Si la opción no aparece, solicita acceso a tu administrador.
