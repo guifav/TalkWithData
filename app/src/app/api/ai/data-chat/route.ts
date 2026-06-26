@@ -457,8 +457,7 @@ export async function POST(request: NextRequest) {
               { role: "assistant", content: content as ContentBlock[] },
               { role: "user", content: toolResults },
             ];
-            toolLoopCount++;
-        continueLoop = true;
+            continueLoop = true;
           }
         }
 

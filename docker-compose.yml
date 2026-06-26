@@ -10,7 +10,7 @@ services:
     environment:
       STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
       LOCAL_STORAGE_ROOT: /data/uploads
-      PORT: 3000
+      PORT: 8080
     volumes:
       - app_data:/data
     restart: unless-stopped
