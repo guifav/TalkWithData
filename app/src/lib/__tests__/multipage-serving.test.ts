@@ -70,7 +70,7 @@ describe("referer-based auth for sub-resources", () => {
   it("accepts referer from same dashboard view", () => {
     expect(
       isValidReferer(
-        "https://dashs.example.com/api/dashboards/abc123/view",
+        "https://talkwithdata.example.com/api/dashboards/abc123/view",
         "abc123"
       )
     ).toBe(true);
@@ -79,7 +79,7 @@ describe("referer-based auth for sub-resources", () => {
   it("accepts referer from same dashboard with embed token", () => {
     expect(
       isValidReferer(
-        "https://dashs.example.com/api/dashboards/abc123/view?embed_token=xxx",
+        "https://talkwithdata.example.com/api/dashboards/abc123/view?embed_token=xxx",
         "abc123"
       )
     ).toBe(true);
@@ -88,7 +88,7 @@ describe("referer-based auth for sub-resources", () => {
   it("rejects referer from different dashboard", () => {
     expect(
       isValidReferer(
-        "https://dashs.example.com/api/dashboards/other-id/view",
+        "https://talkwithdata.example.com/api/dashboards/other-id/view",
         "abc123"
       )
     ).toBe(false);

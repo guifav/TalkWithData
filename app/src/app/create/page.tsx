@@ -791,7 +791,7 @@ function CreatePageInner() {
                   let html = prepareDashboardHtmlForRender(currentHtml);
                   // Inject data API bootstrap for preview (read-only: no session cookie in srcDoc iframe)
                   if (draftDashboardId) {
-                    const bootstrap = `<script>window.__DASHS_DASHBOARD_ID__="${draftDashboardId}";window.__DASHS_DATA_API__="/api/dashboards/${draftDashboardId}/data";window.__DASHS_PREVIEW__=true;</script>`;
+                    const bootstrap = `<script>window.__TWD_DASHBOARD_ID__="${draftDashboardId}";window.__TWD_DATA_API__="/api/dashboards/${draftDashboardId}/data";window.__TWD_PREVIEW__=true;</script>`;
                     if (/<head[^>]*>/i.test(html)) {
                       html = html.replace(/(<head[^>]*>)/i, `$1\n${bootstrap}`);
                     } else {
