@@ -168,7 +168,8 @@ export async function GET(
         dataApi: `/api/dashboards/${id}/data`,
         dataToken: sessionToken,
       };
-      const dataApiScript = `<script>window.__TWD_DASHBOARD_ID__=${JSON.stringify(bootstrap.dashboardId)};window.__TWD_DATA_API__=${JSON.stringify(bootstrap.dataApi)};window.__TWD_DATA_TOKEN__=${JSON.stringify(bootstrap.dataToken)};</script>`;
+      const safeJson = (v: unknown) => JSON.stringify(v).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
+      const dataApiScript = `<script>window.__TWD_DASHBOARD_ID__=${safeJson(bootstrap.dashboardId)};window.__TWD_DATA_API__=${safeJson(bootstrap.dataApi)};window.__TWD_DATA_TOKEN__=${safeJson(bootstrap.dataToken)};</script>`;
       if (/<head[^>]*>/i.test(html)) {
         html = html.replace(/(<head[^>]*>)/i, `$1\n    ${dataApiScript}`);
       } else {
