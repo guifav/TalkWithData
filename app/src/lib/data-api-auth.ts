@@ -53,7 +53,7 @@ export async function verifyDataApiRequest(
     const authHeader = request.headers.get("authorization");
     if (authHeader?.startsWith("Bearer ")) {
       const bearerToken = authHeader.slice(7);
-      if (verifyDashSessionToken(dashboardId, bearerToken, "read")) {
+      if (verifyDashSessionToken(dashboardId, bearerToken, "write")) {
         authenticated = true;
       }
     }
