@@ -61,11 +61,11 @@ export function buildScopeHeaders(
   secret: string
 ): Record<string, string> {
   return {
-    "X-Talk With Data-User-Id": userId,
-    "X-Talk With Data-User-Email": userEmail,
-    "X-Talk With Data-Dashboard-Id": dashboardId,
-    "X-Talk With Data-Schema": schema,
-    "X-Talk With Data-Table-Prefix": tablePrefix,
-    "X-Talk With Data-Scope-Signature": signScope(userId, dashboardId, schema, tablePrefix, secret),
+    "X-TWD-User-Id": userId,
+    "X-TWD-User-Email": userEmail,
+    "X-TWD-Dashboard-Id": dashboardId,
+    "X-TWD-Schema": schema,
+    "X-TWD-Table-Prefix": tablePrefix,
+    "X-TWD-Scope-Signature": signScope(userId, dashboardId, schema, tablePrefix, secret),
   };
 }
