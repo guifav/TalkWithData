@@ -64,7 +64,28 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    return NextResponse.json({ id: doc.id, ...data });
+    const isOwner = data.createdBy === auth.uid;
+    if (isOwner) {
+      return NextResponse.json({ id: doc.id, ...data });
+    }
+
+    // Sanitized response for non-owners (viewers/team/folder access)
+    return NextResponse.json({
+      id: doc.id,
+      title: data.title || "Untitled",
+      description: data.description || null,
+      category: data.category || null,
+      source: data.source || null,
+      visibility: data.visibility || "private",
+      slug: data.slug || null,
+      thumbnailUrl: data.thumbnailUrl || null,
+      viewCount: data.viewCount || 0,
+      createdAt: data.createdAt || null,
+      updatedAt: data.updatedAt || null,
+      createdBy: data.createdBy || null,
+      createdByEmail: data.createdByEmail || null,
+      createdByName: data.createdByName || null,
+    });
   } catch (error) {
     console.error("Failed to get dashboard:", error);
     return NextResponse.json(
