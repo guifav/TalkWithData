@@ -126,38 +126,56 @@ interface FakeFolderDoc {
   data: Record<string, unknown>;
 }
 
+// Firestore `where` requires "array-contains" for the folder/department
+// membership queries this fake stands in for. Asserting on the operator here
+// means production code that regresses to e.g. "==" fails the test instead of
+// silently passing against a fake that would match on any operator.
+function assertArrayContains(collectionName: string, op: string) {
+  if (op !== "array-contains") {
+    throw new Error(
+      `Expected "array-contains" operator on collection "${collectionName}", got "${op}"`
+    );
+  }
+}
+
 function makeFakeAdminDb(folders: FakeFolderDoc[], departments: FakeFolderDoc[] = []) {
   return {
     collection: (name: string) => {
       if (name === "shared-folders") {
         return {
-          where: (field: string, _op: string, value: string) => ({
-            get: async () => {
-              const docs = folders
-                .filter((f) => {
-                  const ids = f.data[field] as string[] | undefined;
-                  return Array.isArray(ids) && ids.includes(value);
-                })
-                .map((f) => ({ id: f.id, data: () => f.data }));
-              return { empty: docs.length === 0, docs };
-            },
-          }),
+          where: (field: string, op: string, value: string) => {
+            assertArrayContains(name, op);
+            return {
+              get: async () => {
+                const docs = folders
+                  .filter((f) => {
+                    const ids = f.data[field] as string[] | undefined;
+                    return Array.isArray(ids) && ids.includes(value);
+                  })
+                  .map((f) => ({ id: f.id, data: () => f.data }));
+                return { empty: docs.length === 0, docs };
+              },
+            };
+          },
         };
       }
 
       if (name === "departments") {
         return {
-          where: (field: string, _op: string, value: string) => ({
-            get: async () => {
-              const docs = departments
-                .filter((d) => {
-                  const uids = d.data[field] as string[] | undefined;
-                  return Array.isArray(uids) && uids.includes(value);
-                })
-                .map((d) => ({ id: d.id, data: () => d.data }));
-              return { empty: docs.length === 0, docs };
-            },
-          }),
+          where: (field: string, op: string, value: string) => {
+            assertArrayContains(name, op);
+            return {
+              get: async () => {
+                const docs = departments
+                  .filter((d) => {
+                    const uids = d.data[field] as string[] | undefined;
+                    return Array.isArray(uids) && uids.includes(value);
+                  })
+                  .map((d) => ({ id: d.id, data: () => d.data }));
+                return { empty: docs.length === 0, docs };
+              },
+            };
+          },
         };
       }
 
@@ -211,6 +229,32 @@ describe("canViewDashboardViaSharedFolder", () => {
     ]);
 
     const result = await canViewDashboardViaSharedFolder("dash-1", viewer, adminDb);
+
+    expect(result).toEqual({
+      allowed: true,
+      folderName: "Shared Folder",
+      folderId: "folder-1",
+    });
+  });
+
+  it("matches sharedWithEmails using lowercase semantics: mixed-case user email matches a lowercase stored entry", async () => {
+    const adminDb = makeFakeAdminDb([
+      {
+        id: "folder-1",
+        data: {
+          dashboardIds: ["dash-1"],
+          createdBy: "someone-else-uid",
+          name: "Shared Folder",
+          sharedWithEmails: [viewer.email], // stored lowercase
+        },
+      },
+    ]);
+
+    const result = await canViewDashboardViaSharedFolder(
+      "dash-1",
+      { uid: viewer.uid, email: "Viewer@Example.com" },
+      adminDb
+    );
 
     expect(result).toEqual({
       allowed: true,

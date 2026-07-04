@@ -47,6 +47,28 @@ describe("callMcpTool", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("refuses a malformed endpoint (not a URL) and never calls fetch", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const endpoint = "not-a-url";
+    const result = await callMcpTool("some_tool", {}, endpoint);
+
+    expect(JSON.parse(result)).toEqual({ error: `Endpoint not allowed: ${endpoint}` });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses every endpoint when the MCP_ALLOWED_HOSTS allowlist is empty, and never calls fetch", async () => {
+    vi.stubEnv("MCP_ALLOWED_HOSTS", "");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await callMcpTool("some_tool", {}, ALLOWED_ENDPOINT);
+
+    expect(JSON.parse(result)).toEqual({ error: `Endpoint not allowed: ${ALLOWED_ENDPOINT}` });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("posts a JSON-RPC 2.0 tools/call body with the API key header and returns the text content", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

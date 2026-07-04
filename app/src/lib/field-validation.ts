@@ -23,6 +23,13 @@ export function validateFieldValue(
     case "DATE": {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(str))
         return { valid: false, sanitized: null, error: "Must be YYYY-MM-DD" };
+      // A regex only checks shape; reject impossible calendar dates (e.g.
+      // "2026-13-99" or a Feb 29 on a non-leap year) via a round-trip check.
+      const [y, m, d] = str.split("-").map(Number);
+      const dt = new Date(Date.UTC(y, m - 1, d));
+      if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) {
+        return { valid: false, sanitized: null, error: "Must be YYYY-MM-DD" };
+      }
       return { valid: true, sanitized: str };
     }
     case "SELECT":

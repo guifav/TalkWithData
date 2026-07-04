@@ -61,13 +61,21 @@ describe("validateFieldValue: DATE", () => {
     expect(result).toEqual({ valid: false, sanitized: null, error: "Must be YYYY-MM-DD" });
   });
 
-  // Known gap: the regex only checks shape (4 digits, 2 digits, 2 digits) and
-  // does not validate that month/day are semantically real calendar values.
-  // "2026-13-99" has the right shape so it currently passes validation here.
-  // A semantic check (e.g. via Date parsing) is a follow-up, not fixed in this PR.
-  it("passes a shape-valid but semantically invalid date (documented gap, not fixed here)", () => {
+  // The regex only checks shape (4 digits, 2 digits, 2 digits); a round-trip
+  // check via Date parsing catches calendar-impossible values like this one.
+  it("rejects a shape-valid but semantically impossible date", () => {
     const result = validateFieldValue("2026-13-99", "DATE", [], true);
-    expect(result).toEqual({ valid: true, sanitized: "2026-13-99" });
+    expect(result).toEqual({ valid: false, sanitized: null, error: "Must be YYYY-MM-DD" });
+  });
+
+  it("accepts a real calendar date", () => {
+    const result = validateFieldValue("2026-07-04", "DATE", [], true);
+    expect(result).toEqual({ valid: true, sanitized: "2026-07-04" });
+  });
+
+  it("rejects Feb 29 on a non-leap year", () => {
+    const result = validateFieldValue("2026-02-29", "DATE", [], true);
+    expect(result).toEqual({ valid: false, sanitized: null, error: "Must be YYYY-MM-DD" });
   });
 });
 
