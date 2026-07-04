@@ -7,7 +7,7 @@ This guide explains how to deploy Talk With Data with Docker, Google Cloud Run, 
 - Node.js 22 or newer when running without Docker.
 - Docker for containerized deployment.
 - Firebase project with Authentication, Firestore, and Storage enabled.
-- A Prisma-compatible database through `DATABASE_URL`.
+- A PostgreSQL database reachable through `DATABASE_URL`. PostgreSQL is required, including for local development.
 - A storage bucket for dashboard HTML files and assets.
 - At least one AI provider API key for AI features.
 - HTTPS for production, especially for auth, embed views, and MCP calls.
@@ -130,7 +130,7 @@ Use `.env.example` as the source template. The table below describes deployment 
 | `FIREBASE_PROJECT_ID` | Yes | `project` | Firebase Admin project ID. |
 | `SA_KEY_JSON` | Local or non-GCP | JSON string | Optional on GCP when the runtime service account has access. |
 | `STORAGE_BUCKET_NAME` | Yes | `project-uploads` | Bucket used for dashboard files. |
-| `DATABASE_URL` | Yes | `postgresql://...` | Prisma connection string. SQLite can be used for local development. |
+| `DATABASE_URL` | Yes | `postgresql://...` | PostgreSQL connection string used by Prisma. PostgreSQL is required, including for local development. |
 | `DASHBOARD_SESSION_SECRET` | Yes | generated secret | Generate with `openssl rand -hex 32`. |
 | `APP_URL` | Recommended | `https://app.example.com` | Used for public links and token generation. |
 | `ANTHROPIC_API_KEY` | AI features | secret | Required for current AI model calls. |
@@ -211,13 +211,21 @@ Do not use ephemeral container storage for production dashboard assets.
 
 ## Database and Prisma
 
-For local development, `.env.example` uses:
+The Prisma schema targets PostgreSQL. PostgreSQL is required in every environment, including local development. SQLite URLs such as `file:./dev.db` do not work and fail during `prisma generate` and `prisma db push`.
+
+`.env.example` ships with a local PostgreSQL example:
 
 ```bash
-DATABASE_URL=file:./dev.db
+DATABASE_URL=postgresql://user:password@localhost:5432/talkwithdata
 ```
 
-For production, use Postgres or another Prisma-supported persistent database.
+To run a matching local PostgreSQL instance with Docker:
+
+```bash
+docker run -d --name talkwithdata-db -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password -e POSTGRES_DB=talkwithdata -p 5432:5432 -v talkwithdata-db-data:/var/lib/postgresql/data postgres:16-alpine
+```
+
+For production, use a managed or persistent PostgreSQL instance.
 
 After schema changes, generate the Prisma client:
 

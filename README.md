@@ -66,7 +66,7 @@ Copy `.env.example` to `.env`, then replace placeholders with project values.
 | `FIREBASE_PROJECT_ID` | Yes | Firebase Admin project ID. |
 | `SA_KEY_JSON` | Local only | Service account JSON for local development when Application Default Credentials are not available. |
 | `STORAGE_BUCKET_NAME` | Yes | Bucket used to store dashboard HTML packages and assets. |
-| `DATABASE_URL` | Yes | Prisma database connection string. |
+| `DATABASE_URL` | Yes | PostgreSQL connection string used by Prisma. PostgreSQL is required, including for local development. |
 | `DASHBOARD_SESSION_SECRET` | Yes | Secret used to sign dashboard and embed session tokens. |
 | `APP_URL` | Recommended | Public base URL used for links and token generation. |
 | `ANTHROPIC_API_KEY` | AI features | API key for Anthropic models. |
