@@ -106,6 +106,27 @@ describe("verifyEmbedToken", () => {
     // toDate present but not callable must be rejected, not thrown.
     seedToken("dash-a", TOK_A, { expiresAt: { toDate: 123 } });
     await expect(verifyEmbedToken("dash-a", TOK_A)).resolves.toBe(false);
+    // A toDate that throws must be caught and rejected, never propagate.
+    seedToken("dash-a", TOK_A, {
+      expiresAt: {
+        toDate: () => {
+          throw new Error("boom");
+        },
+      },
+    });
+    await expect(verifyEmbedToken("dash-a", TOK_A)).resolves.toBe(false);
+    // An object that throws during primitive conversion must be caught too.
+    seedToken("dash-a", TOK_B, {
+      expiresAt: {
+        valueOf: () => {
+          throw new Error("boom");
+        },
+        toString: () => {
+          throw new Error("boom");
+        },
+      },
+    });
+    await expect(verifyEmbedToken("dash-a", TOK_B)).resolves.toBe(false);
   });
 
   it("rejects malformed token strings without a Firestore read", async () => {

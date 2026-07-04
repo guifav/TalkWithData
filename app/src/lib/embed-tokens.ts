@@ -85,11 +85,18 @@ export async function verifyEmbedToken(
 
   // Check expiry. Reject a missing or invalid expiry rather than letting an
   // Invalid Date comparison (always false) accept the token indefinitely.
-  const rawExpiry = data.expiresAt;
-  const expiresAt =
-    rawExpiry && typeof rawExpiry.toDate === "function"
-      ? rawExpiry.toDate()
-      : new Date(rawExpiry);
+  let expiresAt: Date;
+  try {
+    const rawExpiry = data.expiresAt;
+    expiresAt =
+      rawExpiry && typeof rawExpiry.toDate === "function"
+        ? rawExpiry.toDate()
+        : new Date(rawExpiry);
+  } catch {
+    // A corrupt record (for example a poisoned valueOf/toString, or a toDate
+    // that throws) must be rejected cleanly, never propagate a 500.
+    return false;
+  }
 
   if (!(expiresAt instanceof Date) || Number.isNaN(expiresAt.getTime())) {
     return false;
