@@ -33,7 +33,7 @@ docker run -d --name talkwithdata-db -e POSTGRES_USER=user -e POSTGRES_PASSWORD=
 
 Open http://localhost:3000.
 
-Before testing authenticated flows, edit `.env` and set the Firebase values, `ALLOWED_AUTH_DOMAIN`, `STORAGE_BUCKET_NAME`, `DATABASE_URL`, `DASHBOARD_SESSION_SECRET`, and an AI provider key.
+Before testing authenticated flows, edit `.env` and set the Firebase values, `ALLOWED_AUTH_DOMAIN` and its browser copy `NEXT_PUBLIC_ALLOWED_AUTH_DOMAIN` (same value), `STORAGE_BUCKET_NAME`, `DATABASE_URL`, `DASHBOARD_SESSION_SECRET`, and an AI provider key.
 
 ### Docker setup
 
@@ -147,6 +147,8 @@ Run migrations in environments that use deployed migrations:
 ```bash
 npm run db:migrate
 ```
+
+Use `npm run db:push` while iterating on `app/prisma/schema.prisma` locally. It runs `prisma db push`, which syncs the schema straight to your database without creating migration files, and is the fastest way to prototype schema changes. Use `npm run db:migrate` to apply the committed migration files in `app/prisma/migrations`. It runs `prisma migrate deploy` and is what fresh setups and deployed environments should use. Do not mix the two against the same long-lived database, because `db:push` bypasses migration history and can cause drift.
 
 ## Adding a new AI provider
 

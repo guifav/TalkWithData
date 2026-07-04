@@ -14,6 +14,15 @@ Talk With Data helps teams publish dashboard HTML packages, search across conten
 
 Screenshots will be added after the public UI assets are finalized. The app uses the shadcn/ui Neutral theme, black, white, gray, and the Inter font.
 
+## Prerequisites
+
+- Node.js 22 or newer for local development without Docker.
+- Docker, optional, used by the quickstart and recommended for production parity.
+- A PostgreSQL database. PostgreSQL is required, including for local development.
+- A Firebase project with Authentication, Firestore, and Storage enabled.
+- A Google Cloud Storage bucket, or set `STORAGE_PROVIDER=local` to store uploads on the local filesystem.
+- At least one AI provider API key for AI features.
+
 ## Quickstart with Docker
 
 Run the app locally with Docker in three commands:
@@ -24,7 +33,7 @@ docker build -t talk-with-data -f app/Dockerfile app
 docker run --rm --env-file .env -p 3000:8080 talk-with-data
 ```
 
-Open http://localhost:3000.
+The container listens on port `8080`. The `-p 3000:8080` flag maps it to port 3000 on your machine. Open http://localhost:3000.
 
 The copied `.env` file contains placeholders. Configure Firebase, storage, and at least one AI provider before using authenticated and AI features.
 
@@ -57,6 +66,7 @@ Copy `.env.example` to `.env`, then replace placeholders with project values.
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `ALLOWED_AUTH_DOMAIN` | Yes | Restricts Google sign-in to a single email domain. Also required in `firestore.rules` before deploying rules. |
+| `NEXT_PUBLIC_ALLOWED_AUTH_DOMAIN` | Yes | Browser-side copy of `ALLOWED_AUTH_DOMAIN`. Client code cannot read `ALLOWED_AUTH_DOMAIN`, so set both to the same value at build time. |
 | `NEXT_PUBLIC_FIREBASE_API_KEY` | Yes | Firebase client API key. |
 | `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Yes | Firebase client auth domain. |
 | `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Yes | Firebase client project ID. |
@@ -82,6 +92,7 @@ Copy `.env.example` to `.env`, then replace placeholders with project values.
 | `THUMBNAIL_FUNCTION_URL` | Optional | Cloud Function URL for thumbnail generation. |
 | `THUMBNAIL_SECRET` | Optional | Shared secret for thumbnail generation. |
 | `STORAGE_PROVIDER` | Optional | Storage adapter selector. GCS is the default runtime path. |
+| `LOCAL_STORAGE_ROOT` | Optional | Directory for uploaded files when `STORAGE_PROVIDER` is `local`. Defaults to `/data/uploads`. Set automatically by `docker-compose.yml`. |
 
 See [.env.example](.env.example) for the current template.
 
