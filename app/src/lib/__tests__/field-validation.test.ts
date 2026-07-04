@@ -68,9 +68,9 @@ describe("validateFieldValue: DATE", () => {
     expect(result).toEqual({ valid: false, sanitized: null, error: "Must be YYYY-MM-DD" });
   });
 
-  it("accepts a real calendar date", () => {
-    const result = validateFieldValue("2026-07-04", "DATE", [], true);
-    expect(result).toEqual({ valid: true, sanitized: "2026-07-04" });
+  it("accepts Feb 29 on a leap year", () => {
+    const result = validateFieldValue("2024-02-29", "DATE", [], true);
+    expect(result).toEqual({ valid: true, sanitized: "2024-02-29" });
   });
 
   it("rejects Feb 29 on a non-leap year", () => {
