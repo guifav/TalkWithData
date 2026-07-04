@@ -141,6 +141,13 @@ describe("verifyEmbedToken", () => {
       verifyEmbedToken("dash-a", "a".repeat(44))
     ).resolves.toBe(false);
 
+    // Malformed dashboardId (a slash, or over the 1500-char doc-id limit) is
+    // rejected before any Firestore lookup, so .doc() never receives it.
+    await expect(verifyEmbedToken("dash/a", TOK_A)).resolves.toBe(false);
+    await expect(
+      verifyEmbedToken("d".repeat(1501), TOK_A)
+    ).resolves.toBe(false);
+
     // None of the malformed inputs above should have reached Firestore.
     expect(mockGet).not.toHaveBeenCalled();
   });
