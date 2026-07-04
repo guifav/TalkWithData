@@ -42,12 +42,20 @@ export async function createEmbedToken(
 }
 
 /**
- * Verify an embed token. Returns the dashboard ID if valid, null otherwise.
+ * Verify an embed token for a specific dashboard. Returns true only when the
+ * token record exists under that dashboard, is bound to it, and has not expired.
  */
 export async function verifyEmbedToken(
   dashboardId: string,
   token: string
 ): Promise<boolean> {
+  // Tokens are 32 random bytes, base64url encoded. Reject anything else before
+  // using the value as a Firestore document id (a "/" would make .doc() throw
+  // and turn a bad query param into a 500 instead of a 401).
+  if (!dashboardId || !token || !/^[A-Za-z0-9_-]+$/.test(token)) {
+    return false;
+  }
+
   const doc = await adminDb
     .collection("dashboards")
     .doc(dashboardId)
@@ -59,6 +67,14 @@ export async function verifyEmbedToken(
 
   const data = doc.data();
   if (!data) return false;
+
+  // Defense in depth (issue #30): the lookup path already scopes the token to
+  // this dashboard, but also require the stored binding and provenance so a
+  // misplaced, hand-written, or migrated record cannot authorize a view.
+  if (data.dashboardId !== dashboardId) return false;
+  if (typeof data.createdBy !== "string" || data.createdBy.length === 0) {
+    return false;
+  }
 
   // Check expiry
   const expiresAt = data.expiresAt?.toDate?.()
