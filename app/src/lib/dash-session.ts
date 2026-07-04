@@ -5,14 +5,33 @@ export type DashSessionScope = "read" | "write";
 /**
  * Server-side secret for HMAC-based dashboard session cookies.
  * MUST be set via DASHBOARD_SESSION_SECRET env var (shared across all instances).
- * Falls back to a per-process UUID ONLY for local development — in production
- * this would cause intermittent 401s across Cloud Run instances.
+ * In production a missing secret throws at first use: a per-process fallback
+ * would cause intermittent 401s across Cloud Run instances. Local development
+ * falls back to a per-process UUID.
+ *
+ * Resolved lazily, not at import time: `next build` imports route modules with
+ * NODE_ENV=production (the Docker builder stage has no secrets) and must not
+ * fail. Only minting or verifying a token requires the secret.
  */
-const secret = process.env.DASHBOARD_SESSION_SECRET;
-if (!secret && process.env.NODE_ENV === "production") {
-  console.error("CRITICAL: DASHBOARD_SESSION_SECRET not set in production. Dashboard session cookies will not work across instances.");
+let cachedSecret: string | null = null;
+
+function getDashSessionSecret(): string {
+  if (cachedSecret !== null) return cachedSecret;
+
+  const secret = process.env.DASHBOARD_SESSION_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "DASHBOARD_SESSION_SECRET is not set. Refusing to issue dashboard session tokens in production: a per-process fallback breaks sessions across instances and restarts."
+      );
+    }
+    console.warn(
+      "DASHBOARD_SESSION_SECRET not set. Falling back to a per-process secret (development only)."
+    );
+  }
+  cachedSecret = secret || randomUUID();
+  return cachedSecret;
 }
-export const DASH_SESSION_SECRET = secret || randomUUID();
 
 /**
  * Create an HMAC-SHA256 token for a dashboard session cookie.
@@ -22,7 +41,7 @@ export function createDashSessionToken(
   dashboardId: string,
   scope: DashSessionScope = "read"
 ): string {
-  return createHmac("sha256", DASH_SESSION_SECRET)
+  return createHmac("sha256", getDashSessionSecret())
     .update(`${dashboardId}:${scope}`)
     .digest("hex");
 }

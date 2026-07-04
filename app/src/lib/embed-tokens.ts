@@ -42,12 +42,27 @@ export async function createEmbedToken(
 }
 
 /**
- * Verify an embed token. Returns the dashboard ID if valid, null otherwise.
+ * Verify an embed token for a specific dashboard. Returns true only when the
+ * token record exists under that dashboard, is bound to it, has a non-empty
+ * createdBy, and has not expired.
  */
 export async function verifyEmbedToken(
   dashboardId: string,
   token: string
 ): Promise<boolean> {
+  // dashboardId is a route param used as a Firestore doc id; embed tokens are
+  // 32 random bytes base64url encoded (exactly 43 chars). Reject anything else
+  // before calling .doc(), so a bad or crafted value is a clean rejection
+  // instead of a 500 (a "/" would make .doc() throw).
+  if (
+    !dashboardId ||
+    !/^[A-Za-z0-9_-]{1,1500}$/.test(dashboardId) ||
+    !token ||
+    !/^[A-Za-z0-9_-]{43}$/.test(token)
+  ) {
+    return false;
+  }
+
   const doc = await adminDb
     .collection("dashboards")
     .doc(dashboardId)
@@ -60,10 +75,32 @@ export async function verifyEmbedToken(
   const data = doc.data();
   if (!data) return false;
 
-  // Check expiry
-  const expiresAt = data.expiresAt?.toDate?.()
-    ? data.expiresAt.toDate()
-    : new Date(data.expiresAt);
+  // Defense in depth (issue #30): the lookup path already scopes the token to
+  // this dashboard, but also require the stored binding and provenance so a
+  // misplaced, hand-written, or migrated record cannot authorize a view.
+  if (data.dashboardId !== dashboardId) return false;
+  if (typeof data.createdBy !== "string" || data.createdBy.length === 0) {
+    return false;
+  }
+
+  // Check expiry. Reject a missing or invalid expiry rather than letting an
+  // Invalid Date comparison (always false) accept the token indefinitely.
+  let expiresAt: Date;
+  try {
+    const rawExpiry = data.expiresAt;
+    expiresAt =
+      rawExpiry && typeof rawExpiry.toDate === "function"
+        ? rawExpiry.toDate()
+        : new Date(rawExpiry);
+  } catch {
+    // A corrupt record (for example a poisoned valueOf/toString, or a toDate
+    // that throws) must be rejected cleanly, never propagate a 500.
+    return false;
+  }
+
+  if (!(expiresAt instanceof Date) || Number.isNaN(expiresAt.getTime())) {
+    return false;
+  }
 
   if (expiresAt < new Date()) {
     // Cleanup expired token
