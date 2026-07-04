@@ -6,6 +6,15 @@ Hub open-source de dashboards com IA. Envie, organize, pesquise, converse e inco
 
 Talk With Data ajuda equipes a publicar pacotes HTML de dashboards, pesquisar conteudo, explorar dados com IA, conectar ferramentas MCP e compartilhar visualizacoes com autenticacao ou tokens de embed.
 
+## Pre-requisitos
+
+- Node.js 22 ou superior para desenvolvimento local sem Docker.
+- Docker, opcional, usado no inicio rapido e recomendado para paridade com producao.
+- Um banco PostgreSQL. PostgreSQL e obrigatorio, inclusive para desenvolvimento local.
+- Um projeto Firebase com Authentication, Firestore e Storage habilitados.
+- Um bucket no Google Cloud Storage, ou `STORAGE_PROVIDER=local` para armazenar uploads no disco local.
+- Pelo menos uma chave de API de um provedor de IA para os recursos de IA.
+
 ## Inicio rapido com Docker
 
 Rode localmente com Docker em tres comandos:
@@ -16,7 +25,7 @@ docker build -t talk-with-data -f app/Dockerfile app
 docker run --rm --env-file .env -p 3000:8080 talk-with-data
 ```
 
-Abra http://localhost:3000.
+O container escuta na porta `8080`. O parametro `-p 3000:8080` mapeia a porta para 3000 na sua maquina. Abra http://localhost:3000.
 
 O arquivo `.env` copiado tem placeholders. Configure Firebase, storage e pelo menos um provedor de IA antes de usar login e recursos de IA.
 
@@ -49,6 +58,7 @@ Copie `.env.example` para `.env` e preencha as variaveis do seu projeto.
 Variaveis principais:
 
 - `ALLOWED_AUTH_DOMAIN`, dominio permitido para login Google.
+- `NEXT_PUBLIC_ALLOWED_AUTH_DOMAIN`, copia do `ALLOWED_AUTH_DOMAIN` exposta ao navegador. Use o mesmo valor nas duas variaveis.
 - `NEXT_PUBLIC_FIREBASE_*`, configuracao publica do app Firebase.
 - `FIREBASE_PROJECT_ID`, projeto usado pelo Firebase Admin.
 - `SA_KEY_JSON`, service account opcional para desenvolvimento local.
@@ -59,6 +69,7 @@ Variaveis principais:
 - `ANTHROPIC_API_KEY`, chave para recursos de IA com Anthropic.
 - `MCP_ALLOWED_HOSTS`, `MCP_API_KEY` e `MCP_URL`, configuracao opcional de MCP.
 - `THUMBNAIL_FUNCTION_URL` e `THUMBNAIL_SECRET`, thumbnails opcionais.
+- `STORAGE_PROVIDER` e `LOCAL_STORAGE_ROOT`, storage local opcional. `LOCAL_STORAGE_ROOT` tem padrao `/data/uploads` quando `STORAGE_PROVIDER=local`.
 
 Veja [.env.example](.env.example) para o template completo.
 

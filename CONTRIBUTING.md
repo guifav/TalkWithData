@@ -148,6 +148,8 @@ Run migrations in environments that use deployed migrations:
 npm run db:migrate
 ```
 
+Use `npm run db:push` while iterating on `app/prisma/schema.prisma` locally. It runs `prisma db push`, which syncs the schema straight to your database without creating migration files, and is the fastest way to prototype schema changes. Use `npm run db:migrate` to apply the committed migration files in `app/prisma/migrations`. It runs `prisma migrate deploy` and is what fresh setups and deployed environments should use. Do not mix the two against the same long-lived database, because `db:push` bypasses migration history and can cause drift.
+
 ## Adding a new AI provider
 
 Read [Architecture, AI providers](docs/ARCHITECTURE.md#ai-providers) before changing provider code.
