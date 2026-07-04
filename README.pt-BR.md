@@ -53,7 +53,7 @@ Variaveis principais:
 - `FIREBASE_PROJECT_ID`, projeto usado pelo Firebase Admin.
 - `SA_KEY_JSON`, service account opcional para desenvolvimento local.
 - `STORAGE_BUCKET_NAME`, bucket para HTML e assets dos dashboards.
-- `DATABASE_URL`, conexao Prisma.
+- `DATABASE_URL`, string de conexao PostgreSQL usada pelo Prisma. PostgreSQL e obrigatorio, inclusive para desenvolvimento local.
 - `DASHBOARD_SESSION_SECRET`, segredo para tokens de sessao e embed.
 - `APP_URL`, URL publica da aplicacao.
 - `ANTHROPIC_API_KEY`, chave para recursos de IA com Anthropic.

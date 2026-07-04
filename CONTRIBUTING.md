@@ -10,7 +10,7 @@ Thank you for helping improve Talk With Data. This guide explains how to set up 
 - npm.
 - Docker, optional but recommended for production parity.
 - A Firebase project with Authentication, Firestore, and Storage enabled.
-- A database supported by Prisma. SQLite is enough for local metadata testing, Postgres is recommended for production-like work.
+- A PostgreSQL database. PostgreSQL is required, including for local development. The Prisma schema targets PostgreSQL and does not work with SQLite.
 - At least one AI provider API key for AI features.
 
 ### Local setup
@@ -23,6 +23,12 @@ cd app
 npm install
 npm run db:generate
 npm run dev
+```
+
+Start a local PostgreSQL that matches the DATABASE_URL in .env.example:
+
+```bash
+docker run -d --name talkwithdata-db -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password -e POSTGRES_DB=talkwithdata -p 5432:5432 -v talkwithdata-db-data:/var/lib/postgresql/data postgres:16-alpine
 ```
 
 Open http://localhost:3000.
