@@ -167,6 +167,8 @@ Provider adapters must not leak API keys to clients. All provider calls must sta
 
 ## Reporting bugs and suggesting features
 
+Do not report security vulnerabilities in public issues. Follow the private reporting process in [SECURITY.md](SECURITY.md) instead.
+
 When reporting a bug, include:
 
 - What you expected to happen.
