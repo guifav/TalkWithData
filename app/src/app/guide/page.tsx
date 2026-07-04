@@ -17,6 +17,10 @@ import {
   Share2,
   History,
   Shield,
+  Home,
+  Layers,
+  Settings,
+  Circle,
 } from "lucide-react";
 import {
   GUIDE_SECTIONS,
@@ -44,7 +48,17 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   share: <Share2 className="size-4" />,
   history: <History className="size-4" />,
   shield: <Shield className="size-4" />,
+  home: <Home className="size-4" />,
+  layers: <Layers className="size-4" />,
+  settings: <Settings className="size-4" />,
 };
+
+// Fallback neutro: garante que uma secao com icone desconhecido nunca renderize vazio.
+const FALLBACK_ICON = <Circle className="size-4" />;
+
+function renderIcon(name: string): React.ReactNode {
+  return ICON_MAP[name] ?? FALLBACK_ICON;
+}
 
 function renderContent(text: string) {
   // Split into paragraphs and render with basic markdown-like formatting
@@ -121,7 +135,7 @@ function SidebarNav({
               : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
           }`}
         >
-          {ICON_MAP[section.icon]}
+          {renderIcon(section.icon)}
           <span className="truncate">{section.title[lang]}</span>
         </button>
       ))}
@@ -227,7 +241,7 @@ export default function GuidePage() {
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="flex items-center justify-center size-8 rounded-md bg-accent">
-                      {ICON_MAP[section.icon]}
+                      {renderIcon(section.icon)}
                     </span>
                     <h2 className="text-lg font-semibold">
                       {section.title[lang]}
