@@ -15,6 +15,9 @@ services:
     volumes:
       - app_data:/data
     restart: unless-stopped
+    # Liveness probe for observability (docker compose ps, depends_on gating).
+    # Compose does not restart unhealthy containers, and /api/health does not
+    # check the database, so healthy means the app is serving, not DB-ready.
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/api/health"]
       interval: 30s
