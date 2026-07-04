@@ -56,7 +56,7 @@ Copy `.env.example` to `.env`, then replace placeholders with project values.
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
-| `ALLOWED_AUTH_DOMAIN` | Yes | Restricts Google sign-in to a single email domain. |
+| `ALLOWED_AUTH_DOMAIN` | Yes | Restricts Google sign-in to a single email domain. Also required in `firestore.rules` before deploying rules. |
 | `NEXT_PUBLIC_FIREBASE_API_KEY` | Yes | Firebase client API key. |
 | `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Yes | Firebase client auth domain. |
 | `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Yes | Firebase client project ID. |
@@ -107,6 +107,8 @@ npm run build
 Docker is the recommended portable runtime. Build from `app/Dockerfile`, provide the same variables from `.env.example`, and expose container port `8080` through your platform.
 
 See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for Docker, Google Cloud Run, Firebase setup, storage, AI providers, and optional MCP setup.
+
+Firestore security rules and indexes are deployed separately with the Firebase CLI, and `firestore.rules` requires your `ALLOWED_AUTH_DOMAIN` in place of the placeholder domain. See [Deploy Firestore rules and indexes](docs/DEPLOYMENT.md#4-deploy-firestore-rules-and-indexes).
 
 ## Contributing
 
