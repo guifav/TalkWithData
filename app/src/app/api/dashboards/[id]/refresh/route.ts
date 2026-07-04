@@ -12,7 +12,17 @@ export const MIN_REFRESH_INTERVAL_MS = 60 * 60 * 1000;
 
 type Auth = NonNullable<Awaited<ReturnType<typeof verifyRequest>>>;
 
-async function loadAccessibleDashboard(id: string, auth: Auth) {
+type LoadDashboardResult =
+  | { error: NextResponse }
+  | {
+      docRef: FirebaseFirestore.DocumentReference;
+      dashData: FirebaseFirestore.DocumentData;
+    };
+
+async function loadAccessibleDashboard(
+  id: string,
+  auth: Auth
+): Promise<LoadDashboardResult> {
   const docRef = adminDb.collection("dashboards").doc(id);
   const doc = await docRef.get();
   if (!doc.exists) {

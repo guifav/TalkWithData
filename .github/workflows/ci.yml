@@ -2,6 +2,9 @@ name: CI
 
 on:
   pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   lint-test-build:
@@ -45,6 +48,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
 
       - name: Test
         run: npm test
