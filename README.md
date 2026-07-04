@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/banner.svg" alt="Talk With Data" width="100%">
+</p>
+
 # Talk With Data
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-black.svg)](LICENSE)

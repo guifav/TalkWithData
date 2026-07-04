@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 320" role="img" aria-labelledby="twd-title">
+  <title id="twd-title">Talk With Data</title>
+  <defs>
+    <pattern id="twd-dots" width="26" height="26" patternUnits="userSpaceOnUse">
+      <circle cx="13" cy="13" r="1.4" fill="#212121"/>
+    </pattern>
+  </defs>
+
+  <rect x="1" y="1" width="1278" height="318" rx="20" fill="#0A0A0A" stroke="#2A2A2A" stroke-width="1.5"/>
+  <rect x="24" y="24" width="1232" height="272" fill="url(#twd-dots)"/>
+
+  <text x="96" y="110" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="600" letter-spacing="4.5" fill="#737373">OPEN SOURCE</text>
+  <text x="96" y="176" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="58" font-weight="600" letter-spacing="-1" fill="#FAFAFA"><tspan>Talk </tspan><tspan font-weight="400" fill="#A3A3A3">With </tspan><tspan>Data</tspan></text>
+  <text x="96" y="218" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="400" letter-spacing="0.2" fill="#A3A3A3">Ask in plain language. Get dashboards and insights.</text>
+
+  <path d="M948 58 H1102 Q1120 58 1120 76 V180 Q1120 198 1102 198 H962 L930 226 V76 Q930 58 948 58 Z" fill="#0A0A0A" stroke="#FAFAFA" stroke-width="3" stroke-linejoin="round"/>
+  <rect x="972" y="140" width="16" height="26" rx="3" fill="#525252"/>
+  <rect x="1002" y="124" width="16" height="42" rx="3" fill="#737373"/>
+  <rect x="1032" y="110" width="16" height="56" rx="3" fill="#A3A3A3"/>
+  <rect x="1062" y="92" width="16" height="74" rx="3" fill="#FAFAFA"/>
+
+  <path d="M1080 152 H1198 Q1214 152 1214 168 V284 L1186 260 H1080 Q1064 260 1064 244 V168 Q1064 152 1080 152 Z" fill="#0A0A0A" stroke="#737373" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="1114" cy="206" r="5.5" fill="#737373"/>
+  <circle cx="1139" cy="206" r="5.5" fill="#A3A3A3"/>
+  <circle cx="1164" cy="206" r="5.5" fill="#FAFAFA"/>
+</svg>
