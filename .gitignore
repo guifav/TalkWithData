@@ -1,7 +1,6 @@
 # Environment
-.env
-.env.local
-.env.*.local
+.env*
+!.env.example
 
 # Dependencies
 node_modules/
@@ -40,3 +39,20 @@ app/prisma/*.db-journal
 # Temp
 tmp/
 temp/
+
+# Credentials and key material
+*.pem
+*.key
+*.crt
+*.p12
+service-account*.json
+*firebase-adminsdk*.json
+*-credentials.json
+*-key.json
+
+# Firebase and Vercel local artifacts
+.firebase/
+.vercel/
+
+# Test coverage
+coverage/
