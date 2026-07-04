@@ -103,6 +103,9 @@ describe("verifyEmbedToken", () => {
     await expect(verifyEmbedToken("dash-a", TOK_A)).resolves.toBe(false);
     seedToken("dash-a", TOK_B, { expiresAt: "not-a-date" });
     await expect(verifyEmbedToken("dash-a", TOK_B)).resolves.toBe(false);
+    // toDate present but not callable must be rejected, not thrown.
+    seedToken("dash-a", TOK_A, { expiresAt: { toDate: 123 } });
+    await expect(verifyEmbedToken("dash-a", TOK_A)).resolves.toBe(false);
   });
 
   it("rejects malformed token strings without a Firestore read", async () => {

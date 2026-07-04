@@ -43,8 +43,8 @@ export async function createEmbedToken(
 
 /**
  * Verify an embed token for a specific dashboard. Returns true only when the
- * token record exists under that dashboard, is bound to it, has a valid creator,
- * and has not expired.
+ * token record exists under that dashboard, is bound to it, has a non-empty
+ * createdBy, and has not expired.
  */
 export async function verifyEmbedToken(
   dashboardId: string,
@@ -85,9 +85,11 @@ export async function verifyEmbedToken(
 
   // Check expiry. Reject a missing or invalid expiry rather than letting an
   // Invalid Date comparison (always false) accept the token indefinitely.
-  const expiresAt = data.expiresAt?.toDate?.()
-    ? data.expiresAt.toDate()
-    : new Date(data.expiresAt);
+  const rawExpiry = data.expiresAt;
+  const expiresAt =
+    rawExpiry && typeof rawExpiry.toDate === "function"
+      ? rawExpiry.toDate()
+      : new Date(rawExpiry);
 
   if (!(expiresAt instanceof Date) || Number.isNaN(expiresAt.getTime())) {
     return false;
