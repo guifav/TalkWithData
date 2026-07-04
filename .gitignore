@@ -40,12 +40,14 @@ app/prisma/*.db-journal
 tmp/
 temp/
 
-# Credentials and key material
+# Credentials and key material (force-add a legit fixture with: git add -f <file>)
 *.pem
 *.key
 *.crt
 *.p12
 service-account*.json
+serviceAccount*.json
+application_default_credentials.json
 *firebase-adminsdk*.json
 *-credentials.json
 *-key.json
