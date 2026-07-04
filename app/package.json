@@ -5,7 +5,8 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/guifav/TalkWithData.git"
+    "url": "git+https://github.com/guifav/TalkWithData.git",
+    "directory": "app"
   },
   "engines": {
     "node": ">=22.0.0"
