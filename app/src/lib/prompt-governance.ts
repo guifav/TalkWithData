@@ -37,14 +37,14 @@ export const GLOBAL_PROMPT_VARIABLES: PromptGlobalVariable[] = [
     name: "today",
     token: "{{today}}",
     label: "Today",
-    description: "Data atual em formato YYYY-MM-DD no timezone do produto.",
+    description: "Current date in YYYY-MM-DD format in the product timezone.",
     resolvedIn: ["Builder", "Refresh", "Data Chat"],
   },
   {
     name: "currentDate",
     token: "{{currentDate}}",
     label: "Current date",
-    description: "Alias explicito de {{today}} para prompts em ingles.",
+    description: "Explicit alias for {{today}} for English-language prompts.",
     resolvedIn: ["Builder", "Refresh", "Data Chat"],
   },
   {
@@ -52,7 +52,7 @@ export const GLOBAL_PROMPT_VARIABLES: PromptGlobalVariable[] = [
     token: "{{currentDatetime}}",
     label: "Current datetime",
     description:
-      "Data e horario atuais em America/Sao_Paulo para instrucoes sensiveis a tempo.",
+      "Current date and time in America/Sao_Paulo for time-sensitive instructions.",
     resolvedIn: ["Builder", "Refresh", "Data Chat"],
   },
 ];
@@ -143,36 +143,36 @@ export function renderGlobalPromptVariables(
 export const PROMPT_GOVERNANCE: Record<PromptKey, PromptGovernance> = {
   "builder.platform_rules": {
     purpose:
-      "Define as regras tecnicas que o AI Dashboard Builder deve seguir ao gerar HTML, Chart.js e ao chamar save_dashboard_html.",
+      "Defines the technical rules the AI Dashboard Builder must follow when generating HTML, Chart.js, and when calling save_dashboard_html.",
     consumers: ["Builder"],
     sourceFiles: [
       "app/src/lib/ai-prompt.ts",
       "app/src/app/api/ai/chat/route.ts",
     ],
     composition: [
-      "Primeira camada do buildSystemPrompt().",
-      "Vem antes de freshness, dinamismo, playbook da plataforma, fontes MCP e database.",
+      "First layer of buildSystemPrompt().",
+      "Comes before freshness, dynamism, platform playbook, MCP sources, and database.",
     ],
     dependencies: ["save_dashboard_html", "Chart.js v4", "MCP tools"],
     impact:
-      "Afeta novas geracoes e edicoes feitas pelo Builder. Nao altera dashboards ja salvos ate que sejam editados/regenerados.",
+      "Affects new generations and edits made by the Builder. Does not change already-saved dashboards until they are edited/regenerated.",
     risks: [
-      "Remover a obrigatoriedade de save_dashboard_html pode encerrar conversas sem dashboard salvo.",
-      "Relaxar regras de HTML/Chart.js pode gerar dashboards quebrados no viewer.",
+      "Removing the save_dashboard_html requirement can end conversations without a saved dashboard.",
+      "Relaxing HTML/Chart.js rules can produce broken dashboards in the viewer.",
     ],
     safeChanges: [
-      "Ajustar convencoes visuais tecnicas sem mudar o contrato de salvamento.",
-      "Adicionar restricoes de responsividade ou acessibilidade.",
+      "Adjust technical visual conventions without changing the save contract.",
+      "Add responsiveness or accessibility constraints.",
     ],
     dangerousChanges: [
-      "Permitir bibliotecas externas arbitrarias.",
-      "Remover a exigencia de dados reais ou do HTML completo.",
+      "Allow arbitrary external libraries.",
+      "Remove the requirement for real data or complete HTML.",
     ],
-    badges: ["Usado no Builder", "Afeta dashboards futuros"],
+    badges: ["Used in Builder", "Affects future dashboards"],
   },
   "builder.mcp_freshness": {
     purpose:
-      "Explica que MCP e fonte viva e que chamadas novas devem ser tratadas como dado mais recente disponivel.",
+      "Explains that MCP is a live source and that new calls should be treated as the most recent data available.",
     consumers: ["Builder", "Refresh", "Data Chat"],
     sourceFiles: [
       "app/src/lib/ai-prompt.ts",
@@ -180,88 +180,88 @@ export const PROMPT_GOVERNANCE: Record<PromptKey, PromptGovernance> = {
       "app/src/lib/data-chat-prompt-fallback.ts",
     ],
     composition: [
-      "Segunda camada do Builder.",
-      "Injetada no template de Refresh como ${mcpFreshness}.",
-      "Injetada no template de Data Chat como ${mcpFreshness}.",
+      "Second layer of the Builder.",
+      "Injected into the Refresh template as ${mcpFreshness}.",
+      "Injected into the Data Chat template as ${mcpFreshness}.",
     ],
     dependencies: ["builder.platform_rules", "refresh.system", "data_chat.system"],
     impact:
-      "Afeta Builder, refresh manual e Data Chat. Mudancas aqui propagam para multiplos fluxos que consultam MCP.",
+      "Affects Builder, manual refresh, and Data Chat. Changes here propagate to multiple flows that query MCP.",
     risks: [
-      "Enfraquecer o contrato pode fazer o modelo reutilizar numeros antigos.",
-      "Remover timestamps reduz rastreabilidade de dashboards gerados.",
+      "Weakening the contract can make the model reuse stale numbers.",
+      "Removing timestamps reduces traceability of generated dashboards.",
     ],
     safeChanges: [
-      "Clarificar quando reconsultar MCP para pedidos de hoje, agora ou latest.",
-      "Melhorar orientacao de timestamp sem contradizer refresh server-side.",
+      "Clarify when to re-query MCP for requests about today, now, or latest.",
+      "Improve timestamp guidance without contradicting server-side refresh.",
     ],
     dangerousChanges: [
-      "Dizer que dados do HTML atual sao fonte da verdade.",
-      "Instruir o modelo a reaproveitar resultados antigos para dados atuais.",
+      "State that data in the current HTML is the source of truth.",
+      "Instruct the model to reuse old results for current data.",
     ],
-    badges: ["Compartilhado", "Usado no Builder", "Usado no Refresh", "Usado no Data Chat"],
+    badges: ["Shared", "Used in Builder", "Used in Refresh", "Used in Data Chat"],
   },
   "builder.dynamic_dashboard": {
     purpose:
-      "Alinha a resposta do Builder sobre snapshot HTML versus refresh server-side da plataforma Talk With Data.",
+      "Aligns the Builder's response about HTML snapshot versus server-side refresh for the Talk With Data platform.",
     consumers: ["Builder"],
     sourceFiles: [
       "app/src/lib/ai-prompt.ts",
       "app/src/app/api/ai/chat/route.ts",
     ],
     composition: [
-      "Terceira camada do buildSystemPrompt().",
-      "Fica depois do contrato MCP e antes do playbook institucional.",
+      "Third layer of buildSystemPrompt().",
+      "Comes after the MCP contract and before the institutional playbook.",
     ],
     dependencies: ["builder.mcp_freshness", "dashboard refresh route"],
     impact:
-      "Afeta como novos dashboards MCP-backed sao concebidos e descritos pelo modelo.",
+      "Affects how new MCP-backed dashboards are conceived and described by the model.",
     risks: [
-      "O modelo pode prometer live browser updates que a plataforma nao fornece.",
-      "O modelo pode negar dinamismo mesmo com refresh server-side disponivel.",
+      "The model can promise live browser updates that the platform does not provide.",
+      "The model can deny dynamism even when server-side refresh is available.",
     ],
     safeChanges: [
-      "Refinar linguagem sobre snapshot, refresh manual e roadmap.",
-      "Adicionar exemplos de layout preparado para refresh periodico.",
+      "Refine language about snapshot, manual refresh, and roadmap.",
+      "Add layout examples prepared for periodic refresh.",
     ],
     dangerousChanges: [
-      "Prometer auto-refresh agendado se ainda nao estiver implementado.",
-      "Pedir chamadas MCP diretamente do browser.",
+      "Promise scheduled auto-refresh if it is not yet implemented.",
+      "Ask for MCP calls directly from the browser.",
     ],
-    badges: ["Usado no Builder", "Afeta narrativa de dinamismo"],
+    badges: ["Used in Builder", "Affects dynamism narrative"],
   },
   "builder.platform_playbook": {
     purpose:
-      "Fornece contexto institucional, identidade visual e padroes minimos de dashboards para o Talk With Data.",
+      "Provides institutional context, visual identity, and minimum dashboard standards for Talk With Data.",
     consumers: ["Builder"],
     sourceFiles: [
       "app/src/lib/ai-prompt.ts",
       "app/src/app/api/ai/chat/route.ts",
     ],
     composition: [
-      "Quarta camada do buildSystemPrompt().",
-      "Vem antes da lista dinamica de fontes MCP.",
+      "Fourth layer of buildSystemPrompt().",
+      "Comes before the dynamic list of MCP sources.",
     ],
     dependencies: ["brand colors", "dashboard standards"],
     impact:
-      "Afeta consistencia visual e tom dos dashboards gerados ou editados pelo Builder.",
+      "Affects visual consistency and tone of dashboards generated or edited by the Builder.",
     risks: [
-      "Mudancas de marca podem criar dashboards desalinhados com o produto.",
-      "Remover estados vazios pode piorar leitura quando MCP retorna sem dados.",
+      "Brand changes can produce dashboards misaligned with the product.",
+      "Removing empty states can worsen readability when MCP returns no data.",
     ],
     safeChanges: [
-      "Atualizar padroes visuais aprovados pela marca.",
-      "Refinar requisitos de empty state e timestamp.",
+      "Update brand-approved visual standards.",
+      "Refine empty state and timestamp requirements.",
     ],
     dangerousChanges: [
-      "Trocar cores oficiais sem aprovacao.",
-      "Remover contexto de audiencia e autoexplicacao.",
+      "Change official colors without approval.",
+      "Remove audience context and self-explanation.",
     ],
-    badges: ["Usado no Builder", "Afeta padrao visual"],
+    badges: ["Used in Builder", "Affects visual standard"],
   },
   "builder.db_playbook": {
     purpose:
-      "Define quando o Builder deve usar database por dashboard e quais limites de seguranca/persistencia respeitar.",
+      "Defines when the Builder should use a per-dashboard database and which security/persistence limits to respect.",
     consumers: ["Builder"],
     sourceFiles: [
       "app/src/lib/ai-prompt.ts",
@@ -269,85 +269,85 @@ export const PROMPT_GOVERNANCE: Record<PromptKey, PromptGovernance> = {
       "app/src/lib/app-db/tools.ts",
     ],
     composition: [
-      "Camada opcional do buildSystemPrompt().",
-      "Entra somente quando o draft dashboard tem database habilitado.",
-      "Pode ser seguida pelo estado atual das tabelas do dashboard.",
+      "Optional layer of buildSystemPrompt().",
+      "Only included when the draft dashboard has the database enabled.",
+      "Can be followed by the current state of the dashboard's tables.",
     ],
     dependencies: ["App DB tools", "draftDashboardId", "database registry"],
     impact:
-      "Afeta apenas Builder em apps com banco habilitado, especialmente schema, persistencia e isolamento.",
+      "Affects only the Builder in apps with the database enabled, especially schema, persistence, and isolation.",
     risks: [
-      "Duplicar dados MCP no database pode criar fonte divergente.",
-      "Permitir credenciais ou SQL cru quebra o limite de seguranca do App DB.",
+      "Duplicating MCP data in the database can create a divergent source.",
+      "Allowing credentials or raw SQL breaks the App DB security boundary.",
     ],
     safeChanges: [
-      "Adicionar exemplos de entidades persistentes criadas pelo usuario.",
-      "Melhorar regras de preview versus live mode.",
+      "Add examples of persistent entities created by the user.",
+      "Improve preview versus live mode rules.",
     ],
     dangerousChanges: [
-      "Permitir acesso a tabelas de outro dashboard.",
-      "Remover a regra de usar ferramentas estruturadas em vez de SQL cru.",
+      "Allow access to another dashboard's tables.",
+      "Remove the rule to use structured tools instead of raw SQL.",
     ],
-    badges: ["Builder com banco", "Afeta apps persistentes"],
+    badges: ["Builder with database", "Affects persistent apps"],
   },
   "refresh.system": {
     purpose:
-      "Template completo usado pelo worker de refresh para regenerar HTML com dados atuais preservando layout.",
+      "Complete template used by the refresh worker to regenerate HTML with current data while preserving layout.",
     consumers: ["Refresh"],
     sourceFiles: [
       "app/src/lib/dashboard-refresh-worker.ts",
       "app/src/lib/refresh-prompt-fallback.ts",
     ],
     composition: [
-      "Resolvido pelo registry como template.",
-      "Recebe ${mcpFreshness}, ${title}, ${description}, ${currentHtmlBlock} e ${refreshedAt}.",
-      "Depois o worker envia o prompt ao modelo com ferramentas MCP e save_dashboard_html.",
+      "Resolved by the registry as a template.",
+      "Receives ${mcpFreshness}, ${title}, ${description}, ${currentHtmlBlock}, and ${refreshedAt}.",
+      "Afterward the worker sends the prompt to the model with MCP tools and save_dashboard_html.",
     ],
     dependencies: ["builder.mcp_freshness", "aiRecipe.generationPrompt", "saved MCP server refs"],
     impact:
-      "Afeta refreshes manuais futuros de dashboards AI que tenham prompt e referencias MCP salvas.",
+      "Affects future manual refreshes of AI dashboards that have a saved prompt and MCP references.",
     risks: [
-      "Remover placeholders obrigatorios quebra contexto do refresh.",
-      "Pedir recriacao do zero pode perder layout ou estrutura atual.",
+      "Removing required placeholders breaks the refresh context.",
+      "Asking for a from-scratch recreation can lose the current layout or structure.",
     ],
     safeChanges: [
-      "Melhorar instrucao de preservacao de layout.",
-      "Refinar formato do timestamp de refresh.",
+      "Improve the layout-preservation instruction.",
+      "Refine the refresh timestamp format.",
     ],
     dangerousChanges: [
-      "Remover ${currentHtmlBlock} ou ${mcpFreshness}.",
-      "Instruir o modelo a ignorar o dashboard atual.",
+      "Remove ${currentHtmlBlock} or ${mcpFreshness}.",
+      "Instruct the model to ignore the current dashboard.",
     ],
-    badges: ["Template", "Usado no Refresh", "Afeta refresh manual"],
+    badges: ["Template", "Used in Refresh", "Affects manual refresh"],
   },
   "data_chat.system": {
     purpose:
-      "Template completo do Data Chat para respostas analiticas e criacao de dashboards somente quando o usuario pedir.",
+      "Complete Data Chat template for analytical answers and dashboard creation only when the user asks for it.",
     consumers: ["Data Chat"],
     sourceFiles: [
       "app/src/app/api/ai/data-chat/route.ts",
       "app/src/lib/data-chat-prompt-fallback.ts",
     ],
     composition: [
-      "Resolvido pelo registry como template.",
-      "Recebe ${mcpFreshness}.",
-      "Depois recebe a lista dinamica de fontes MCP disponiveis.",
+      "Resolved by the registry as a template.",
+      "Receives ${mcpFreshness}.",
+      "Afterward receives the dynamic list of available MCP sources.",
     ],
     dependencies: ["builder.mcp_freshness", "MCP server selection"],
     impact:
-      "Afeta conversas futuras no Data Chat e como o agente responde versus cria dashboards.",
+      "Affects future conversations in Data Chat and how the agent answers versus creates dashboards.",
     risks: [
-      "Remover a regra de nao inventar numeros prejudica confiabilidade.",
-      "Incentivar dashboard sem pedido explicito muda o comportamento do chat.",
+      "Removing the rule against inventing numbers harms reliability.",
+      "Encouraging dashboard creation without an explicit request changes chat behavior.",
     ],
     safeChanges: [
-      "Refinar formato de resposta analitica.",
-      "Melhorar orientacao de tabelas, timestamps e concisao.",
+      "Refine the analytical response format.",
+      "Improve guidance on tables, timestamps, and conciseness.",
     ],
     dangerousChanges: [
-      "Mandar criar dashboards em toda resposta.",
-      "Remover ${mcpFreshness}.",
+      "Instruct it to create dashboards in every response.",
+      "Remove ${mcpFreshness}.",
     ],
-    badges: ["Template", "Usado no Data Chat"],
+    badges: ["Template", "Used in Data Chat"],
   },
 };
