@@ -169,9 +169,8 @@ The application also validates the domain server-side. Do not rely only on Fireb
 
 1. Create a Firestore database.
 2. Choose the region closest to your users.
-3. Start with locked-down rules for production.
+3. Deploy the rules and indexes from this repository, see the next step.
 4. Let API routes perform privileged operations through Firebase Admin.
-5. Create composite indexes as Firestore requests them during staging tests.
 
 Recommended production posture:
 
@@ -179,7 +178,39 @@ Recommended production posture:
 - Route dashboard, user, prompt, MCP, department, and sharing changes through API routes.
 - Keep service account credentials in Secret Manager or platform secrets.
 
-### 4. Enable Storage or GCS
+### 4. Deploy Firestore rules and indexes
+
+The repository ships the Firestore security rules and composite indexes the app depends on:
+
+- `firestore.rules` defines client access rules.
+- `firestore.indexes.json` defines composite indexes and field overrides.
+- `firebase.json` wires both files for the Firebase CLI.
+
+> [!WARNING]
+> `firestore.rules` ships with a placeholder domain. Before deploying, edit the `isAuthorizedUser()` function in `firestore.rules` and replace `example[.]com` with the same domain you set in `ALLOWED_AUTH_DOMAIN`. Keep the brackets around each dot, for example `mycompany[.]com`, because the value is a regular expression. If you deploy the placeholder, all client reads fail for your real users, and accounts on the placeholder domain would be authorized instead. Update and redeploy the rules whenever `ALLOWED_AUTH_DOMAIN` changes.
+
+Install and authenticate the Firebase CLI once:
+
+```bash
+npm install -g firebase-tools
+firebase login
+```
+
+Deploy from the repository root, where `firebase.json` is located:
+
+```bash
+firebase deploy --only firestore:rules,firestore:indexes --project YOUR_PROJECT_ID
+```
+
+Notes:
+
+- The repository does not include a `.firebaserc`, so pass `--project` explicitly, or run `firebase use --add` once. Do not commit the generated `.firebaserc`.
+- Index builds run in the background and can take several minutes. Queries that need an index fail with a `FAILED_PRECONDITION` error until the build completes.
+- If the Firebase project contains indexes that are not in `firestore.indexes.json`, the CLI asks whether to delete them. Treat the file as the source of truth.
+- The configuration targets the default Firestore database.
+- Server API routes use the Firebase Admin SDK, which bypasses these rules. The rules gate client SDK access only, so a wrong domain shows up as empty lists and failed reads in the browser while server routes keep working.
+
+### 5. Enable Storage or GCS
 
 1. Create a bucket for dashboard HTML files and assets.
 2. Set `STORAGE_BUCKET_NAME` to that bucket name.
@@ -328,6 +359,7 @@ After deployment, verify:
 - `/api/health` returns success.
 - Google sign-in works for an allowed domain user.
 - A disallowed domain user is rejected.
+- The dashboard list loads for an allowed domain user, which confirms the deployed Firestore rules use the correct domain.
 - Dashboard upload stores files in the configured bucket.
 - Search can find uploaded dashboard text.
 - AI chat returns a provider response.
