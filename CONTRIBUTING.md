@@ -33,7 +33,7 @@ docker run -d --name talkwithdata-db -e POSTGRES_USER=user -e POSTGRES_PASSWORD=
 
 Open http://localhost:3000.
 
-Before testing authenticated flows, edit `.env` and set the Firebase values, `ALLOWED_AUTH_DOMAIN`, `STORAGE_BUCKET_NAME`, `DATABASE_URL`, `DASHBOARD_SESSION_SECRET`, and an AI provider key.
+Before testing authenticated flows, edit `.env` and set the Firebase values, `ALLOWED_AUTH_DOMAIN` and its browser copy `NEXT_PUBLIC_ALLOWED_AUTH_DOMAIN` (same value), `STORAGE_BUCKET_NAME`, `DATABASE_URL`, `DASHBOARD_SESSION_SECRET`, and an AI provider key.
 
 ### Docker setup
 

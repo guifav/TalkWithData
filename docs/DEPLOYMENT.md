@@ -121,6 +121,7 @@ Use `.env.example` as the source template. The table below describes deployment 
 | Variable | Required | Example | Notes |
 | --- | --- | --- | --- |
 | `ALLOWED_AUTH_DOMAIN` | Yes | `example.com` | Only users with this email domain can authenticate. |
+| `NEXT_PUBLIC_ALLOWED_AUTH_DOMAIN` | Yes | `example.com` | Browser-side copy of `ALLOWED_AUTH_DOMAIN`, set to the same value. Required at build time because client code cannot read the non-public variable. |
 | `NEXT_PUBLIC_FIREBASE_API_KEY` | Yes | `AIza...` | Public Firebase client config. |
 | `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Yes | `project.firebaseapp.com` | Public Firebase client config. |
 | `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Yes | `project` | Public Firebase client config. |
@@ -146,6 +147,7 @@ Use `.env.example` as the source template. The table below describes deployment 
 | `THUMBNAIL_FUNCTION_URL` | Optional | URL | Cloud Function endpoint for thumbnail generation. |
 | `THUMBNAIL_SECRET` | Optional | secret | Shared secret for thumbnail generation. |
 | `STORAGE_PROVIDER` | Optional | `gcs` | GCS is the default runtime path. |
+| `LOCAL_STORAGE_ROOT` | Optional | `/data/uploads` | Upload directory when `STORAGE_PROVIDER` is `local`. Defaults to `/data/uploads`. |
 
 ## Firebase setup
 
