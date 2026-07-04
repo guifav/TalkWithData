@@ -33,8 +33,8 @@ Do not open a public issue, pull request, or discussion for a security problem, 
 
 ## What to expect
 
-- Acknowledgment of your report within 5 business days.
-- An initial assessment and severity triage within 14 days.
+- We aim to acknowledge your report within 5 business days.
+- We aim to provide an initial assessment and severity triage within 14 days.
 - A fix plan and timeline after triage. Critical issues are prioritized.
 - Credit in the published advisory, unless you prefer to stay anonymous.
 
@@ -49,9 +49,11 @@ In scope:
 - Authentication and session handling, including Firebase sign-in and dashboard session cookies.
 - Authorization, including admin routes, department access, and shared folders.
 - Embed token generation and validation.
-- Rendering and sanitization of user-uploaded HTML dashboards.
-- File upload parsing, including CSV, Excel, and ZIP handling.
+- Rendering and serving of user-uploaded HTML dashboards.
+- Dashboard upload handling for HTML files and ZIP packages.
+- Data file parsing for Excel (.xlsx) and Markdown files.
 - Server-side handling of AI provider API keys and database credentials.
+- Relational database access through Prisma, including raw query construction and row-level authorization.
 - Firestore security rules in this repository.
 - Server-side request handling, including MCP host access and dashboard refresh.
 
