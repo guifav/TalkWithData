@@ -49,10 +49,16 @@ export async function verifyEmbedToken(
   dashboardId: string,
   token: string
 ): Promise<boolean> {
-  // Tokens are 32 random bytes, base64url encoded. Reject anything else before
-  // using the value as a Firestore document id (a "/" would make .doc() throw
-  // and turn a bad query param into a 500 instead of a 401).
-  if (!dashboardId || !token || !/^[A-Za-z0-9_-]+$/.test(token)) {
+  // dashboardId is a route param used as a Firestore doc id; embed tokens are
+  // 32 random bytes base64url encoded (exactly 43 chars). Reject anything else
+  // before calling .doc(), so a bad or crafted value is a clean rejection
+  // instead of a 500 (a "/" would make .doc() throw).
+  if (
+    !dashboardId ||
+    !/^[A-Za-z0-9_-]+$/.test(dashboardId) ||
+    !token ||
+    !/^[A-Za-z0-9_-]{43}$/.test(token)
+  ) {
     return false;
   }
 
