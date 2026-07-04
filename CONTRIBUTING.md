@@ -64,6 +64,7 @@ docker run --rm --env-file .env -p 3000:8080 talk-with-data
 - Do not use long dash characters in prose. Use commas, periods, parentheses, or a normal hyphen when a compound word needs one.
 - Prefer text labels over decorative icons.
 - Icons must be black and white and should come from `lucide-react`.
+- Add new shadcn/ui components with `npx shadcn@latest add <component>`. The CLI is not a project dependency; it prompts to create `components.json` on first use.
 
 ### Accessibility and UX
 
