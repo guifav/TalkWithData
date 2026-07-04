@@ -211,7 +211,7 @@ Do not use ephemeral container storage for production dashboard assets.
 
 ## Database and Prisma
 
-The Prisma schema targets PostgreSQL. PostgreSQL is required in every environment, including local development. SQLite URLs such as `file:./dev.db` do not work and fail during `prisma generate` and `prisma db push`.
+The Prisma schema targets PostgreSQL. PostgreSQL is required in every environment, including local development. The database provider is not switchable: the schema sets `provider = "postgresql"` and uses PostgreSQL-only `String[]` scalar list fields. SQLite URLs such as `file:./dev.db` do not work and fail during `prisma generate` and `prisma db push`.
 
 `.env.example` ships with a local PostgreSQL example:
 
