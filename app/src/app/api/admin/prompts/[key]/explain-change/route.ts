@@ -67,25 +67,25 @@ export async function POST(
     );
   }
 
-  const system = `You compare two versions of an internal system prompt and write a short, factual change summary in Brazilian Portuguese.
+  const system = `You compare two versions of an internal system prompt and write a short, factual change summary in English.
 
 Rules:
 - Maximum 280 characters.
 - Describe FUNCTIONAL changes only (rules added/removed, behavior changes). Skip purely cosmetic edits (whitespace, punctuation).
 - No marketing language. No filler. No "this change..." preamble.
 - Plain text, single line preferred.
-- If there are no meaningful changes, respond exactly: "Sem mudancas funcionais relevantes."`;
+- If there are no meaningful changes, respond exactly: "No relevant functional changes."`;
 
   const user = `Prompt key: ${key}
 Label: ${entry.label}
 
---- VERSAO ANTERIOR ---
-${previous || "(vazio, nao havia versao anterior)"}
+--- PREVIOUS VERSION ---
+${previous || "(empty, there was no previous version)"}
 
---- NOVA VERSAO ---
+--- NEW VERSION ---
 ${next}
 
-Resumo da mudanca:`;
+Change summary:`;
 
   try {
     const adapter = getAiAdapter(aiModel.config.provider);

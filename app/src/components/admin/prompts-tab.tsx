@@ -88,7 +88,7 @@ function formatDate(iso: string | null): string {
 }
 
 function authorLabel(a: PromptAuthor | null): string {
-  if (!a) return "—";
+  if (!a) return "Unknown";
   return a.name || a.email;
 }
 
@@ -157,7 +157,7 @@ function PromptList({
               ))}
             </div>
             <div>
-              <span className="font-medium">Fluxos:</span>{" "}
+              <span className="font-medium">Flows:</span>{" "}
               {consumerLabel(p.governance.consumers)}
             </div>
             <div>
@@ -188,14 +188,14 @@ function GovernancePanel({ prompt }: { prompt: PromptDetail }) {
       <Card>
         <CardHeader>
           <CardTitle className="text-sm flex items-center gap-2">
-            <Info className="size-4" /> Impacto deste prompt
+            <Info className="size-4" /> Impact of this prompt
           </CardTitle>
           <CardDescription>{prompt.governance.purpose}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <div>
             <div className="text-xs font-medium text-muted-foreground mb-1">
-              Fluxos consumidores
+              Consuming flows
             </div>
             <div className="flex flex-wrap gap-1">
               {prompt.governance.consumers.map((consumer) => (
@@ -207,13 +207,13 @@ function GovernancePanel({ prompt }: { prompt: PromptDetail }) {
           </div>
           <div>
             <div className="text-xs font-medium text-muted-foreground mb-1">
-              Publicar uma versao afeta
+              Publishing a version affects
             </div>
             <p className="text-muted-foreground">{prompt.governance.impact}</p>
           </div>
           <div>
             <div className="text-xs font-medium text-muted-foreground mb-1">
-              Origem no codigo
+              Source in code
             </div>
             <ul className="space-y-1">
               {prompt.governance.sourceFiles.map((file) => (
@@ -228,15 +228,15 @@ function GovernancePanel({ prompt }: { prompt: PromptDetail }) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Composicao e riscos</CardTitle>
+          <CardTitle className="text-sm">Composition and risks</CardTitle>
           <CardDescription>
-            Ordem de montagem, dependencias e limites de edicao.
+            Assembly order, dependencies, and editing limits.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <div>
             <div className="text-xs font-medium text-muted-foreground mb-1">
-              Onde entra no pipeline
+              Where it enters the pipeline
             </div>
             <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
               {prompt.governance.composition.map((item) => (
@@ -246,7 +246,7 @@ function GovernancePanel({ prompt }: { prompt: PromptDetail }) {
           </div>
           <div>
             <div className="text-xs font-medium text-muted-foreground mb-1">
-              Dependencias
+              Dependencies
             </div>
             <div className="flex flex-wrap gap-1">
               {prompt.governance.dependencies.map((dependency) => (
@@ -262,7 +262,7 @@ function GovernancePanel({ prompt }: { prompt: PromptDetail }) {
           </div>
           <div>
             <div className="text-xs font-medium text-muted-foreground mb-1">
-              Riscos comuns
+              Common risks
             </div>
             <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
               {prompt.governance.risks.map((risk) => (
@@ -273,7 +273,7 @@ function GovernancePanel({ prompt }: { prompt: PromptDetail }) {
           <div className="grid gap-3 md:grid-cols-2">
             <div>
               <div className="text-xs font-medium text-muted-foreground mb-1">
-                Mudancas seguras
+                Safe changes
               </div>
               <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
                 {prompt.governance.safeChanges.map((change) => (
@@ -283,7 +283,7 @@ function GovernancePanel({ prompt }: { prompt: PromptDetail }) {
             </div>
             <div>
               <div className="text-xs font-medium text-muted-foreground mb-1">
-                Evitar
+                Avoid
               </div>
               <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
                 {prompt.governance.dangerousChanges.map((change) => (
@@ -308,18 +308,18 @@ function PromptVariablesPanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm">Variaveis e placeholders</CardTitle>
+        <CardTitle className="text-sm">Variables and placeholders</CardTitle>
         <CardDescription>
-          Use <code>{"{{variavel}}"}</code> para variaveis globais resolvidas
-          antes da chamada ao modelo. Placeholders tecnicos usam{" "}
-          <code>${"{"}placeholder{"}"}</code> e sao preservados ate o renderer
-          do fluxo.
+          Use <code>{"{{variable}}"}</code> for global variables resolved
+          before the model call. Technical placeholders use{" "}
+          <code>${"{"}placeholder{"}"}</code> and are preserved until the flow
+          renderer.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
         <div>
           <div className="text-xs font-medium text-muted-foreground mb-2">
-            Variaveis globais disponiveis
+            Available global variables
           </div>
           <div className="grid gap-2 md:grid-cols-3">
             {prompt.globalVariables.map((variable) => (
@@ -332,7 +332,7 @@ function PromptVariablesPanel({
                 <div className="flex items-center justify-between gap-2">
                   <PlaceholderToken token={variable.token} />
                   <span className="text-[10px] text-muted-foreground">
-                    inserir
+                    insert
                   </span>
                 </div>
                 <div className="mt-2 text-xs font-medium">{variable.label}</div>
@@ -346,7 +346,7 @@ function PromptVariablesPanel({
 
         <div>
           <div className="text-xs font-medium text-muted-foreground mb-2">
-            Placeholders tecnicos obrigatorios
+            Required technical placeholders
           </div>
           {prompt.requiredPlaceholders.length > 0 ? (
             <div className="flex flex-wrap gap-2">
@@ -356,7 +356,7 @@ function PromptVariablesPanel({
             </div>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Este prompt nao exige placeholders tecnicos para publicacao.
+              This prompt does not require technical placeholders to publish.
             </p>
           )}
         </div>
@@ -413,7 +413,7 @@ function PromptEditor({
       );
     } catch (err) {
       console.error(err);
-      toast.error("Falha ao carregar prompt");
+      toast.error("Failed to load prompt");
     } finally {
       setLoading(false);
     }
@@ -466,7 +466,7 @@ function PromptEditor({
 
   const handleSaveDraft = useCallback(async () => {
     if (!editorContent.trim()) {
-      toast.error("Conteudo nao pode estar vazio");
+      toast.error("Content cannot be empty");
       return;
     }
     setSavingDraft(true);
@@ -483,10 +483,10 @@ function PromptEditor({
         const err = await res.json().catch(() => ({}));
         throw new Error((err as { error?: string }).error || `HTTP ${res.status}`);
       }
-      toast.success("Rascunho salvo");
+      toast.success("Draft saved");
       await load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao salvar rascunho");
+      toast.error(err instanceof Error ? err.message : "Failed to save draft");
     } finally {
       setSavingDraft(false);
     }
@@ -500,18 +500,18 @@ function PromptEditor({
         { method: "DELETE" }
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      toast.success("Rascunho descartado");
+      toast.success("Draft discarded");
       await load();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Falha ao descartar rascunho"
+        err instanceof Error ? err.message : "Failed to discard draft"
       );
     }
   }, [detail, promptKey, load]);
 
   const handleExplainChange = useCallback(async () => {
     if (!editorContent.trim()) {
-      toast.error("Edite o conteudo antes de gerar resumo");
+      toast.error("Edit the content before generating a summary");
       return;
     }
     setExplaining(true);
@@ -533,10 +533,10 @@ function PromptEditor({
       }
       const data = (await res.json()) as { summary: string };
       setPublishSummary(data.summary);
-      toast.success("Resumo gerado");
+      toast.success("Summary generated");
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Falha ao gerar resumo"
+        err instanceof Error ? err.message : "Failed to generate summary"
       );
     } finally {
       setExplaining(false);
@@ -545,16 +545,16 @@ function PromptEditor({
 
   const handlePublish = useCallback(async () => {
     if (!publishSummary.trim()) {
-      toast.error("Resumo da mudanca e obrigatorio");
+      toast.error("Change summary is required");
       return;
     }
     if (publishSummary.length > 500) {
-      toast.error("Resumo deve ter no maximo 500 caracteres");
+      toast.error("Summary must be at most 500 characters");
       return;
     }
     if (unknownGlobalVariables.length > 0) {
       toast.error(
-        `Variaveis desconhecidas: ${unknownGlobalVariables.join(", ")}`
+        `Unknown variables: ${unknownGlobalVariables.join(", ")}`
       );
       return;
     }
@@ -576,12 +576,12 @@ function PromptEditor({
         throw new Error((err as { error?: string }).error || `HTTP ${res.status}`);
       }
       const data = (await res.json()) as { version: number };
-      toast.success(`Versao v${data.version} publicada`);
+      toast.success(`Version v${data.version} published`);
       setPublishOpen(false);
       setPublishSummary("");
       await load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao publicar");
+      toast.error(err instanceof Error ? err.message : "Failed to publish");
     } finally {
       setPublishing(false);
     }
@@ -590,7 +590,7 @@ function PromptEditor({
   const handleRestore = useCallback(async () => {
     if (!restoreTarget) return;
     if (!restoreSummary.trim()) {
-      toast.error("Resumo da mudanca e obrigatorio");
+      toast.error("Change summary is required");
       return;
     }
     setRestoring(true);
@@ -611,12 +611,12 @@ function PromptEditor({
         throw new Error((err as { error?: string }).error || `HTTP ${res.status}`);
       }
       const data = (await res.json()) as { version: number };
-      toast.success(`Restaurado como v${data.version}`);
+      toast.success(`Restored as v${data.version}`);
       setRestoreTarget(null);
       setRestoreSummary("");
       await load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao restaurar");
+      toast.error(err instanceof Error ? err.message : "Failed to restore");
     } finally {
       setRestoring(false);
     }
@@ -634,9 +634,9 @@ function PromptEditor({
     return (
       <div className="space-y-4">
         <Button variant="ghost" onClick={onBack}>
-          <ChevronLeft className="size-4 mr-1" /> Voltar
+          <ChevronLeft className="size-4 mr-1" /> Back
         </Button>
-        <p className="text-sm text-muted-foreground">Prompt nao encontrado.</p>
+        <p className="text-sm text-muted-foreground">Prompt not found.</p>
       </div>
     );
   }
@@ -646,15 +646,15 @@ function PromptEditor({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={onBack}>
-            <ChevronLeft className="size-4 mr-1" /> Voltar
+            <ChevronLeft className="size-4 mr-1" /> Back
           </Button>
           <h2 className="text-lg font-medium">{detail.label}</h2>
           {detail.activeVersion !== null ? (
-            <Badge variant="secondary">v{detail.activeVersion} ativa</Badge>
+            <Badge variant="secondary">v{detail.activeVersion} active</Badge>
           ) : (
-            <Badge variant="outline">usando fallback</Badge>
+            <Badge variant="outline">using fallback</Badge>
           )}
-          {detail.hasDraft && <Badge>rascunho</Badge>}
+          {detail.hasDraft && <Badge>draft</Badge>}
         </div>
         <div className="flex items-center gap-1 text-xs">
           <Button
@@ -662,14 +662,14 @@ function PromptEditor({
             size="sm"
             onClick={() => setTab("edit")}
           >
-            <FileText className="size-3.5 mr-1" /> Editar
+            <FileText className="size-3.5 mr-1" /> Edit
           </Button>
           <Button
             variant={tab === "history" ? "secondary" : "ghost"}
             size="sm"
             onClick={() => setTab("history")}
           >
-            <History className="size-3.5 mr-1" /> Historico ({versions.length})
+            <History className="size-3.5 mr-1" /> History ({versions.length})
           </Button>
         </div>
       </div>
@@ -677,8 +677,9 @@ function PromptEditor({
       <p className="text-sm text-muted-foreground">{detail.description}</p>
       {detail.isTemplate && (
         <p className="text-xs text-muted-foreground">
-          Este e um template com placeholders no formato{" "}
-          <code>${"{"}placeholder{"}"}</code>. Preserve os placeholders ao editar.
+          This is a template with placeholders in the{" "}
+          <code>${"{"}placeholder{"}"}</code> format. Preserve the placeholders
+          when editing.
         </p>
       )}
 
@@ -693,10 +694,10 @@ function PromptEditor({
           {unknownGlobalVariables.length > 0 && (
             <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
               <div className="font-medium text-destructive">
-                Variaveis desconhecidas
+                Unknown variables
               </div>
               <p className="mt-1 text-muted-foreground">
-                Corrija ou remova antes de publicar:{" "}
+                Fix or remove before publishing:{" "}
                 {unknownGlobalVariables.join(", ")}
               </p>
             </div>
@@ -710,9 +711,9 @@ function PromptEditor({
             spellCheck={false}
           />
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>{editorContent.length.toLocaleString()} caracteres</span>
+            <span>{editorContent.length.toLocaleString()} characters</span>
             <span>
-              {dirty ? "Alteracoes nao salvas" : "Sincronizado com versao salva"}
+              {dirty ? "Unsaved changes" : "Synced with saved version"}
             </span>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -724,17 +725,17 @@ function PromptEditor({
               {savingDraft && (
                 <Loader2 className="size-4 mr-1 animate-spin" />
               )}
-              Salvar rascunho
+              Save draft
             </Button>
             <Button
               onClick={() => setPublishOpen(true)}
               disabled={!editorContent.trim()}
             >
-              Publicar nova versao
+              Publish new version
             </Button>
             {detail.hasDraft && (
               <Button variant="ghost" onClick={handleDiscardDraft}>
-                Descartar rascunho
+                Discard draft
               </Button>
             )}
             <Button
@@ -747,7 +748,7 @@ function PromptEditor({
                 (detail.activeContent ?? detail.fallbackContent)
               }
             >
-              Reverter para versao ativa
+              Revert to active version
             </Button>
           </div>
         </div>
@@ -757,8 +758,8 @@ function PromptEditor({
         <div className="space-y-3">
           {versions.length === 0 && (
             <p className="text-sm text-muted-foreground">
-              Nenhuma versao publicada ainda. O app esta usando o fallback do
-              codigo.
+              No version published yet. The app is using the fallback from
+              the code.
             </p>
           )}
           <ul className="divide-y border rounded-md">
@@ -769,12 +770,12 @@ function PromptEditor({
                     <Badge
                       variant={v.status === "active" ? "secondary" : "outline"}
                     >
-                      v{v.version} {v.status === "active" && "• ativa"}
+                      v{v.version} {v.status === "active" && "• active"}
                     </Badge>
                     <span className="text-sm">{v.changeSummary}</span>
                     {v.restoredFromVersion !== null && (
                       <Badge variant="outline" className="text-[10px]">
-                        restaurada de v{v.restoredFromVersion}
+                        restored from v{v.restoredFromVersion}
                       </Badge>
                     )}
                   </div>
@@ -784,7 +785,7 @@ function PromptEditor({
                       variant="ghost"
                       onClick={() => setDiffVersion(v)}
                     >
-                      Ver
+                      View
                     </Button>
                     {v.status !== "active" && (
                       <Button
@@ -792,7 +793,7 @@ function PromptEditor({
                         variant="ghost"
                         onClick={() => setRestoreTarget(v)}
                       >
-                        <RotateCcw className="size-3.5 mr-1" /> Restaurar
+                        <RotateCcw className="size-3.5 mr-1" /> Restore
                       </Button>
                     )}
                   </div>
@@ -811,31 +812,32 @@ function PromptEditor({
       <Dialog open={publishOpen} onOpenChange={setPublishOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Publicar nova versao</DialogTitle>
+            <DialogTitle>Publish new version</DialogTitle>
             <DialogDescription>
-              Isso cria uma versao imutavel e a torna ativa imediatamente.
+              This creates an immutable version and makes it active
+              immediately.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             {unknownGlobalVariables.length > 0 && (
               <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
                 <div className="font-medium text-destructive">
-                  Publicacao bloqueada
+                  Publishing blocked
                 </div>
                 <p className="mt-1 text-muted-foreground">
-                  Variaveis desconhecidas: {unknownGlobalVariables.join(", ")}
+                  Unknown variables: {unknownGlobalVariables.join(", ")}
                 </p>
               </div>
             )}
             <div>
               <label className="text-sm font-medium block mb-1">
-                Resumo da mudanca
+                Change summary
               </label>
               <Textarea
                 value={publishSummary}
                 onChange={(e) => setPublishSummary(e.target.value)}
                 rows={3}
-                placeholder="O que mudou e por que"
+                placeholder="What changed and why"
                 maxLength={500}
               />
               <div className="flex items-center justify-between mt-1 text-xs text-muted-foreground">
@@ -857,7 +859,7 @@ function PromptEditor({
             </div>
             <div>
               <div className="text-sm font-medium mb-1">
-                Preview com variaveis resolvidas
+                Preview with resolved variables
               </div>
               <pre className="max-h-48 overflow-auto rounded-md bg-muted p-3 text-xs whitespace-pre-wrap">
                 {renderedPreview}
@@ -870,11 +872,11 @@ function PromptEditor({
               onClick={() => setPublishOpen(false)}
               disabled={publishing}
             >
-              Cancelar
+              Cancel
             </Button>
             <Button onClick={handlePublish} disabled={publishing}>
               {publishing && <Loader2 className="size-4 mr-1 animate-spin" />}
-              Publicar
+              Publish
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -888,18 +890,18 @@ function PromptEditor({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              Restaurar versao v{restoreTarget?.version}
+              Restore version v{restoreTarget?.version}
             </DialogTitle>
             <DialogDescription>
-              Isso cria uma NOVA versao ativa baseada no conteudo de v
-              {restoreTarget?.version}. O historico original e preservado.
+              This creates a NEW active version based on the content of v
+              {restoreTarget?.version}. The original history is preserved.
             </DialogDescription>
           </DialogHeader>
           <Textarea
             value={restoreSummary}
             onChange={(e) => setRestoreSummary(e.target.value)}
             rows={3}
-            placeholder="Por que esta restaurando esta versao"
+            placeholder="Why you are restoring this version"
             maxLength={500}
           />
           <div className="text-xs text-muted-foreground">
@@ -911,11 +913,11 @@ function PromptEditor({
               onClick={() => setRestoreTarget(null)}
               disabled={restoring}
             >
-              Cancelar
+              Cancel
             </Button>
             <Button onClick={handleRestore} disabled={restoring}>
               {restoring && <Loader2 className="size-4 mr-1 animate-spin" />}
-              Restaurar
+              Restore
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -997,7 +999,7 @@ function DiffDialog({
       <DialogContent className="max-w-5xl">
         <DialogHeader>
           <DialogTitle>
-            v{diffVersion.version} — {diffVersion.changeSummary}
+            v{diffVersion.version} • {diffVersion.changeSummary}
           </DialogTitle>
           <DialogDescription>
             {formatDate(diffVersion.createdAt)} •{" "}
@@ -1012,14 +1014,14 @@ function DiffDialog({
               size="sm"
               onClick={() => onModeChange("diff")}
             >
-              <GitCompare className="size-3.5 mr-1" /> Diff vs ativa
+              <GitCompare className="size-3.5 mr-1" /> Diff vs active
             </Button>
             <Button
               variant={mode === "raw" ? "secondary" : "ghost"}
               size="sm"
               onClick={() => onModeChange("raw")}
             >
-              <FileText className="size-3.5 mr-1" /> Conteudo bruto
+              <FileText className="size-3.5 mr-1" /> Raw content
             </Button>
           </div>
           {mode === "diff" && (
@@ -1039,13 +1041,13 @@ function DiffDialog({
           <div className="border rounded bg-muted/30 max-h-[60vh] overflow-auto">
             <div className="sticky top-0 bg-background border-b px-3 py-1.5 text-[10px] uppercase tracking-wide text-muted-foreground flex">
               <span className="w-10 text-right pr-1">v{diffVersion.version}</span>
-              <span className="w-10 text-right pr-1">ativa</span>
+              <span className="w-10 text-right pr-1">active</span>
               <span className="w-4" />
-              <span>Linhas removidas vs adicionadas pela versao ativa</span>
+              <span>Lines removed vs added by the active version</span>
             </div>
             {segments.length === 0 ? (
               <p className="text-xs text-muted-foreground p-3">
-                Conteudos identicos.
+                Identical content.
               </p>
             ) : (
               segments.map((s, idx) => (
@@ -1065,11 +1067,11 @@ function DiffDialog({
               variant="outline"
               onClick={() => onRestore(diffVersion)}
             >
-              <RotateCcw className="size-3.5 mr-1" /> Restaurar esta versao
+              <RotateCcw className="size-3.5 mr-1" /> Restore this version
             </Button>
           )}
           <Button variant="ghost" onClick={onClose}>
-            Fechar
+            Close
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -1093,7 +1095,7 @@ export function PromptsTab() {
       setPrompts(data.prompts);
     } catch (err) {
       console.error(err);
-      toast.error("Falha ao listar prompts");
+      toast.error("Failed to list prompts");
     } finally {
       setLoading(false);
     }
@@ -1118,13 +1120,13 @@ export function PromptsTab() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-medium">Prompts do app</h2>
+        <h2 className="text-lg font-medium">App prompts</h2>
         <p className="text-sm text-muted-foreground">
-          Edite, versione e restaure prompts usados pelo AI Dashboard Builder,
-          pelo refresh de dashboards e pelo Data Chat. Cada card mostra fluxos,
-          impacto e dependencias para ajudar a avaliar o efeito de uma
-          publicacao. Quando nao ha versao publicada, o app usa o fallback
-          hardcoded no codigo.
+          Edit, version, and restore prompts used by the AI Dashboard Builder,
+          dashboard refresh, and Data Chat. Each card shows flows, impact, and
+          dependencies to help assess the effect of a publish. When there is
+          no published version, the app uses the fallback hardcoded in the
+          code.
         </p>
       </div>
       {loading ? (
