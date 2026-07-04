@@ -252,11 +252,21 @@ The Prisma schema targets PostgreSQL. PostgreSQL is required in every environmen
 DATABASE_URL=postgresql://user:password@localhost:5432/talkwithdata
 ```
 
+That hostname is correct when the app runs directly on your host. If the app
+runs in a container, `localhost` resolves to the app container itself, not the
+database.
+
 To run a matching local PostgreSQL instance with Docker:
 
 ```bash
 docker run -d --name talkwithdata-db -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password -e POSTGRES_DB=talkwithdata -p 5432:5432 -v talkwithdata-db-data:/var/lib/postgresql/data postgres:16-alpine
 ```
+
+For a containerized app, use one of these connection patterns instead:
+
+- `host.docker.internal` on Docker Desktop, for example `postgresql://user:password@host.docker.internal:5432/talkwithdata`
+- a shared Docker network and the database container name as the host
+- a compose-managed `db` service name when the app and PostgreSQL are started together
 
 For production, use a managed or persistent PostgreSQL instance.
 
