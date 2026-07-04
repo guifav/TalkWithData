@@ -27,4 +27,4 @@ Closes #
 - [ ] Commits follow Conventional Commits.
 - [ ] Documentation is updated for behavior, configuration, or deployment changes, or no update is needed.
 - [ ] No `.env`, service account, or private key files are committed.
-- [ ] No emojis or long dash characters were added.
+- [ ] No emojis, em-dashes, or en-dashes were added.
