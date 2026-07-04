@@ -31,6 +31,14 @@ Start a local PostgreSQL that matches the DATABASE_URL in .env.example:
 docker run -d --name talkwithdata-db -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password -e POSTGRES_DB=talkwithdata -p 5432:5432 -v talkwithdata-db-data:/var/lib/postgresql/data postgres:16-alpine
 ```
 
+That `localhost` URL works when `npm run dev` runs on your host machine. If the
+app itself runs in a container, `localhost` points at the app container, not
+PostgreSQL. In that case, use one of these container-friendly options:
+
+- On Docker Desktop, set `DATABASE_URL=postgresql://user:password@host.docker.internal:5432/talkwithdata`.
+- Put the app and PostgreSQL on the same Docker network and use the database container name as the host.
+- Or add a Postgres service to your compose stack and point `DATABASE_URL` at that service name.
+
 Open http://localhost:3000.
 
 Before testing authenticated flows, edit `.env` and set the Firebase values, `ALLOWED_AUTH_DOMAIN`, `STORAGE_BUCKET_NAME`, `DATABASE_URL`, `DASHBOARD_SESSION_SECRET`, and an AI provider key.
@@ -42,6 +50,9 @@ cp .env.example .env
 docker build -t talk-with-data -f app/Dockerfile app
 docker run --rm --env-file .env -p 3000:8080 talk-with-data
 ```
+
+When you use the container flow above, remember to update `DATABASE_URL` away
+from `localhost` before starting the container.
 
 ## Code standards
 
