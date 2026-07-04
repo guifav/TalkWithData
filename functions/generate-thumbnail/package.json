@@ -6,6 +6,9 @@
   "engines": {
     "node": ">=22.0.0"
   },
+  "overrides": {
+    "uuid": "^11.1.1"
+  },
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc"
