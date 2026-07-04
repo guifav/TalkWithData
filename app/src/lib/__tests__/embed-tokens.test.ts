@@ -98,6 +98,13 @@ describe("verifyEmbedToken", () => {
     expect(mockDelete).toHaveBeenCalledTimes(1);
   });
 
+  it("rejects a record with a missing or invalid expiresAt (no indefinite accept)", async () => {
+    seedToken("dash-a", TOK_A, { expiresAt: undefined });
+    await expect(verifyEmbedToken("dash-a", TOK_A)).resolves.toBe(false);
+    seedToken("dash-a", TOK_B, { expiresAt: "not-a-date" });
+    await expect(verifyEmbedToken("dash-a", TOK_B)).resolves.toBe(false);
+  });
+
   it("rejects malformed token strings without a Firestore read", async () => {
     await expect(verifyEmbedToken("dash-a", "not/a/token")).resolves.toBe(false);
     await expect(verifyEmbedToken("dash-a", "")).resolves.toBe(false);
