@@ -14,7 +14,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@google-cloud/functions-framework": "^3",
+    "@google-cloud/functions-framework": "^5",
     "@google-cloud/storage": "^7",
     "@google-cloud/firestore": "^7",
     "@sparticuz/chromium": "^131",
