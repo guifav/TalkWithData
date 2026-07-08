@@ -1,14 +1,15 @@
 import { adminDb } from "@/lib/firebase/admin";
 import type { CredentialRef } from "@/lib/data-sources/credentials";
-import { DataSourceKind, type DataSource } from "@/lib/data-sources/types";
+import {
+  DataSourceKind,
+  type DataSource,
+  type DataSourceAccessGrants,
+} from "@/lib/data-sources/types";
 import type { DataSourceRegistry } from "@/lib/data-sources/registry";
 
 const COLLECTION = "data_sources";
 
-export interface DataSourceAccessGrants {
-  assignedUsers: string[];
-  assignedDepartments: string[];
-}
+export type { DataSourceAccessGrants } from "./types";
 
 export interface DataSourceDoc {
   id: string;
@@ -19,6 +20,7 @@ export interface DataSourceDoc {
   credentialRef: CredentialRef;
   credentialEnc?: string;
   ownerColumn: string;
+  ownerColumnIdentity?: "email" | "uid";
   accessGrants: DataSourceAccessGrants;
   configVersion: number;
   createdBy: string;
@@ -135,6 +137,8 @@ export async function loadDataSourcesIntoRegistry(
       kind: DataSourceKind.CSV,
       orgId: dataSource.orgId,
       configVersion: dataSource.configVersion,
+      accessGrants: dataSource.accessGrants,
+      ownerColumnIdentity: dataSource.ownerColumnIdentity ?? "email",
     };
 
     if (dataSource.ownerColumn) {
@@ -225,6 +229,9 @@ function toDataSourceDoc(
     prefix: normalizePrefix(typeof data.prefix === "string" ? data.prefix : ""),
     credentialRef: data.credentialRef as CredentialRef,
     ownerColumn: typeof data.ownerColumn === "string" ? data.ownerColumn : "",
+    ownerColumnIdentity: isOwnerColumnIdentity(data.ownerColumnIdentity)
+      ? data.ownerColumnIdentity
+      : "email",
     accessGrants: normalizeAccessGrants(
       isAccessGrantsLike(data.accessGrants) ? data.accessGrants : undefined,
     ),
@@ -253,6 +260,7 @@ function toMetadata(doc: DataSourceDoc): DataSourceMetadata {
     bucket: doc.bucket,
     prefix: doc.prefix,
     ownerColumn: doc.ownerColumn,
+    ownerColumnIdentity: doc.ownerColumnIdentity,
     accessGrants: doc.accessGrants,
     configVersion: doc.configVersion,
     createdBy: doc.createdBy,
@@ -290,4 +298,8 @@ function isAccessGrantsLike(
     Array.isArray((value as Partial<DataSourceAccessGrants>).assignedUsers) &&
     Array.isArray((value as Partial<DataSourceAccessGrants>).assignedDepartments)
   );
+}
+
+function isOwnerColumnIdentity(value: unknown): value is "email" | "uid" {
+  return value === "email" || value === "uid";
 }
