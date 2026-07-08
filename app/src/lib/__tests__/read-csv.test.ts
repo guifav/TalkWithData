@@ -120,6 +120,19 @@ describe("readDataSourceCsv (P1.7, fluxo real de credencial)", () => {
     );
   });
 
+  it("falha fechado quando credentialRef esta ausente", async () => {
+    getDataSourceWithCredentials.mockResolvedValue(
+      makeMeta({
+        credentialEnc: makeCredentialBlob(FAKE_CREDS),
+      }),
+    );
+
+    await expect(readDataSourceCsvById("u1", "ds1")).rejects.toThrow(
+      /credentialRef valido/,
+    );
+    expect(createGcsStorage).not.toHaveBeenCalled();
+  });
+
   it("normaliza falha de storage como fonte indisponivel", async () => {
     getDataSourceWithCredentials.mockResolvedValue(
       makeMeta({

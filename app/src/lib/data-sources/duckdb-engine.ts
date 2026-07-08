@@ -264,9 +264,11 @@ async function createFilteredView(
     }
   }
 
-  const filterSql = ownerColSafe
-    ? `${quoteIdentifier(ownerColSafe)} IN (SELECT k FROM auth_keys)`
-    : "1 = 0";
+  const ownerExpr = quoteIdentifier(ownerColSafe);
+  const filterSql =
+    source.ownerColumnIdentity === "email"
+      ? `lower(trim(CAST(${ownerExpr} AS VARCHAR))) IN (SELECT k FROM auth_keys)`
+      : `${ownerExpr} IN (SELECT k FROM auth_keys)`;
 
   // A coluna de escopo (ownerColumn) NUNCA e exposta pela view filtrada.
   // CSVs podem ter headers duplicados (ex.: "owner,owner,amount"); o

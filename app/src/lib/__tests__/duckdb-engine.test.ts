@@ -103,6 +103,22 @@ describe("loadSource", () => {
     ).toEqual([20]);
   });
 
+  it("normaliza ownerColumn email do CSV antes do filtro", async () => {
+    const mixedCaseCsv = Buffer.from(
+      ["owner_email,amount", " ANA@Example.com ,10", "bob@example.com,20"].join("\n"),
+    );
+    const engine = await loadSource({
+      source: source({ id: "src-email-normalization" }),
+      csvBuffer: mixedCaseCsv,
+      viewerScope: { ownerKeys: ["ana@example.com"] },
+      etag: "etag-email-normalization",
+      configVersion: 1,
+    });
+
+    const result = await engine.run(`SELECT amount FROM ${engine.viewName}`);
+    expect(result.rows).toEqual([[10]]);
+  });
+
   it("falha fechado quando ownerColumn está ausente", async () => {
     __engineCacheReset();
     const engine = await loadSource({

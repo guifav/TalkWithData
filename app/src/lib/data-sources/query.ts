@@ -181,7 +181,19 @@ async function readDataSourceCsv(
   // Assim o fluxo de producao descriptografa a credencial GCS de ponta a
   // ponta. O secretManager ainda nao esta implementado (SecretService.resolve
   // lanca), entao bloqueamos cedo se o ref for desse kind.
-  if (doc.credentialRef.kind === "secretManager") {
+  const credentialRef = doc.credentialRef;
+  if (
+    !credentialRef ||
+    typeof credentialRef !== "object" ||
+    typeof credentialRef.kind !== "string" ||
+    typeof credentialRef.ref !== "string" ||
+    credentialRef.ref.trim() === ""
+  ) {
+    throw new DataSourceUnavailableError(
+      `Fonte ${dsMeta.id} sem credentialRef valido`,
+    );
+  }
+  if (credentialRef.kind === "secretManager") {
     throw new DataSourceUnavailableError(
       `credentialRef secretManager ainda nao suportado para ${dsMeta.id}`,
     );
@@ -195,13 +207,13 @@ async function readDataSourceCsv(
   try {
     const secretService = new SecretService({
       loadEncryptedBlob: async (ref: string) => {
-        if (ref !== doc.credentialRef.ref) {
+        if (ref !== credentialRef.ref) {
           throw new Error(`credentialRef ${ref} nao corresponde a fonte`);
         }
         return Buffer.from(doc.credentialEnc as string, "base64");
       },
     });
-    const credentials = await secretService.resolve(doc.credentialRef);
+    const credentials = await secretService.resolve(credentialRef);
     const storage = createGcsStorage({
       bucketName: doc.bucket,
       credentials,
