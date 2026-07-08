@@ -144,7 +144,7 @@ function parseRecords(text: string): string[][] {
 }
 
 function isEmptyHeader(header: string[]): boolean {
-  return header.length === 0 || (header.length === 1 && isBlankValue(header[0]));
+  return header.length === 0 || header.every(isBlankValue);
 }
 
 function normalizeSampleSize(sampleSize: number | undefined): number {

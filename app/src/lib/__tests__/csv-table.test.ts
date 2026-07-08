@@ -30,6 +30,10 @@ describe("parseCsvRows", () => {
     expect(() => parseCsvRows("")).toThrow(CsvParseError);
   });
 
+  it("rejeita header totalmente em branco", () => {
+    expect(() => parseCsvRows(",,,\n1,2,3\n")).toThrow(CsvParseError);
+  });
+
   it("rejeita linha irregular com rowIndex de dados 0-based", () => {
     try {
       parseCsvRows("name,age\nAna,37\nBob\n");
