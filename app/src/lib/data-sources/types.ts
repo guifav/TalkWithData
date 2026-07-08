@@ -2,6 +2,11 @@ export enum DataSourceKind {
   CSV = "csv",
 }
 
+export interface DataSourceAccessGrants {
+  assignedUsers: string[];
+  assignedDepartments: string[];
+}
+
 export interface DataSource {
   id: string;
   kind: DataSourceKind;
@@ -12,4 +17,14 @@ export interface DataSource {
   // em P1.3 via Firestore). Mantido aqui para que o registry o disponibilize
   // no lookup.
   ownerColumn?: string;
+  accessGrants?: DataSourceAccessGrants;
+  ownerColumnIdentity?: "email" | "uid";
+}
+
+export interface ViewerScope {
+  ownerKeys: string[];
+}
+
+export interface QueryAuthorization {
+  canQuery: boolean;
 }

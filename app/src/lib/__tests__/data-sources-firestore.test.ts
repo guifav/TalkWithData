@@ -220,6 +220,8 @@ describe("data sources Firestore persistence", () => {
       orgId: "org-a",
       configVersion: 3,
       ownerColumn: "owner_email",
+      accessGrants: { assignedUsers: [], assignedDepartments: [] },
+      ownerColumnIdentity: "email",
     });
   });
 });
