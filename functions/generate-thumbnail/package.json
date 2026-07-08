@@ -21,6 +21,6 @@
     "puppeteer-core": "^25"
   },
   "devDependencies": {
-    "typescript": "^5"
+    "typescript": "^6"
   }
 }
