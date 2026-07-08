@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
   if (!dataSourceId || !sql) {
     return new Response(
-      JSON.stringify({ error: "dataSourceId e query sao obrigatorios" }),
+      JSON.stringify({ error: "dataSourceId and query are required" }),
       { status: 400, headers: { "Content-Type": "application/json" } },
     );
   }

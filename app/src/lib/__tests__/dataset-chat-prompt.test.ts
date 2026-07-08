@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { escapeDataSourceName } from "@/lib/dataset-chat-prompt";
+import {
+  escapeDataSourceId,
+  escapeDataSourceName,
+} from "@/lib/dataset-chat-prompt";
 
 describe("escapeDataSourceName (P1.7 / P2 E4-Kimi)", () => {
   it("remove caracteres de markdown/instruction-breaking", () => {
@@ -28,5 +31,12 @@ describe("escapeDataSourceName (P1.7 / P2 E4-Kimi)", () => {
   it("trunca a um tamanho seguro", () => {
     const long = "a".repeat(200);
     expect(escapeDataSourceName(long).length).toBeLessThanOrEqual(80);
+  });
+});
+
+describe("escapeDataSourceId", () => {
+  it("mantem id tecnico sem truncar, apenas removendo caracteres inseguros", () => {
+    const longId = `${"a".repeat(120)}!@#`;
+    expect(escapeDataSourceId(longId)).toBe("a".repeat(120));
   });
 });

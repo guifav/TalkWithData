@@ -297,7 +297,6 @@ export async function POST(request: NextRequest) {
     toolToEndpoint,
     toolToServerId,
   } = buildToolsFromServers(servers);
-  TOOLS.push(QUERY_DATASET_TOOL);
 
   let allSources: DataSourceMetadata[] = [];
   try {
@@ -320,6 +319,9 @@ export async function POST(request: NextRequest) {
         err,
       );
     }
+  }
+  if (authorizedSources.length > 0) {
+    TOOLS.push(QUERY_DATASET_TOOL);
   }
 
   let built: BuiltDataChatPrompt;

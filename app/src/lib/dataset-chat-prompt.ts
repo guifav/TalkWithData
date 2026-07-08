@@ -24,6 +24,10 @@ export function escapeDataSourceName(name: string, maxLen = 80): string {
   return cleaned.length > maxLen ? `${cleaned.slice(0, maxLen - 3)}...` : cleaned;
 }
 
+export function escapeDataSourceId(id: string): string {
+  return id.replace(/[^a-zA-Z0-9_.\-]/g, "");
+}
+
 /**
  * Prompt do dataset-chat (TalkWithData). SEPARADO do buildDataChatSystemPrompt
  * original (MCP) para nao quebrar o chat existente: reusa o base + mcp_freshness
@@ -42,7 +46,7 @@ export async function buildDatasetChatSystemPrompt(
     ? dataSources
         .map(
           (ds) =>
-            `- **${escapeDataSourceName(ds.name ?? ds.id)}** (dataSourceId: \`${escapeDataSourceName(ds.id)}\`)`,
+            `- **${escapeDataSourceName(ds.name ?? ds.id)}** (dataSourceId: \`${escapeDataSourceId(ds.id)}\`)`,
         )
         .join("\n")
     : "(nenhuma fonte de dados disponivel para este usuario)";
