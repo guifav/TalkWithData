@@ -1,4 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@/generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 // Allow build to succeed without DATABASE_URL (Next.js collects page data at build time)
 const databaseUrl = process.env.DATABASE_URL;
@@ -15,7 +16,8 @@ function createPrismaClient(): PrismaClient {
       },
     });
   }
-  return new PrismaClient();
+  const adapter = new PrismaPg({ connectionString: databaseUrl });
+  return new PrismaClient({ adapter });
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();

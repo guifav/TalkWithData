@@ -12,7 +12,7 @@ import { NextRequest } from "next/server";
 import { verifyDashSessionToken } from "@/lib/dash-session";
 import { verifyRequest } from "@/lib/api-auth";
 import { getInstance } from "@/lib/app-db/registry";
-import type { AppDbInstance } from "@prisma/client";
+import type { AppDbInstance } from "@/generated/prisma/client";
 
 export interface DataApiAuth {
   dashboardId: string;

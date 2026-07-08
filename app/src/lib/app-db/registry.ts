@@ -16,7 +16,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { userSchemaName, dashboardTablePrefix } from "./naming";
-import type { AppDbInstance, Prisma } from "@prisma/client";
+import type { AppDbInstance, Prisma } from "@/generated/prisma/client";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
