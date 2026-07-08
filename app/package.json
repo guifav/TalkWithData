@@ -33,7 +33,7 @@
   "dependencies": {
     "@duckdb/node-api": "1.5.4-r.1",
     "@google-cloud/storage": "^7.21.0",
-    "@prisma/client": "^6.6.0",
+    "@prisma/client": "^7.8.0",
     "adm-zip": "^0.5.17",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
