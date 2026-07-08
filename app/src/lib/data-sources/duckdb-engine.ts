@@ -282,21 +282,20 @@ async function createFilteredView(
       `DataSource ${source.id} possui multiplas colunas de escopo "${ownerRaw}"`,
     );
   }
-  const projectedColumns = ownerColSafe
+  const projectedColumnList = ownerColSafe
     ? columns
         .filter((column) => column.rawName !== ownerRaw)
         .map((column) => quoteIdentifier(column.safeName))
-        .join(", ")
-    : "*";
+    : [];
 
   // Falha fechado se nao houver nenhuma coluna de dados alem da ownerColumn:
   // nunca podemos cair em SELECT * (que reexporia a coluna de escopo).
-  if (ownerColSafe && projectedColumns.length === 0) {
+  if (ownerColSafe && projectedColumnList.length === 0) {
     throw new DataSourceUnavailableError(
       `DataSource ${source.id} nao possui colunas de dados alem da coluna de escopo`,
     );
   }
-  const selectList = projectedColumns.length > 0 ? projectedColumns : "*";
+  const selectList = ownerColSafe ? projectedColumnList.join(", ") : "*";
 
   await connection.runAndReadAll(
     `CREATE OR REPLACE TEMP VIEW ${quoteIdentifier(viewName)} AS SELECT ${selectList} FROM ${quoteIdentifier(rawSafe)} WHERE ${filterSql}`,

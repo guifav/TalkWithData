@@ -124,11 +124,12 @@ export async function queryDataset(
 }
 
 /**
- * Leitura real do CSV da fonte por id: busca o doc com credenciais, valida
- * autorizacao (P1.4) e delega a leitura. Exportada para testes/APIs externas,
- * mas OBRIGATORIAMENTE passa por canQueryDataSource antes de ler (P1 E4/Kimi:
- * nao expor leitura sem autorizacao). Em producao o queryDataset ja tem o doc
- * (leitura unica, P4) e chama readDataSourceCsv direto.
+ * Leitura real do CSV da fonte por id: busca primeiro metadata SEM credenciais,
+ * valida autorizacao (P1.4) e so entao busca o doc server-only com credentialEnc.
+ * A dupla leitura Firestore e intencional: evita carregar credentialRef/credentialEnc
+ * antes de canQueryDataSource, que e o invariante de seguranca mais forte.
+ * Exportada para testes/APIs externas, mas OBRIGATORIAMENTE passa por
+ * canQueryDataSource antes de ler.
  */
 export async function readDataSourceCsvById(
   uid: string,

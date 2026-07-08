@@ -146,7 +146,7 @@ describe("queryDataset (P1.7)", () => {
         },
         { readCsv: async () => mockCsv() },
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/owner|not found|binder/i);
   });
 
   it("nao vaza ownerColumn com header duplicado (falha fechado)", async () => {
