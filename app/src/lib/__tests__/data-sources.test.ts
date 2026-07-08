@@ -60,4 +60,11 @@ describe("DataSourceRegistry", () => {
 
     expect(registry.list("org-a")).toEqual([orgASecond, orgAFirst]);
   });
+
+  it("returns empty array when the org has no sources", () => {
+    const registry = new DataSourceRegistry();
+    registry.register(csvSource({ id: "source-x", orgId: "org-b" }));
+
+    expect(registry.list("org-a")).toEqual([]);
+  });
 });
