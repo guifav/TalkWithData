@@ -187,7 +187,7 @@ function isBlankValue(value: string): boolean {
 }
 
 function isInt4Integer(value: string): boolean {
-  if (!/^-?\d+$/.test(value)) {
+  if (!/^[+-]?\d+$/.test(value)) {
     return false;
   }
 
@@ -197,11 +197,11 @@ function isInt4Integer(value: string): boolean {
 }
 
 function isDecimalValue(value: string): boolean {
-  if (/^-?\d+$/.test(value)) {
+  if (/^[+-]?\d+$/.test(value)) {
     return isInt4Integer(value);
   }
 
-  return /^-?(?:\d+\.\d+|\d+\.|\.\d+)(?:[eE][+-]?\d+)?$/.test(value);
+  return /^[+-]?(?:\d+\.\d+|\d+\.|\.\d+)(?:[eE][+-]?\d+)?$/.test(value);
 }
 
 function isBooleanValue(value: string): boolean {

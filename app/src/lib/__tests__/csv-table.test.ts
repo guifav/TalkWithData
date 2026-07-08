@@ -70,11 +70,18 @@ describe("inferColumnType", () => {
     expect(inferColumnType(["2026-02-30"])).toBe("text");
   });
 
-  it("respeita limites int4 incluindo o mínimo negativo", () => {
+  it("respeita limites int4 incluindo o mínimo negativo e sinal positivo", () => {
     expect(inferColumnType(["-2147483648"])).toBe("integer");
     expect(inferColumnType(["2147483647"])).toBe("integer");
+    expect(inferColumnType(["+2147483647"])).toBe("integer");
     expect(inferColumnType(["-2147483649"])).toBe("text");
     expect(inferColumnType(["2147483648"])).toBe("text");
+    expect(inferColumnType(["+2147483648"])).toBe("text");
+  });
+
+  it("infere decimal para valores com sinal", () => {
+    expect(inferColumnType(["+1.5"])).toBe("decimal");
+    expect(inferColumnType(["-2.25"])).toBe("decimal");
   });
 
   it("infere timestamp para valores com data e horario validos", () => {
