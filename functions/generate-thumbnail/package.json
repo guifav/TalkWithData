@@ -14,13 +14,13 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@google-cloud/functions-framework": "^3",
+    "@google-cloud/functions-framework": "^5",
     "@google-cloud/storage": "^7",
-    "@google-cloud/firestore": "^7",
-    "@sparticuz/chromium": "^131",
-    "puppeteer-core": "^24"
+    "@google-cloud/firestore": "^8",
+    "@sparticuz/chromium": "^149",
+    "puppeteer-core": "^25"
   },
   "devDependencies": {
-    "typescript": "^5"
+    "typescript": "^6"
   }
 }
