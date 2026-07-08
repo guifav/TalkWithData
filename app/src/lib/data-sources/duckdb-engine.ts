@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import {
   parseCsvTable,
+  CsvParseError,
   type CsvColumn,
   type InferredColumnType,
 } from "@/lib/data-sources/csv-table";
@@ -146,6 +147,9 @@ async function createRawSource(args: LoadSourceArgs): Promise<CachedRawSource> {
     connection?.closeSync();
     instance.closeSync();
     if (error instanceof DuckDbSandboxError) throw error;
+    if (error instanceof CsvParseError) {
+      throw new DataSourceUnavailableError(error.message);
+    }
     throw new DuckDbSandboxError(errorMessage(error), error);
   }
 }

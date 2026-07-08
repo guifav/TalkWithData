@@ -56,7 +56,11 @@ export function publicErrorMessage(err: unknown): string {
     return "Data source temporarily unavailable.";
   if (err instanceof QueryDatasetInvalidInputError)
     return "Invalid query input.";
-  if (err instanceof DuckDbSandboxError) return "Invalid query.";
+  if (err instanceof DuckDbSandboxError) {
+    return isDuckDbSourceUnavailable(err)
+      ? "Data source temporarily unavailable."
+      : "Invalid query.";
+  }
   return "Query failed. Please try again.";
 }
 
@@ -77,13 +81,8 @@ export function publicErrorStatus(err: unknown): number {
     // falha de execucao.
     const msg = err.message || "";
     if (/timeout/i.test(msg)) return 504;
-    if (
-      /(statement proibido|tabela (nao autorizada|ausente)|query (muito longa|invalida)|sql inválido|function scan|função bloqueada|binder error|parser error|catalog error)/i.test(
-        msg,
-      )
-    ) {
-      return 400;
-    }
+    if (isDuckDbSourceUnavailable(err)) return 503;
+    if (isDuckDbInvalidQuery(msg)) return 400;
     return 500;
   }
   if (err instanceof Error && "status" in err) {
@@ -91,4 +90,22 @@ export function publicErrorStatus(err: unknown): number {
     if (typeof s === "number") return s;
   }
   return 500;
+}
+
+function isDuckDbInvalidQuery(message: string): boolean {
+  const normalized = normalizeMessage(message);
+  return /(statement proibido|tabela (nao autorizada|ausente)|query (muito longa|invalida)|sql invalido|function scan|funcao bloqueada|catalogo proibido|multi-statement proibido|(union|intersect|except) proibido|binder error|parser error|catalog error)/i.test(
+    normalized,
+  );
+}
+
+function isDuckDbSourceUnavailable(err: DuckDbSandboxError): boolean {
+  const normalized = normalizeMessage(err.message || "");
+  return /(csv invalido|csv sem header|linha csv irregular|objeto externo excede|fonte .*sem credentialenc|declara ownercolumn|ownercolumn .*ausente|ownercolumn .*vazia)/i.test(
+    normalized,
+  );
+}
+
+function normalizeMessage(message: string): string {
+  return message.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }

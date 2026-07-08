@@ -120,6 +120,25 @@ describe("readDataSourceCsv (P1.7, fluxo real de credencial)", () => {
     );
   });
 
+  it("normaliza falha de storage como fonte indisponivel", async () => {
+    getDataSourceWithCredentials.mockResolvedValue(
+      makeMeta({
+        credentialRef: { kind: "encryptedBlob" as const, ref: "r1" },
+        credentialEnc: makeCredentialBlob(FAKE_CREDS),
+      }),
+    );
+    createGcsStorage.mockReturnValue({
+      list: async () => {
+        throw new Error("gcs down with internal detail");
+      },
+      readByKey: async () => ({ content: CSV_BYTES, md5Hash: "h1" }),
+    });
+
+    await expect(readDataSourceCsvById("u1", "ds1")).rejects.toThrow(
+      /indisponivel para leitura do CSV/,
+    );
+  });
+
   it("bloqueia cedo credentialRef secretManager (ainda nao implementado)", async () => {
     getDataSourceWithCredentials.mockResolvedValue(
       makeMeta({

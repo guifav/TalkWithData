@@ -431,7 +431,7 @@ function validateFallbackTableRefs(
     if (word !== "from" && word !== "join") continue;
 
     const relationStart = nextRelationTokenIndex(tokens, index + 1);
-    if (relationStart === null) continue;
+    if (relationStart === null) return "tabela ausente apos FROM/JOIN";
 
     const first = tokens[relationStart];
     if (!first || first.value === "(") continue;

@@ -191,33 +191,40 @@ async function readDataSourceCsv(
     );
   }
 
-  const secretService = new SecretService({
-    loadEncryptedBlob: async (ref: string) => {
-      if (ref !== doc.credentialRef.ref) {
-        throw new Error(`credentialRef ${ref} nao corresponde a fonte`);
-      }
-      return Buffer.from(doc.credentialEnc as string, "base64");
-    },
-  });
-  const credentials = await secretService.resolve(doc.credentialRef);
-  const storage = createGcsStorage({
-    bucketName: doc.bucket,
-    credentials,
-  });
+  try {
+    const secretService = new SecretService({
+      loadEncryptedBlob: async (ref: string) => {
+        if (ref !== doc.credentialRef.ref) {
+          throw new Error(`credentialRef ${ref} nao corresponde a fonte`);
+        }
+        return Buffer.from(doc.credentialEnc as string, "base64");
+      },
+    });
+    const credentials = await secretService.resolve(doc.credentialRef);
+    const storage = createGcsStorage({
+      bucketName: doc.bucket,
+      credentials,
+    });
 
-  const listed = await storage.list(doc.prefix);
-  const csvObject = listed.objects.find((o) =>
-    String(o.name).toLowerCase().endsWith(".csv"),
-  );
-  if (!csvObject) {
+    const listed = await storage.list(doc.prefix);
+    const csvObject = listed.objects.find((o) =>
+      String(o.name).toLowerCase().endsWith(".csv"),
+    );
+    if (!csvObject) {
+      throw new DataSourceUnavailableError(
+        `Nenhum objeto CSV encontrado em ${doc.prefix}`,
+      );
+    }
+
+    const { content, md5Hash } = await storage.readByKey(csvObject.name);
+    return {
+      csvBuffer: content,
+      etag: md5Hash || csvObject.md5Hash || "",
+    };
+  } catch (error) {
+    if (error instanceof DataSourceUnavailableError) throw error;
     throw new DataSourceUnavailableError(
-      `Nenhum objeto CSV encontrado em ${doc.prefix}`,
+      `Fonte ${dsMeta.id} indisponivel para leitura do CSV`,
     );
   }
-
-  const { content, md5Hash } = await storage.readByKey(csvObject.name);
-  return {
-    csvBuffer: content,
-    etag: md5Hash || csvObject.md5Hash || "",
-  };
 }
