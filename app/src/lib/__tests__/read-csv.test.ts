@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createCipheriv } from "crypto";
 
 // NÃO mockamos @/lib/data-sources/credentials: queremos exercitar o
@@ -69,6 +69,7 @@ function makeMeta(extra: Record<string, unknown> = {}) {
 describe("readDataSourceCsv (P1.7, fluxo real de credencial)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv("TWD_CREDENTIAL_ENC_KEY", DEV_ENC_KEY);
     getDataSource.mockResolvedValue(makeMeta());
     canQueryDataSource.mockResolvedValue({ canQuery: true });
     createGcsStorage.mockReturnValue({
@@ -77,6 +78,10 @@ describe("readDataSourceCsv (P1.7, fluxo real de credencial)", () => {
       }),
       readByKey: async () => ({ content: CSV_BYTES, md5Hash: "h1" }),
     });
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("descriptografa credentialEnc com SecretService real e le o CSV", async () => {

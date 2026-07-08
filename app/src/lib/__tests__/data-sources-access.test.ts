@@ -154,18 +154,14 @@ describe("canQueryDataSource", () => {
 });
 
 describe("resolveViewerScope", () => {
-  it("retorna emails normalizados para comparação case-insensitive", async () => {
-    firestoreMocks.departments.set("sales", {
+  it("retorna apenas o email normalizado do viewer para ownerColumnIdentity=email", async () => {
+    firestoreMocks.users.set("uid-viewer", {
       exists: true,
-      data: { memberUids: ["uid-member"] },
+      data: { email: " Viewer@Example.COM " },
     });
-    firestoreMocks.users.set("uid-member", {
+    firestoreMocks.users.set("uid-other", {
       exists: true,
-      data: { email: "MEMBER@EXAMPLE.COM" },
-    });
-    firestoreMocks.users.set("uid-direct", {
-      exists: true,
-      data: { email: " Direct@Example.COM " },
+      data: { email: "other@example.com" },
     });
 
     const result = await resolveViewerScope(
@@ -173,49 +169,73 @@ describe("resolveViewerScope", () => {
       dataSource({
         ownerColumnIdentity: "email",
         accessGrants: {
-          assignedUsers: ["uid-direct"],
-          assignedDepartments: ["sales"],
+          assignedUsers: ["uid-viewer", "uid-other"],
+          assignedDepartments: [],
         },
       }),
     );
 
-    expect(result.ownerKeys).toEqual([
-      "member@example.com",
-      "direct@example.com",
-    ]);
+    expect(result.ownerKeys).toEqual(["viewer@example.com"]);
   });
 
-  it("retorna uids diretos quando ownerColumnIdentity é uid", async () => {
-    firestoreMocks.departments.set("sales", {
-      exists: true,
-      data: { memberUids: ["uid-member"] },
-    });
-
+  it("retorna apenas o uid do viewer quando ownerColumnIdentity é uid", async () => {
     const result = await resolveViewerScope(
       "uid-viewer",
       dataSource({
         ownerColumnIdentity: "uid",
         accessGrants: {
-          assignedUsers: ["uid-direct"],
-          assignedDepartments: ["sales"],
+          assignedUsers: ["uid-viewer", "uid-other"],
+          assignedDepartments: [],
         },
       }),
     );
 
-    expect(result.ownerKeys).toEqual(["uid-member", "uid-direct"]);
+    expect(result.ownerKeys).toEqual(["uid-viewer"]);
   });
 
-  it("ignora user doc ausente ao resolver emails", async () => {
-    firestoreMocks.departments.set("sales", {
+  it("ignora user doc ausente ao resolver email do viewer", async () => {
+    firestoreMocks.users.set("uid-other", {
       exists: true,
-      data: { memberUids: ["uid-member", "uid-missing"] },
-    });
-    firestoreMocks.users.set("uid-member", {
-      exists: true,
-      data: { email: "member@example.com" },
+      data: { email: "other@example.com" },
     });
 
     const result = await resolveViewerScope(
+      "uid-viewer",
+      dataSource({
+        accessGrants: {
+          assignedUsers: ["uid-viewer", "uid-other"],
+          assignedDepartments: [],
+        },
+      }),
+    );
+
+    expect(result).toEqual({ ownerKeys: [] });
+  });
+
+  it("viewer autorizado por department ve somente as proprias linhas", async () => {
+    firestoreMocks.departments.set("sales", {
+      exists: true,
+      data: { memberUids: ["uid-viewer", "uid-other"] },
+    });
+    firestoreMocks.users.set("uid-viewer", {
+      exists: true,
+      data: { email: "viewer@example.com" },
+    });
+    firestoreMocks.users.set("uid-other", {
+      exists: true,
+      data: { email: "other@example.com" },
+    });
+
+    const auth = await canQueryDataSource(
+      "uid-viewer",
+      dataSource({
+        accessGrants: {
+          assignedUsers: [],
+          assignedDepartments: ["sales"],
+        },
+      }),
+    );
+    const scope = await resolveViewerScope(
       "uid-viewer",
       dataSource({
         accessGrants: {
@@ -225,48 +245,17 @@ describe("resolveViewerScope", () => {
       }),
     );
 
-    expect(result).toEqual({ ownerKeys: ["member@example.com"] });
+    expect(auth).toEqual({ canQuery: true });
+    expect(scope).toEqual({ ownerKeys: ["viewer@example.com"] });
   });
 
-  it("deduplica owner keys repetidos", async () => {
-    firestoreMocks.departments.set("sales", {
-      exists: true,
-      data: { memberUids: ["uid-a", "uid-b"] },
-    });
-    firestoreMocks.users.set("uid-a", {
-      exists: true,
-      data: { email: "owner@example.com" },
-    });
-    firestoreMocks.users.set("uid-b", {
-      exists: true,
-      data: { email: "OWNER@EXAMPLE.COM" },
-    });
-
+  it("retorna ownerKeys vazio quando uid do viewer está vazio", async () => {
     const result = await resolveViewerScope(
-      "uid-viewer",
-      dataSource({
-        accessGrants: {
-          assignedUsers: ["uid-a"],
-          assignedDepartments: ["sales"],
-        },
-      }),
-    );
-
-    expect(result).toEqual({ ownerKeys: ["owner@example.com"] });
-  });
-
-  it("retorna ownerKeys vazio quando não há grants nem members", async () => {
-    firestoreMocks.departments.set("sales", {
-      exists: true,
-      data: { memberUids: [] },
-    });
-
-    const result = await resolveViewerScope(
-      "uid-viewer",
+      "",
       dataSource({
         accessGrants: {
           assignedUsers: [],
-          assignedDepartments: ["sales"],
+          assignedDepartments: [],
         },
       }),
     );

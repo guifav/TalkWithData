@@ -70,6 +70,29 @@ describe("queryDataset (P1.7)", () => {
     expect(result.truncated).toBe(false);
   });
 
+  it("usa ownerKeys do viewer, nao todos os owners autorizados da fonte", async () => {
+    (
+      resolveViewerScope as unknown as ReturnType<typeof vi.fn>
+    ).mockResolvedValue({ ownerKeys: ["ana"] });
+
+    const result = await queryDataset(
+      {
+        uid: "u1",
+        dataSourceId: "ds1",
+        sql: "SELECT amount FROM view ORDER BY amount",
+      },
+      {
+        readCsv: async () => ({
+          csvBuffer: Buffer.from("owner,amount\nana,10\nbob,20\n"),
+          etag: "etag-viewer-only",
+        }),
+      },
+    );
+
+    expect(resolveViewerScope).toHaveBeenCalledWith("u1", expect.any(Object));
+    expect(result.rows).toEqual([[10]]);
+  });
+
   it("nega acesso antes de carregar credenciais", async () => {
     (
       canQueryDataSource as unknown as ReturnType<typeof vi.fn>

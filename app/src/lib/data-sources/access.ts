@@ -30,33 +30,16 @@ export async function canQueryDataSource(
 }
 
 export async function resolveViewerScope(
-  _uid: string,
+  uid: string,
   ds: DataSource,
 ): Promise<ViewerScope> {
-  const ownerUids = await collectGrantedOwnerUids(ds);
   const ownerColumnIdentity = ds.ownerColumnIdentity ?? "email";
 
   if (ownerColumnIdentity === "uid") {
-    return { ownerKeys: ownerUids };
+    return { ownerKeys: uniqueStrings(uid ? [uid] : []) };
   }
 
-  return { ownerKeys: await resolveOwnerEmails(ownerUids) };
-}
-
-async function collectGrantedOwnerUids(ds: DataSource): Promise<string[]> {
-  const grants = ds.accessGrants;
-  if (!grants) return [];
-
-  const departmentMemberLists = await Promise.all(
-    uniqueStrings(grants.assignedDepartments).map((departmentId) =>
-      loadDepartmentMemberUids(departmentId),
-    ),
-  );
-
-  return uniqueStrings([
-    ...departmentMemberLists.flat(),
-    ...grants.assignedUsers,
-  ]);
+  return { ownerKeys: await resolveOwnerEmails(uid ? [uid] : []) };
 }
 
 async function loadDepartmentMemberUids(
