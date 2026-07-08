@@ -159,6 +159,15 @@ describe("guardSql", () => {
     expectBlocked("CREATE TABLE twd_source_filtered(id integer)", "statement proibido");
   });
 
+  it("rejeita SHOW TABLES", () => {
+    expectBlocked("SHOW TABLES", "statement proibido");
+  });
+
+  it("rejeita DESCRIBE (parse invalido ou statement bloqueado)", () => {
+    const result = guardSql(`DESCRIBE ${allowedViewName}`, { allowedViewName });
+    expect(result).toMatchObject({ ok: false });
+  });
+
   it.each([
     "query_table",
     "query",

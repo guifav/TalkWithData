@@ -234,16 +234,17 @@ async function createFilteredView(
     : undefined;
   const ownerColSafe = ownerColumn?.safeName;
 
-  // Falha fechado se a coluna de escopo declarada nao casa exatamente com
-  // uma coluna do CSV. Sem ownerColumn valido, a view cairia em SELECT * e
-  // exporia o schema bruto (incluindo a coluna de owner) no resultado,
-  // violando o contrato de nao vazar ownerColumn/emails de owner.
-  if (source.ownerColumn && !ownerColSafe) {
-    throw new DataSourceUnavailableError(
-      `DataSource ${source.id} declara ownerColumn "${source.ownerColumn}" ausente no CSV`,
-    );
+  // Falha fechado se a coluna de escopo estiver ausente, vazia ou nao casar
+  // exatamente com uma coluna do CSV. Sem ownerColumn valido, a view cairia em
+  // SELECT * e exporia o schema bruto (incluindo a coluna de owner) no
+  // resultado, violando o contrato de nao vazar ownerColumn/emails de owner.
+  if (!ownerColSafe) {
+    const detail = source.ownerColumn
+      ? `declara ownerColumn "${source.ownerColumn}" ausente no CSV`
+      : "nao declara ownerColumn valida";
+    throw new DataSourceUnavailableError(`DataSource ${source.id} ${detail}`);
   }
-  if (ownerColSafe) validateIdentifier(ownerColSafe);
+  validateIdentifier(ownerColSafe);
 
   await connection.runAndReadAll("CREATE TEMP TABLE auth_keys(k VARCHAR)");
   if (ownerColSafe) {

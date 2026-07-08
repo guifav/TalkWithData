@@ -140,4 +140,13 @@ describe("POST /api/ai/query-dataset (P1.7)", () => {
     );
     expect(res.status).toBe(404);
   });
+
+  it("400 para SQL sintaticamente invalido", async () => {
+    const res = await POST(
+      makeRequest({ dataSourceId: "ds1", query: "SELECT FROM" }),
+    );
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBe("Invalid query.");
+  });
 });

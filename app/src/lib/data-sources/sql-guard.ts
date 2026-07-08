@@ -68,6 +68,8 @@ const BLOCKED_STATEMENT_TYPES = new Set([
   "load",
   "pragma",
   "set",
+  "show",
+  "describe",
   "update",
 ]);
 

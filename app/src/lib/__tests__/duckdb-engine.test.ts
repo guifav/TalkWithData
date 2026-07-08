@@ -103,16 +103,17 @@ describe("loadSource", () => {
     ).toEqual([20]);
   });
 
-  it("retorna zero linhas quando ownerColumn está ausente", async () => {
+  it("falha fechado quando ownerColumn está ausente", async () => {
+    __engineCacheReset();
     const engine = await loadSource({
-      source: source({ id: "src-no-owner-column", ownerColumn: undefined }),
+      source: source({ id: "src-no-owner-column", ownerColumn: "" }),
       csvBuffer: csv,
       viewerScope: { ownerKeys: ["ana@example.com"] },
       etag: "etag-no-owner-column",
       configVersion: 1,
     });
 
-    await expect(countRows(engine.viewName, engine.run)).resolves.toBe(0);
+    await expect(countRows(engine.viewName, engine.run)).rejects.toThrow(/ownerColumn valida/);
   });
 
   it("retorna zero linhas quando ownerKeys está vazio", async () => {

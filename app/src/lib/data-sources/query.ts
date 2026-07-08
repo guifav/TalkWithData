@@ -108,10 +108,11 @@ export async function queryDataset(
   // Substitui a referencia de tabela `view` (convencao do prompt) pelo
   // viewName interno determinístico ANTES de rodar. So troca em contexto de
   // tabela (apos FROM/JOIN). Para nao corromper strings literais (ex.:
-  // 'from view'), protegemos aspas simples/duplas em placeholders, aplicamos
-  // o replace e restauramos. O guardSql ainda valida a viewName real, entao
-  // nao ha vazamento mesmo em casos nao cobertos (join implicito por virgula).
-  const SQL_STRING_RE = /'([^']|'')*'|"([^"]|"")*"/g;
+  // 'from view') nem dollar-quoted strings DuckDB/Postgres (ex.:
+  // $$from view$$), protegemos literais em placeholders, aplicamos o replace
+  // e restauramos. O guardSql ainda valida a viewName real, entao nao ha
+  // vazamento mesmo em casos nao cobertos (join implicito por virgula).
+  const SQL_STRING_RE = /\$([A-Za-z_][A-Za-z0-9_]*)?\$[\s\S]*?\$\1\$|'([^']|'')*'|"([^"]|"")*"/g;
   const protectedStrings: string[] = [];
   const sqlWithPlaceholders = args.sql.replace(
     SQL_STRING_RE,
@@ -143,7 +144,7 @@ export async function readDataSourceCsvById(
 ): Promise<ReadCsvResult> {
   const doc = await getDataSourceWithCredentials(dataSourceId);
   if (!doc) {
-    throw new DataSourceUnavailableError(`Fonte indisponivel: ${dataSourceId}`);
+    throw new DataSourceNotFoundError(dataSourceId);
   }
   const dsMeta: DataSourceMetadata = {
     id: doc.id,

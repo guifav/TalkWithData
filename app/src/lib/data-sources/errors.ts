@@ -77,7 +77,7 @@ export function publicErrorStatus(err: unknown): number {
     const msg = err.message || "";
     if (/timeout/i.test(msg)) return 504;
     if (
-      /(statement proibido|tabela (nao autorizada|ausente)|query (muito longa|invalida)|function scan|função bloqueada)/i.test(
+      /(statement proibido|tabela (nao autorizada|ausente)|query (muito longa|invalida)|sql inválido|function scan|função bloqueada)/i.test(
         msg,
       )
     ) {

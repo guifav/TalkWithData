@@ -198,4 +198,18 @@ describe("queryDataset (P1.7)", () => {
     expect(result.columns).toEqual(["view"]);
     expect(result.rows).toEqual([[42]]);
   });
+
+  it("nao corrompe dollar-quoted literal contendo 'from view' no rewrite", async () => {
+    const viewColCsv = Buffer.from("owner,view,nota\nana,42,from view aqui\n");
+    const result = await queryDataset(
+      {
+        uid: "u1",
+        dataSourceId: "ds1",
+        sql: "SELECT view FROM view WHERE nota = $$from view aqui$$",
+      },
+      { readCsv: async () => ({ csvBuffer: viewColCsv, etag: "etag-dollar" }) },
+    );
+    expect(result.columns).toEqual(["view"]);
+    expect(result.rows).toEqual([[42]]);
+  });
 });

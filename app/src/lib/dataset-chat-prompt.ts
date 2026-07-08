@@ -21,7 +21,7 @@ export interface DatasetChatServerInfo {
  */
 export function escapeDataSourceName(name: string, maxLen = 80): string {
   const cleaned = name.replace(/[^a-zA-Z0-9 _.\-]/g, "").replace(/\s+/g, " ").trim();
-  return cleaned.length > maxLen ? `${cleaned.slice(0, maxLen - 1)}…` : cleaned;
+  return cleaned.length > maxLen ? `${cleaned.slice(0, maxLen - 3)}...` : cleaned;
 }
 
 /**
