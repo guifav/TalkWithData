@@ -114,7 +114,7 @@ class GcsExternalBucketStorage implements ExternalBucketStorage {
   ): Promise<{ content: Buffer; md5Hash: string }> {
     const safeKey = validateExternalPath(key, { allowEmpty: false });
     const maxBytes = normalizeByteLimit(opts.maxBytes, "maxBytes");
-    const file = this.storage.bucket(this.bucketName).file(safeKey);
+    let file = this.storage.bucket(this.bucketName).file(safeKey);
 
     try {
       const [metadata] = await file.getMetadata();
@@ -125,11 +125,12 @@ class GcsExternalBucketStorage implements ExternalBucketStorage {
       }
 
       const generation = readGeneration(metadata);
-      const downloadOptions =
-        generation !== undefined
-          ? ({ generation } as unknown as Parameters<typeof file.download>[0])
-          : undefined;
-      const [content] = await file.download(downloadOptions as never);
+
+      if (generation !== undefined) {
+        file = this.storage.bucket(this.bucketName).file(safeKey, { generation });
+      }
+
+      const [content] = await file.download();
 
       if (content.length > maxBytes) {
         throw new ExternalStorageReadTooLargeError(content.length, maxBytes);

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { SyncCache, createSyncCacheKey } from "@/lib/data-sources/sync-cache";
+import { SyncCache, createSyncCacheKey, type SyncCacheLoadResult } from "@/lib/data-sources/sync-cache";
 
 describe("SyncCache", () => {
   it("faz cache hit por md5 e não chama loader no segundo acesso", async () => {
@@ -34,21 +34,25 @@ describe("SyncCache", () => {
       md5Hash: "md5-b",
       configVersion: 1,
     });
-    const loaderA = vi.fn(async () => ({
-      value: Buffer.from("csv-a"),
-      byteSize: 5,
-      md5Hash: "md5-a",
-    }));
+    let resolveA: (value: SyncCacheLoadResult<Buffer>) => void;
+    const loaderAPromise = new Promise<SyncCacheLoadResult<Buffer>>((resolve) => {
+      resolveA = resolve;
+    });
+    const loaderA = vi.fn(() => loaderAPromise);
     const loaderB = vi.fn(async () => ({
       value: Buffer.from("csv-b"),
       byteSize: 5,
       md5Hash: "md5-b",
     }));
 
-    await cache.getOrLoad(keyA, loaderA);
-    const result = await cache.getOrLoad(keyB, loaderB);
+    const first = cache.getOrLoad(keyA, loaderA);
+    const second = cache.getOrLoad(keyB, loaderB);
+    resolveA!({ value: Buffer.from("csv-a"), byteSize: 5, md5Hash: "md5-a" });
 
-    expect(result).toEqual(Buffer.from("csv-b"));
+    const [resultA, resultB] = await Promise.all([first, second]);
+
+    expect(resultA).toEqual(Buffer.from("csv-a"));
+    expect(resultB).toEqual(Buffer.from("csv-b"));
     expect(loaderA).toHaveBeenCalledTimes(1);
     expect(loaderB).toHaveBeenCalledTimes(1);
   });
@@ -136,5 +140,27 @@ describe("SyncCache", () => {
         configVersion: 1,
       }),
     ).toBe("source-a::etag-a::1");
+  });
+
+  it("não mantém no cache item que sozinho excede o limite por bytes", () => {
+    const cache = new SyncCache({ maxBytes: 10 });
+    const key = createSyncCacheKey({
+      sourceId: "source-a",
+      md5Hash: "md5-a",
+      configVersion: 1,
+    });
+
+    cache.set(key, Buffer.from("的工具"), 20);
+
+    expect(cache.get(key)).toBeUndefined();
+
+    const keyB = createSyncCacheKey({
+      sourceId: "source-b",
+      md5Hash: "md5-b",
+      configVersion: 1,
+    });
+    cache.set(keyB, Buffer.from("ok"), 2);
+
+    expect(cache.get(keyB)).toEqual(Buffer.from("ok"));
   });
 });

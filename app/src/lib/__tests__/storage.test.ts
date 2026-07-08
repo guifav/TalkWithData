@@ -102,6 +102,26 @@ describe("createGcsStorage", () => {
     expect(gcsMocks.download).toHaveBeenCalledTimes(1);
   });
 
+  it("prende a geração do metadata no file() ao baixar", async () => {
+    const content = Buffer.from("a,b\n1,2\n", "utf8");
+    gcsMocks.getMetadata.mockResolvedValue([
+      { size: String(content.length), md5Hash: "md5-csv", generation: "123" },
+    ]);
+    gcsMocks.download.mockResolvedValue([content]);
+
+    const storage = createGcsStorage({
+      bucketName: "external-bucket",
+      credentials,
+    });
+
+    await expect(storage.readByKey("exports/a.csv")).resolves.toEqual({
+      content,
+      md5Hash: "md5-csv",
+    });
+
+    expect(gcsMocks.file).toHaveBeenCalledWith("exports/a.csv", { generation: "123" });
+  });
+
   it("lança erro tipado se bucketName ou credentials estiverem ausentes", () => {
     process.env.SA_KEY_JSON = JSON.stringify({ project_id: "global-project" });
 

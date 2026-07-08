@@ -73,6 +73,10 @@ export class SyncCache {
       this.entries.delete(key);
     }
 
+    if (normalizedSize > this.maxBytes) {
+      return;
+    }
+
     this.entries.set(key, { value, byteSize: normalizedSize });
     this.totalBytes += normalizedSize;
     this.evictUntilWithinLimit(key);
