@@ -120,5 +120,10 @@ service cloud.firestore {
         allow write: if false;
       }
     }
+
+    // Fontes externas são acessíveis apenas no servidor. O Admin SDK ignora as regras.
+    match /data_sources/{id} {
+      allow read, write: if false;
+    }
   }
 }
