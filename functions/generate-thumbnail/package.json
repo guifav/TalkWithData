@@ -18,7 +18,7 @@
     "@google-cloud/storage": "^7",
     "@google-cloud/firestore": "^7",
     "@sparticuz/chromium": "^131",
-    "puppeteer-core": "^24"
+    "puppeteer-core": "^25"
   },
   "devDependencies": {
     "typescript": "^6"
