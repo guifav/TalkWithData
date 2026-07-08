@@ -2,7 +2,7 @@ import type { DataSource } from "@/lib/data-sources/types";
 
 export class DataSourceAlreadyRegisteredError extends Error {
   constructor(dataSourceId: string) {
-    super(`Fonte de dados ja registrada: ${dataSourceId}`);
+    super(`Fonte de dados já registrada: ${dataSourceId}`);
     this.name = "DataSourceAlreadyRegisteredError";
     Object.setPrototypeOf(this, new.target.prototype);
   }
@@ -10,17 +10,19 @@ export class DataSourceAlreadyRegisteredError extends Error {
 
 export class DataSourceNotFoundError extends Error {
   constructor(dataSourceId: string) {
-    super(`Fonte de dados nao encontrada: ${dataSourceId}`);
+    super(`Fonte de dados não encontrada: ${dataSourceId}`);
     this.name = "DataSourceNotFoundError";
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
 
-// Registro em memoria de fontes de dados de uma org. `id` e globalmente
-// unico (UUID da fonte no Firestore, P1.3): o Map usa `id` como chave, nao
-// par (orgId, id). `list(orgId)` filtra por org e ordena por id de forma
-// deterministica. `register` de id duplicado lanca; `get` de id inexistente
-// lanca. Sem I/O: persistencia/grants chegam em P1.3/P1.4.
+// Registro em memória de fontes de dados de uma org. `id` é globalmente
+// único (UUID da fonte no Firestore, P1.3): o Map usa `id` como chave, não
+// par (orgId, id). `list(orgId)` filtra por org e ordena por `id` em ordem
+// lexicográfica (ids são UUIDs, então sem ambiguidade de caixa). `register`
+// não valida campos (delega a P1.3, que persiste no Firestore); apenas
+// bloqueia id duplicado. `get` de id inexistente lança. Sem I/O:
+// persistência/grants chegam em P1.3/P1.4.
 export class DataSourceRegistry {
   private readonly sources = new Map<string, DataSource>();
 

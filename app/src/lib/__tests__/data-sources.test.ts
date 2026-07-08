@@ -29,6 +29,7 @@ describe("DataSourceRegistry", () => {
     registry.register(source);
 
     expect(registry.get(source.id)).toBe(source);
+    expect(registry.get(source.id).ownerColumn).toBe("owner_email");
   });
 
   it("throws when registering a duplicate id", () => {
@@ -37,15 +38,17 @@ describe("DataSourceRegistry", () => {
 
     registry.register(source);
 
-    expect(() => registry.register(csvSource({ orgId: "org-b" }))).toThrow(
-      DataSourceAlreadyRegisteredError,
+    expect(() => registry.register(csvSource({ orgId: "org-b" }))).toThrowError(
+      /Fonte de dados já registrada: source-a/,
     );
   });
 
   it("throws when getting an unknown id", () => {
     const registry = new DataSourceRegistry();
 
-    expect(() => registry.get("missing-source")).toThrow(DataSourceNotFoundError);
+    expect(() => registry.get("missing-source")).toThrowError(
+      /Fonte de dados não encontrada: missing-source/,
+    );
   });
 
   it("lists only data sources for the requested org", () => {
