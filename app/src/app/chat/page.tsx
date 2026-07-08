@@ -24,7 +24,7 @@ import {
 
 function ChatPageInner() {
   const { isAuthenticated, loading: authLoading } = useAuth();
-  const { hasAccess, mcpServers, loading: mcpLoading } = useMcpAccess();
+  const { mcpServers, loading: mcpLoading } = useMcpAccess();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -82,12 +82,9 @@ function ChatPageInner() {
     }
   }, [authLoading, isAuthenticated, router]);
 
-  useEffect(() => {
-    if (!mcpLoading && !hasAccess && isAuthenticated) {
-      router.push("/");
-    }
-  }, [mcpLoading, hasAccess, isAuthenticated, router]);
-
+  // Chat is available with either MCP tools or local data-source tools.
+  // Do not redirect just because the user has no MCP servers; query_dataset can
+  // still be available when data sources authorize this viewer.
   // Load sessions
   const loadSessions = useCallback(async () => {
     try {
@@ -102,10 +99,10 @@ function ChatPageInner() {
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated && hasAccess) {
+    if (isAuthenticated) {
       loadSessions();
     }
-  }, [isAuthenticated, hasAccess, loadSessions]);
+  }, [isAuthenticated, loadSessions]);
 
   // Create new session
   const handleNewChat = useCallback(async () => {

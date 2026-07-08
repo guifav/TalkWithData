@@ -15,6 +15,7 @@ const ALLOWED_FIELDS = new Set([
   "bucket",
   "prefix",
   "credentialRef",
+  "credentialEnc",
   "ownerColumn",
   "accessGrants",
 ]);
@@ -44,6 +45,10 @@ export function parseCreateDataSourceBody(
   if (!isNonEmptyString(data.ownerColumn)) {
     return { ok: false, error: "ownerColumn is required" };
   }
+  if (data.credentialEnc !== undefined && !isNonEmptyString(data.credentialEnc)) {
+    return { ok: false, error: "credentialEnc must be a non-empty string" };
+  }
+
   const grants = parseAccessGrants(data.accessGrants);
   if (!grants.ok) return grants;
 
@@ -61,6 +66,9 @@ export function parseCreateDataSourceBody(
       return { ok: false, error: "name must be a string" };
     }
     input.name = data.name.trim();
+  }
+  if (data.credentialEnc !== undefined) {
+    input.credentialEnc = data.credentialEnc.trim();
   }
 
   return { ok: true, value: input };
@@ -111,6 +119,13 @@ export function parseUpdateDataSourceBody(
       return { ok: false, error: "credentialRef is invalid" };
     }
     patch.credentialRef = data.credentialRef;
+  }
+
+  if ("credentialEnc" in data) {
+    if (!isNonEmptyString(data.credentialEnc)) {
+      return { ok: false, error: "credentialEnc must be a non-empty string" };
+    }
+    patch.credentialEnc = data.credentialEnc.trim();
   }
 
   if ("ownerColumn" in data) {

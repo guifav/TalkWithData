@@ -233,6 +233,7 @@ function hasConfigChanged(
     changed(current.bucket, patch.bucket) ||
     changed(current.prefix, patch.prefix) ||
     changed(current.credentialRef, patch.credentialRef) ||
+    changed(current.credentialEnc, patch.credentialEnc) ||
     changed(current.ownerColumn, patch.ownerColumn) ||
     changed(current.accessGrants, patch.accessGrants)
   );
