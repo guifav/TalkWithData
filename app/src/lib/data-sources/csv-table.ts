@@ -191,13 +191,9 @@ function isInt4Integer(value: string): boolean {
     return false;
   }
 
-  const normalized = value.replace(/^-/, "").replace(/^0+/, "") || "0";
+  const big = BigInt(value);
 
-  if (normalized.length < 10) {
-    return true;
-  }
-
-  return normalized.length === 10 && normalized <= "2147483647";
+  return big >= BigInt("-2147483648") && big <= BigInt("2147483647");
 }
 
 function isDecimalValue(value: string): boolean {

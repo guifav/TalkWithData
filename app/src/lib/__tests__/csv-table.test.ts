@@ -70,6 +70,13 @@ describe("inferColumnType", () => {
     expect(inferColumnType(["2026-02-30"])).toBe("text");
   });
 
+  it("respeita limites int4 incluindo o mínimo negativo", () => {
+    expect(inferColumnType(["-2147483648"])).toBe("integer");
+    expect(inferColumnType(["2147483647"])).toBe("integer");
+    expect(inferColumnType(["-2147483649"])).toBe("text");
+    expect(inferColumnType(["2147483648"])).toBe("text");
+  });
+
   it("infere timestamp para valores com data e horario validos", () => {
     expect(inferColumnType(["2026-07-08T10:30:00Z", "2026-07-08 11:30:00"])).toBe(
       "timestamp",
