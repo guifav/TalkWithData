@@ -9,7 +9,7 @@ vi.mock("@/lib/data-sources/access", () => ({
   resolveViewerScope: vi.fn(),
 }));
 
-import { getDataSource } from "@/lib/data-sources/firestore";
+import { getDataSourceWithCredentials } from "@/lib/data-sources/firestore";
 import {
   canQueryDataSource,
   resolveViewerScope,
@@ -26,6 +26,8 @@ const DS_META = {
   id: "ds1",
   kind: "csv" as const,
   orgId: "org",
+  bucket: "bucket-x",
+  prefix: "exports/",
   configVersion: 1,
   ownerColumn: "owner",
   accessGrants: { assignedUsers: ["u1"], assignedDepartments: [] },
@@ -35,9 +37,9 @@ const DS_META = {
 describe("queryDataset (P1.7)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (getDataSource as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
-      DS_META,
-    );
+    (
+      getDataSourceWithCredentials as unknown as ReturnType<typeof vi.fn>
+    ).mockResolvedValue(DS_META);
     (
       canQueryDataSource as unknown as ReturnType<typeof vi.fn>
     ).mockResolvedValue({ canQuery: true });
@@ -74,9 +76,9 @@ describe("queryDataset (P1.7)", () => {
   });
 
   it("propaga erro quando a fonte nao existe", async () => {
-    (getDataSource as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
-      null,
-    );
+    (
+      getDataSourceWithCredentials as unknown as ReturnType<typeof vi.fn>
+    ).mockResolvedValue(null);
     await expect(
       queryDataset(
         { uid: "u1", dataSourceId: "nope", sql: "SELECT * FROM view" },
@@ -91,7 +93,7 @@ describe("queryDataset (P1.7)", () => {
         { uid: "u1", dataSourceId: "ds1", sql: "DROP TABLE view" },
         { readCsv: async () => mockCsv() },
       ),
-    ).rejects.toBeDefined();
+    ).rejects.toThrow(/statement proibido|não autorizada/);
   });
 
   it("aplica row cap e sinaliza truncated", async () => {
@@ -125,7 +127,7 @@ describe("queryDataset (P1.7)", () => {
         },
         { readCsv: async () => mockCsv() },
       ),
-    ).rejects.toBeDefined();
+    ).rejects.toThrow();
   });
 
   it("nao vaza ownerColumn com header duplicado (falha fechado)", async () => {
@@ -169,5 +171,31 @@ describe("queryDataset (P1.7)", () => {
         { readCsv: async () => ({ csvBuffer: noOwnerCsv, etag: "etag-no" }) },
       ),
     ).rejects.toThrow(/ownerColumn.*ausente/);
+  });
+
+  it("rejeita SQL acima do limite de tamanho (P2 E4-Kimi, DoS)", async () => {
+    const hugeSql = "SELECT * FROM view".padEnd(50_001, "x");
+    await expect(
+      queryDataset(
+        { uid: "u1", dataSourceId: "ds1", sql: hugeSql },
+        { readCsv: async () => mockCsv() },
+      ),
+    ).rejects.toThrow(/muito longa/);
+  });
+
+  it("nao corrompe string literal contendo 'from view' no rewrite", async () => {
+    // O CSV tem coluna "view" (rawName diferente de ownerColumn). A string
+    // literal 'from view' deve permanecer intacta; so a tabela real e trocada.
+    const viewColCsv = Buffer.from("owner,view,nota\nana,42,from view aqui\n");
+    const result = await queryDataset(
+      {
+        uid: "u1",
+        dataSourceId: "ds1",
+        sql: "SELECT view FROM view WHERE nota = 'from view aqui'",
+      },
+      { readCsv: async () => ({ csvBuffer: viewColCsv, etag: "etag-lit" }) },
+    );
+    expect(result.columns).toEqual(["view"]);
+    expect(result.rows).toEqual([[42]]);
   });
 });

@@ -6,6 +6,7 @@ import { createCipheriv } from "crypto";
 // produção descriptografa a credencial GCS a partir do credentialEnc.
 const getDataSourceWithCredentials = vi.fn();
 const createGcsStorage = vi.fn();
+const canQueryDataSource = vi.fn();
 
 vi.mock("@/lib/data-sources/firestore", () => ({
   getDataSourceWithCredentials: (id: string) => getDataSourceWithCredentials(id),
@@ -15,8 +16,14 @@ vi.mock("@/lib/data-sources/storage", () => ({
   createGcsStorage: (opts: object) => createGcsStorage(opts),
 }));
 
-import { readDataSourceCsv } from "@/lib/data-sources/query";
+import { readDataSourceCsvById } from "@/lib/data-sources/query";
 import { DEV_ENC_KEY } from "@/lib/data-sources/credentials";
+import type { DataSource } from "@/lib/data-sources/types";
+
+vi.mock("@/lib/data-sources/access", () => ({
+  canQueryDataSource: (uid: string, ds: DataSource) => canQueryDataSource(uid, ds),
+  resolveViewerScope: vi.fn(),
+}));
 
 // Chave de desenvolvimento (32 bytes em base64) usada pelo SecretService quando
 // TWD_CREDENTIAL_ENC_KEY ausente. Criptografamos o fixture com ela.
@@ -60,6 +67,7 @@ function makeMeta(extra: Record<string, unknown> = {}) {
 describe("readDataSourceCsv (P1.7, fluxo real de credencial)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    canQueryDataSource.mockResolvedValue({ canQuery: true });
     createGcsStorage.mockReturnValue({
       list: async () => ({
         objects: [{ name: "exports/data.csv", md5Hash: "h1" }],
@@ -77,7 +85,7 @@ describe("readDataSourceCsv (P1.7, fluxo real de credencial)", () => {
       }),
     );
 
-    const result = await readDataSourceCsv(makeMeta());
+    const result = await readDataSourceCsvById("u1", "ds1");
 
     expect(result.etag).toBe("h1");
     expect(result.csvBuffer.equals(CSV_BYTES)).toBe(true);
@@ -96,7 +104,7 @@ describe("readDataSourceCsv (P1.7, fluxo real de credencial)", () => {
       }),
     );
 
-    await expect(readDataSourceCsv(makeMeta())).rejects.toThrow(
+    await expect(readDataSourceCsvById("u1", "ds1")).rejects.toThrow(
       /sem credentialEnc/,
     );
   });
@@ -109,7 +117,7 @@ describe("readDataSourceCsv (P1.7, fluxo real de credencial)", () => {
       }),
     );
 
-    await expect(readDataSourceCsv(makeMeta())).rejects.toThrow(
+    await expect(readDataSourceCsvById("u1", "ds1")).rejects.toThrow(
       /secretManager/,
     );
   });

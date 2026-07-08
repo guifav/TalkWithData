@@ -34,6 +34,16 @@ export class DataSourceUnavailableError extends Error {
   }
 }
 
+export class QueryDatasetInvalidInputError extends Error {
+  readonly status = 400;
+
+  constructor(message: string) {
+    super(message);
+    this.name = "QueryDatasetInvalidInputError";
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
 /**
  * Mapeia erros internos para mensagens publicas seguras (sem vazar storage
  * paths, emails de owner, stack traces ou detalhes operacionais).
@@ -44,6 +54,8 @@ export function publicErrorMessage(err: unknown): string {
   if (err instanceof DataSourceNotFoundError) return "Data source not found.";
   if (err instanceof DataSourceUnavailableError)
     return "Data source temporarily unavailable.";
+  if (err instanceof QueryDatasetInvalidInputError)
+    return "Invalid query input.";
   if (err instanceof DuckDbSandboxError) return "Invalid query.";
   return "Query failed. Please try again.";
 }
@@ -57,7 +69,22 @@ export function publicErrorStatus(err: unknown): number {
   if (err instanceof QueryDatasetAccessDeniedError) return 403;
   if (err instanceof DataSourceNotFoundError) return 404;
   if (err instanceof DataSourceUnavailableError) return 503;
-  if (err instanceof DuckDbSandboxError) return 400;
+  if (err instanceof DuckDbSandboxError) {
+    // Guard blocks (input do cliente) -> 400. Erros de execucao/infra do
+    // engine (timeout, memoria, falha interna) -> 500. Discriminamos por
+    // mensagem: se menciona guard/SQL invalido, e input; caso contrario,
+    // falha de execucao.
+    const msg = err.message || "";
+    if (/timeout/i.test(msg)) return 504;
+    if (
+      /(statement proibido|tabela (nao autorizada|ausente)|query (muito longa|invalida)|function scan|função bloqueada)/i.test(
+        msg,
+      )
+    ) {
+      return 400;
+    }
+    return 500;
+  }
   if (err instanceof Error && "status" in err) {
     const s = (err as { status?: number }).status;
     if (typeof s === "number") return s;

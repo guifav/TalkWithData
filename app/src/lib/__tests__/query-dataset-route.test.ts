@@ -52,6 +52,8 @@ const DS_META = {
   id: "ds1",
   kind: "csv" as const,
   orgId: "org",
+  bucket: "bucket-x",
+  prefix: "exports/",
   configVersion: 1,
   ownerColumn: "owner",
   accessGrants: { assignedUsers: ["u1"], assignedDepartments: [] },
@@ -130,9 +132,9 @@ describe("POST /api/ai/query-dataset (P1.7)", () => {
   });
 
   it("404 quando a fonte nao existe", async () => {
-    (getDataSource as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
-      null,
-    );
+    (
+      getDataSourceWithCredentials as unknown as ReturnType<typeof vi.fn>
+    ).mockResolvedValue(null);
     const res = await POST(
       makeRequest({ dataSourceId: "nope", query: "SELECT * FROM view" }),
     );

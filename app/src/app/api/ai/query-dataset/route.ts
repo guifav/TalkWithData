@@ -43,6 +43,14 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Limite de tamanho do SQL para evitar DoS via parser AST (P2 E4/Kimi).
+  if (sql.length > 50_000) {
+    return new Response(
+      JSON.stringify({ error: "query muito longa (max 50000 caracteres)" }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
   try {
     const result = await queryDataset({
       uid: auth.uid,

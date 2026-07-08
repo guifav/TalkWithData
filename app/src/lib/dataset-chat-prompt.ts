@@ -11,21 +11,17 @@ export interface DatasetChatServerInfo {
 }
 
 /**
- * Escapa o nome da fonte antes de inseri-lo no system prompt. Remove
- * backticks (que fechariam o code-span), quebras de linha (que permitiriam
- * injetar novas linhas de prompt) e trunca a um tamanho seguro. O dataSourceId
- * e o sql do usuario nunca sao passados por aqui; trata-se apenas do rotulo
- * legivel exibido ao modelo.
+ * Escapa o nome da fonte antes de inseri-lo no system prompt. Usa allow-list
+ * (so alfanumericos, espaco, hifem, underscore e ponto sao mantidos); tudo o
+ * mais e removido. Isso bloqueia backticks, quebras de linha, markdown
+ * (* # [ ] >), caracteres de template ($, { }) e tags de XML/HTML (< >)
+ * que um admin malicioso poderia usar para injetar instrucoes. O
+ * dataSourceId e o sql do usuario nunca sao passados por aqui; trata-se
+ * apenas do rotulo legivel exibido ao modelo.
  */
-function escapeDataSourceName(name: string, maxLen = 80): string {
-  const cleaned = name
-    .replace(/`/g, "'")
-    .replace(/[\r\n\t]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  return cleaned.length > maxLen
-    ? `${cleaned.slice(0, maxLen - 1)}…`
-    : cleaned;
+export function escapeDataSourceName(name: string, maxLen = 80): string {
+  const cleaned = name.replace(/[^a-zA-Z0-9 _.\-]/g, "").replace(/\s+/g, " ").trim();
+  return cleaned.length > maxLen ? `${cleaned.slice(0, maxLen - 1)}…` : cleaned;
 }
 
 /**

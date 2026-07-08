@@ -1,5 +1,4 @@
 import {
-  getDataSource,
   getDataSourceWithCredentials,
   type DataSourceMetadata,
 } from "@/lib/data-sources/firestore";
@@ -11,6 +10,7 @@ import {
   DataSourceNotFoundError,
   DataSourceUnavailableError,
   QueryDatasetAccessDeniedError,
+  QueryDatasetInvalidInputError,
 } from "@/lib/data-sources/errors";
 import type { DataSource } from "@/lib/data-sources/types";
 import { DataSourceKind } from "@/lib/data-sources/types";
@@ -65,11 +65,28 @@ export async function queryDataset(
   args: { uid: string; dataSourceId: string; sql: string },
   deps: QueryDatasetDeps = {},
 ): Promise<QueryDatasetResult> {
-  const dsMeta = await getDataSource(args.dataSourceId);
-  if (!dsMeta) {
+  if (args.sql.length > 50_000) {
+    throw new QueryDatasetInvalidInputError("query muito longa (max 50000 caracteres)");
+  }
+
+  const doc = await getDataSourceWithCredentials(args.dataSourceId);
+  if (!doc) {
     throw new DataSourceNotFoundError(args.dataSourceId);
   }
 
+  const dsMeta: DataSourceMetadata = {
+    id: doc.id,
+    kind: doc.kind,
+    orgId: doc.orgId,
+    bucket: doc.bucket,
+    prefix: doc.prefix,
+    ownerColumn: doc.ownerColumn,
+    ownerColumnIdentity: doc.ownerColumnIdentity,
+    accessGrants: doc.accessGrants,
+    configVersion: doc.configVersion,
+    createdBy: doc.createdBy,
+    updatedAt: doc.updatedAt,
+  };
   const ds = dataSourceToRuntime(dsMeta);
 
   const auth = await canQueryDataSource(args.uid, ds);
@@ -78,7 +95,7 @@ export async function queryDataset(
   }
 
   const viewerScope = await resolveViewerScope(args.uid, ds);
-  const { csvBuffer, etag } = await (deps.readCsv ?? readDataSourceCsv)(dsMeta);
+  const { csvBuffer, etag } = await (deps.readCsv ?? ((m) => readDataSourceCsv(doc, m)))(dsMeta);
 
   const engine = await loadSource({
     source: ds,
@@ -90,12 +107,21 @@ export async function queryDataset(
 
   // Substitui a referencia de tabela `view` (convencao do prompt) pelo
   // viewName interno determinístico ANTES de rodar. So troca em contexto de
-  // tabela (apos FROM/JOIN) para nao afetar literais, quoted strings ou
-  // colunas legítimas chamadas "view". O guardSql ainda valida a viewName real.
-  const guardedSql = args.sql.replace(
-    /\b(?:from|join)\s+view\b/gi,
-    (match) => match.replace(/\bview\b/i, engine.viewName),
+  // tabela (apos FROM/JOIN). Para nao corromper strings literais (ex.:
+  // 'from view'), protegemos aspas simples/duplas em placeholders, aplicamos
+  // o replace e restauramos. O guardSql ainda valida a viewName real, entao
+  // nao ha vazamento mesmo em casos nao cobertos (join implicito por virgula).
+  const SQL_STRING_RE = /'([^']|'')*'|"([^"]|"")*"/g;
+  const protectedStrings: string[] = [];
+  const sqlWithPlaceholders = args.sql.replace(
+    SQL_STRING_RE,
+    (m) => `\u0000${protectedStrings.push(m) - 1}\u0000`,
   );
+  const guardedSql = sqlWithPlaceholders
+    .replace(/\b(?:from|join)\s+view\b/gi, (match) =>
+      match.replace(/\bview\b/i, engine.viewName),
+    )
+    .replace(/\u0000(\d+)\u0000/g, (_, i) => protectedStrings[Number(i)]);
   const result = await engine.run(guardedSql);
   return {
     columns: result.columns,
@@ -105,14 +131,51 @@ export async function queryDataset(
 }
 
 /**
- * Leitura real do CSV da fonte: resolve a credencial GCS (AES-GCM) e le o
- * primeiro objeto .csv do prefixo da fonte. O md5Hash vira o etag de cache
- * do engine (P1.6).
+ * Leitura real do CSV da fonte por id: busca o doc com credenciais, valida
+ * autorizacao (P1.4) e delega a leitura. Exportada para testes/APIs externas,
+ * mas OBRIGATORIAMENTE passa por canQueryDataSource antes de ler (P1 E4/Kimi:
+ * nao expor leitura sem autorizacao). Em producao o queryDataset ja tem o doc
+ * (leitura unica, P4) e chama readDataSourceCsv direto.
  */
-export async function readDataSourceCsv(
+export async function readDataSourceCsvById(
+  uid: string,
+  dataSourceId: string,
+): Promise<ReadCsvResult> {
+  const doc = await getDataSourceWithCredentials(dataSourceId);
+  if (!doc) {
+    throw new DataSourceUnavailableError(`Fonte indisponivel: ${dataSourceId}`);
+  }
+  const dsMeta: DataSourceMetadata = {
+    id: doc.id,
+    kind: doc.kind,
+    orgId: doc.orgId,
+    bucket: doc.bucket,
+    prefix: doc.prefix,
+    ownerColumn: doc.ownerColumn,
+    ownerColumnIdentity: doc.ownerColumnIdentity,
+    accessGrants: doc.accessGrants,
+    configVersion: doc.configVersion,
+    createdBy: doc.createdBy,
+    updatedAt: doc.updatedAt,
+  };
+  const ds = dataSourceToRuntime(dsMeta);
+  const auth = await canQueryDataSource(uid, ds);
+  if (!auth.canQuery) {
+    throw new QueryDatasetAccessDeniedError(dataSourceId);
+  }
+  return readDataSourceCsv(doc, dsMeta);
+}
+
+/**
+ * Leitura real do CSV da fonte: recebe o doc (com credentialEnc) ja obtido
+ * pelo caller e resolve a credencial GCS (AES-GCM) lendo o primeiro .csv do
+ * prefixo. Funcao interna (nao exportada) para forcar acesso via camada de
+ * autorizacao (P3 E4/Kimi).
+ */
+async function readDataSourceCsv(
+  doc: NonNullable<Awaited<ReturnType<typeof getDataSourceWithCredentials>>>,
   dsMeta: DataSourceMetadata,
 ): Promise<ReadCsvResult> {
-  const doc = await getDataSourceWithCredentials(dsMeta.id);
   if (!doc) {
     throw new DataSourceUnavailableError(`Fonte indisponivel: ${dsMeta.id}`);
   }
