@@ -149,11 +149,6 @@ export function createSyncCacheKey(input: SyncCacheKeyInput): string {
   return [input.sourceId, contentHash, configVersion].join(KEY_SEPARATOR);
 }
 
-function parseSourceIdFromKey(key: string): string {
-  validateCacheKey(key);
-  return key.split(KEY_SEPARATOR)[0];
-}
-
 function validateCacheKey(key: string): void {
   const parts = key.split(KEY_SEPARATOR);
 

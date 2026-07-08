@@ -74,7 +74,8 @@ export class SecretService {
   }
 }
 
-export async function loadEncryptedBlob(_ref: string): Promise<Buffer> {
+export async function loadEncryptedBlob(ref: string): Promise<Buffer> {
+  void ref;
   throw new Error("not implemented in this slice");
 }
 
