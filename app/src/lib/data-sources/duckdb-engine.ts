@@ -6,6 +6,7 @@ import {
   type InferredColumnType,
 } from "@/lib/data-sources/csv-table";
 import { DuckDbSandboxError } from "@/lib/data-sources/duckdb-sandbox";
+import { DataSourceUnavailableError } from "@/lib/data-sources/errors";
 import { guardSql } from "@/lib/data-sources/sql-guard";
 import type { DataSource } from "@/lib/data-sources/types";
 import type {
@@ -232,6 +233,16 @@ async function createFilteredView(
     ? columns.find((column) => column.rawName === source.ownerColumn)
     : undefined;
   const ownerColSafe = ownerColumn?.safeName;
+
+  // Falha fechado se a coluna de escopo declarada nao casa exatamente com
+  // uma coluna do CSV. Sem ownerColumn valido, a view cairia em SELECT * e
+  // exporia o schema bruto (incluindo a coluna de owner) no resultado,
+  // violando o contrato de nao vazar ownerColumn/emails de owner.
+  if (source.ownerColumn && !ownerColSafe) {
+    throw new DataSourceUnavailableError(
+      `DataSource ${source.id} declara ownerColumn "${source.ownerColumn}" ausente no CSV`,
+    );
+  }
   if (ownerColSafe) validateIdentifier(ownerColSafe);
 
   await connection.runAndReadAll("CREATE TEMP TABLE auth_keys(k VARCHAR)");
@@ -251,8 +262,39 @@ async function createFilteredView(
   const filterSql = ownerColSafe
     ? `${quoteIdentifier(ownerColSafe)} IN (SELECT k FROM auth_keys)`
     : "1 = 0";
+
+  // A coluna de escopo (ownerColumn) NUNCA e exposta pela view filtrada.
+  // CSVs podem ter headers duplicados (ex.: "owner,owner,amount"); o
+  // csv-table gera safeNames "owner", "owner_2", ... mas o rawName continua
+  // "owner". Filtramos por rawName para excluir TODAS as colunas de escopo,
+  // nao so a primeira, fechando o vazamento via coluna duplicada.
+  const ownerRaw = source.ownerColumn;
+  const ownerColumns = columns.filter((column) => column.rawName === ownerRaw);
+  if (ownerColumns.length > 1) {
+    // CSV malformado: mais de uma coluna de escopo com o mesmo nome. Falha
+    // fechado em vez de expor a duplicata na view.
+    throw new DataSourceUnavailableError(
+      `DataSource ${source.id} possui multiplas colunas de escopo "${ownerRaw}"`,
+    );
+  }
+  const projectedColumns = ownerColSafe
+    ? columns
+        .filter((column) => column.rawName !== ownerRaw)
+        .map((column) => quoteIdentifier(column.safeName))
+        .join(", ")
+    : "*";
+
+  // Falha fechado se nao houver nenhuma coluna de dados alem da ownerColumn:
+  // nunca podemos cair em SELECT * (que reexporia a coluna de escopo).
+  if (ownerColSafe && projectedColumns.length === 0) {
+    throw new DataSourceUnavailableError(
+      `DataSource ${source.id} nao possui colunas de dados alem da coluna de escopo`,
+    );
+  }
+  const selectList = projectedColumns.length > 0 ? projectedColumns : "*";
+
   await connection.runAndReadAll(
-    `CREATE OR REPLACE TEMP VIEW ${quoteIdentifier(viewName)} AS SELECT * FROM ${quoteIdentifier(rawSafe)} WHERE ${filterSql}`,
+    `CREATE OR REPLACE TEMP VIEW ${quoteIdentifier(viewName)} AS SELECT ${selectList} FROM ${quoteIdentifier(rawSafe)} WHERE ${filterSql}`,
   );
 
   return viewName;

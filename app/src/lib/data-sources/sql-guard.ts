@@ -26,6 +26,17 @@ const BLOCKED_FUNCTIONS = new Set([
   "read_text",
   "read_blob",
   "read_xlsx",
+  // Function scans de catalogo/raw que burlariam a VIEW filtrada e leriam a
+  // raw table ou auth_keys (vazamento de owner emails/scope).
+  "query_table",
+  "query",
+  "duckdb_tables",
+  "duckdb_columns",
+  "duckdb_functions",
+  "pragma_table_info",
+  "pragma_database_size",
+  "sqlite_master",
+  "sqlite_schema",
 ]);
 
 const BLOCKED_FUNCTION_PREFIXES = [
@@ -36,6 +47,10 @@ const BLOCKED_FUNCTION_PREFIXES = [
   "read_text",
   "read_blob",
   "read_xlsx",
+  "duckdb_",
+  "pragma_",
+  "sqlite_",
+  "query_",
 ];
 
 const BLOCKED_STATEMENT_TYPES = new Set([
@@ -234,6 +249,19 @@ function validateAstFromItems(
   if (subquery) {
     const reason = validateAstSelect(subquery, ctes, allowedViewName);
     if (reason) return reason;
+  }
+
+  // Function scans em FROM (ex.: query_table('auth_keys'), duckdb_tables(),
+  // pragma_table_info(...)) burlariam a VIEW filtrada e leriam a raw table ou
+  // auth_keys, vazando owner emails/scope. Bloqueamos por padrao: so relacoes
+  // nomeadas ou subqueries sao autorizadas.
+  const tableNode = node.table ?? node.expr;
+  if (isRecord(tableNode)) {
+    const tableType = normalizedString(tableNode.type);
+    if (tableType === "function" || tableType === "call") {
+      const fnName = astFunctionName(tableNode) ?? "desconhecida";
+      return `function scan proibido: ${fnName}`;
+    }
   }
 
   const relationName = identifierFromAst(node.table);

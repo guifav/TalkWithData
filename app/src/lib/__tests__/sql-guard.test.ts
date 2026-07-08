@@ -158,4 +158,29 @@ describe("guardSql", () => {
   it("rejeita DDL", () => {
     expectBlocked("CREATE TABLE twd_source_filtered(id integer)", "statement proibido");
   });
+
+  it.each([
+    "query_table",
+    "query",
+    "duckdb_tables",
+    "duckdb_columns",
+    "duckdb_functions",
+    "pragma_table_info",
+  ])("rejeita function scan de catálogo/raw %s", (functionName) => {
+    const result = guardSql(`SELECT * FROM ${functionName}('auth_keys')`, {
+      allowedViewName,
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejeita function scan de catálogo sem argumento (duckdb_tables())", () => {
+    const result = guardSql("SELECT * FROM duckdb_tables()", {
+      allowedViewName,
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejeita acesso direto à tabela de escopo auth_keys", () => {
+    expectBlocked("SELECT * FROM auth_keys", "tabela não autorizada: auth_keys");
+  });
 });
