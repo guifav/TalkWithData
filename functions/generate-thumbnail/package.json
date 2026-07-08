@@ -16,7 +16,7 @@
   "dependencies": {
     "@google-cloud/functions-framework": "^5",
     "@google-cloud/storage": "^7",
-    "@google-cloud/firestore": "^7",
+    "@google-cloud/firestore": "^8",
     "@sparticuz/chromium": "^149",
     "puppeteer-core": "^25"
   },
