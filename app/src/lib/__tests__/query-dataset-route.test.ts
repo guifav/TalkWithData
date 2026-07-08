@@ -133,7 +133,7 @@ describe("POST /api/ai/query-dataset (P1.7)", () => {
 
   it("404 quando a fonte nao existe", async () => {
     (
-      getDataSourceWithCredentials as unknown as ReturnType<typeof vi.fn>
+      getDataSource as unknown as ReturnType<typeof vi.fn>
     ).mockResolvedValue(null);
     const res = await POST(
       makeRequest({ dataSourceId: "nope", query: "SELECT * FROM view" }),
@@ -148,5 +148,14 @@ describe("POST /api/ai/query-dataset (P1.7)", () => {
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.error).toBe("Invalid query.");
+  });
+
+  it("400 para SQL acima do limite", async () => {
+    const res = await POST(
+      makeRequest({ dataSourceId: "ds1", query: "SELECT * FROM view".padEnd(50_001, "x") }),
+    );
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBe("Invalid query input.");
   });
 });

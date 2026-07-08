@@ -4,11 +4,13 @@ import { createCipheriv } from "crypto";
 // NÃO mockamos @/lib/data-sources/credentials: queremos exercitar o
 // SecretService REAL (AES-GCM) de ponta a ponta, provando que o fluxo de
 // produção descriptografa a credencial GCS a partir do credentialEnc.
+const getDataSource = vi.fn();
 const getDataSourceWithCredentials = vi.fn();
 const createGcsStorage = vi.fn();
 const canQueryDataSource = vi.fn();
 
 vi.mock("@/lib/data-sources/firestore", () => ({
+  getDataSource: (id: string) => getDataSource(id),
   getDataSourceWithCredentials: (id: string) => getDataSourceWithCredentials(id),
 }));
 
@@ -67,6 +69,7 @@ function makeMeta(extra: Record<string, unknown> = {}) {
 describe("readDataSourceCsv (P1.7, fluxo real de credencial)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getDataSource.mockResolvedValue(makeMeta());
     canQueryDataSource.mockResolvedValue({ canQuery: true });
     createGcsStorage.mockReturnValue({
       list: async () => ({
@@ -94,6 +97,14 @@ describe("readDataSourceCsv (P1.7, fluxo real de credencial)", () => {
       bucketName: "bucket-x",
       credentials: FAKE_CREDS,
     });
+  });
+
+  it("nega acesso antes de carregar credenciais", async () => {
+    canQueryDataSource.mockResolvedValue({ canQuery: false });
+
+    await expect(readDataSourceCsvById("u2", "ds1")).rejects.toThrow(/Acesso negado/);
+    expect(getDataSourceWithCredentials).not.toHaveBeenCalled();
+    expect(createGcsStorage).not.toHaveBeenCalled();
   });
 
   it("falha fechado quando nao ha credentialEnc", async () => {

@@ -192,4 +192,18 @@ describe("guardSql", () => {
   it("rejeita acesso direto à tabela de escopo auth_keys", () => {
     expectBlocked("SELECT * FROM auth_keys", "tabela não autorizada: auth_keys");
   });
+
+  it("rejeita auth_keys dentro de subquery", () => {
+    expectBlocked(
+      "SELECT * FROM (SELECT * FROM auth_keys) AS leaked",
+      "tabela não autorizada: auth_keys",
+    );
+  });
+
+  it("rejeita function scan dentro de subquery", () => {
+    expectBlocked(
+      "SELECT * FROM (SELECT * FROM duckdb_tables()) AS leaked",
+      "função bloqueada: duckdb_tables",
+    );
+  });
 });

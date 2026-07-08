@@ -1,4 +1,5 @@
 import {
+  getDataSource,
   getDataSourceWithCredentials,
   type DataSourceMetadata,
 } from "@/lib/data-sources/firestore";
@@ -69,24 +70,10 @@ export async function queryDataset(
     throw new QueryDatasetInvalidInputError("query muito longa (max 50000 caracteres)");
   }
 
-  const doc = await getDataSourceWithCredentials(args.dataSourceId);
-  if (!doc) {
+  const dsMeta = await getDataSource(args.dataSourceId);
+  if (!dsMeta) {
     throw new DataSourceNotFoundError(args.dataSourceId);
   }
-
-  const dsMeta: DataSourceMetadata = {
-    id: doc.id,
-    kind: doc.kind,
-    orgId: doc.orgId,
-    bucket: doc.bucket,
-    prefix: doc.prefix,
-    ownerColumn: doc.ownerColumn,
-    ownerColumnIdentity: doc.ownerColumnIdentity,
-    accessGrants: doc.accessGrants,
-    configVersion: doc.configVersion,
-    createdBy: doc.createdBy,
-    updatedAt: doc.updatedAt,
-  };
   const ds = dataSourceToRuntime(dsMeta);
 
   const auth = await canQueryDataSource(args.uid, ds);
@@ -95,7 +82,12 @@ export async function queryDataset(
   }
 
   const viewerScope = await resolveViewerScope(args.uid, ds);
-  const { csvBuffer, etag } = await (deps.readCsv ?? ((m) => readDataSourceCsv(doc, m)))(dsMeta);
+  const { csvBuffer, etag } = deps.readCsv
+    ? await deps.readCsv(dsMeta)
+    : await readDataSourceCsv(
+        await getAuthorizedDataSourceWithCredentials(args.dataSourceId),
+        dsMeta,
+      );
 
   const engine = await loadSource({
     source: ds,
@@ -142,29 +134,30 @@ export async function readDataSourceCsvById(
   uid: string,
   dataSourceId: string,
 ): Promise<ReadCsvResult> {
-  const doc = await getDataSourceWithCredentials(dataSourceId);
-  if (!doc) {
+  const dsMeta = await getDataSource(dataSourceId);
+  if (!dsMeta) {
     throw new DataSourceNotFoundError(dataSourceId);
   }
-  const dsMeta: DataSourceMetadata = {
-    id: doc.id,
-    kind: doc.kind,
-    orgId: doc.orgId,
-    bucket: doc.bucket,
-    prefix: doc.prefix,
-    ownerColumn: doc.ownerColumn,
-    ownerColumnIdentity: doc.ownerColumnIdentity,
-    accessGrants: doc.accessGrants,
-    configVersion: doc.configVersion,
-    createdBy: doc.createdBy,
-    updatedAt: doc.updatedAt,
-  };
   const ds = dataSourceToRuntime(dsMeta);
   const auth = await canQueryDataSource(uid, ds);
   if (!auth.canQuery) {
     throw new QueryDatasetAccessDeniedError(dataSourceId);
   }
-  return readDataSourceCsv(doc, dsMeta);
+  return readDataSourceCsv(
+    await getAuthorizedDataSourceWithCredentials(dataSourceId),
+    dsMeta,
+  );
+}
+
+async function getAuthorizedDataSourceWithCredentials(dataSourceId: string) {
+  const doc = await getDataSourceWithCredentials(dataSourceId);
+  if (!doc) {
+    // A metadata ja foi encontrada antes da checagem de autorizacao. Se o doc
+    // com credenciais desapareceu entre as leituras, trate como 404 sem vazar
+    // detalhe operacional.
+    throw new DataSourceNotFoundError(dataSourceId);
+  }
+  return doc;
 }
 
 /**

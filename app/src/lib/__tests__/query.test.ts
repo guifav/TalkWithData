@@ -9,7 +9,7 @@ vi.mock("@/lib/data-sources/access", () => ({
   resolveViewerScope: vi.fn(),
 }));
 
-import { getDataSourceWithCredentials } from "@/lib/data-sources/firestore";
+import { getDataSource, getDataSourceWithCredentials } from "@/lib/data-sources/firestore";
 import {
   canQueryDataSource,
   resolveViewerScope,
@@ -38,8 +38,15 @@ describe("queryDataset (P1.7)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (
-      getDataSourceWithCredentials as unknown as ReturnType<typeof vi.fn>
+      getDataSource as unknown as ReturnType<typeof vi.fn>
     ).mockResolvedValue(DS_META);
+    (
+      getDataSourceWithCredentials as unknown as ReturnType<typeof vi.fn>
+    ).mockResolvedValue({
+      ...DS_META,
+      credentialRef: { kind: "encryptedBlob" as const, ref: "r" },
+      credentialEnc: "blob-fake-base64",
+    });
     (
       canQueryDataSource as unknown as ReturnType<typeof vi.fn>
     ).mockResolvedValue({ canQuery: true });
@@ -63,6 +70,18 @@ describe("queryDataset (P1.7)", () => {
     expect(result.truncated).toBe(false);
   });
 
+  it("nega acesso antes de carregar credenciais", async () => {
+    (
+      canQueryDataSource as unknown as ReturnType<typeof vi.fn>
+    ).mockResolvedValue({ canQuery: false });
+    await expect(
+      queryDataset(
+        { uid: "u2", dataSourceId: "ds1", sql: "SELECT * FROM view" },
+      ),
+    ).rejects.toThrow(/Acesso negado/);
+    expect(getDataSourceWithCredentials).not.toHaveBeenCalled();
+  });
+
   it("nega acesso quando canQuery e false (P1.4 guard)", async () => {
     (
       canQueryDataSource as unknown as ReturnType<typeof vi.fn>
@@ -77,7 +96,7 @@ describe("queryDataset (P1.7)", () => {
 
   it("propaga erro quando a fonte nao existe", async () => {
     (
-      getDataSourceWithCredentials as unknown as ReturnType<typeof vi.fn>
+      getDataSource as unknown as ReturnType<typeof vi.fn>
     ).mockResolvedValue(null);
     await expect(
       queryDataset(

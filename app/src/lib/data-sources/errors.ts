@@ -69,6 +69,7 @@ export function publicErrorStatus(err: unknown): number {
   if (err instanceof QueryDatasetAccessDeniedError) return 403;
   if (err instanceof DataSourceNotFoundError) return 404;
   if (err instanceof DataSourceUnavailableError) return 503;
+  if (err instanceof QueryDatasetInvalidInputError) return 400;
   if (err instanceof DuckDbSandboxError) {
     // Guard blocks (input do cliente) -> 400. Erros de execucao/infra do
     // engine (timeout, memoria, falha interna) -> 500. Discriminamos por
@@ -77,7 +78,7 @@ export function publicErrorStatus(err: unknown): number {
     const msg = err.message || "";
     if (/timeout/i.test(msg)) return 504;
     if (
-      /(statement proibido|tabela (nao autorizada|ausente)|query (muito longa|invalida)|sql inválido|function scan|função bloqueada)/i.test(
+      /(statement proibido|tabela (nao autorizada|ausente)|query (muito longa|invalida)|sql inválido|function scan|função bloqueada|binder error|parser error|catalog error)/i.test(
         msg,
       )
     ) {
