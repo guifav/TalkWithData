@@ -17,7 +17,7 @@ const fakeServiceAccount = {
 describe("SecretService", () => {
   afterEach(() => {
     vi.restoreAllMocks();
-    delete process.env.TWD_CREDENTIAL_ENC_KEY;
+    vi.unstubAllEnvs();
   });
 
   it("resolve encryptedBlob descriptografando AES-GCM e parseando JSON", async () => {
@@ -36,6 +36,33 @@ describe("SecretService", () => {
     const ref: CredentialRef = { kind: "secretManager", ref: "projects/p/secrets/s" };
 
     await expect(service.resolve(ref)).rejects.toThrow("secretManager still not implemented");
+  });
+
+  it("exige TWD_CREDENTIAL_ENC_KEY em produção (não usa DEV_ENC_KEY)", async () => {
+    const encrypted = encryptFixture(fakeServiceAccount);
+    const service = new SecretService({
+      loadEncryptedBlob: async () => encrypted,
+    });
+
+    vi.stubEnv("NODE_ENV", "production");
+
+    await expect(
+      service.resolve({ kind: "encryptedBlob", ref: "data-source-a" }),
+    ).rejects.toThrow("TWD_CREDENTIAL_ENC_KEY e obrigatorio em producao");
+  });
+
+  it("usa TWD_CREDENTIAL_ENC_KEY em produção quando presente", async () => {
+    const encrypted = encryptFixture(fakeServiceAccount);
+    const service = new SecretService({
+      loadEncryptedBlob: async () => encrypted,
+    });
+
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("TWD_CREDENTIAL_ENC_KEY", DEV_ENC_KEY);
+
+    await expect(
+      service.resolve({ kind: "encryptedBlob", ref: "data-source-a" }),
+    ).resolves.toEqual(fakeServiceAccount);
   });
 
   it("usa cache TTL para não reler o blob criptografado dentro da janela", async () => {

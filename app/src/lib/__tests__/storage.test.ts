@@ -79,6 +79,7 @@ describe("createGcsStorage", () => {
       prefix: "exports/",
       pageToken: "page-1",
       maxResults: 2,
+      autoPaginate: false,
     });
   });
 

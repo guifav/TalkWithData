@@ -88,8 +88,7 @@ export class SyncCache {
       return cached;
     }
 
-    const sourceId = parseSourceIdFromKey(key);
-    const inFlight = this.loadMutex.get(sourceId);
+    const inFlight = this.loadMutex.get(key);
 
     if (inFlight) {
       return inFlight as Promise<T>;
@@ -101,12 +100,12 @@ export class SyncCache {
         return loaded.value;
       })
       .finally(() => {
-        if (this.loadMutex.get(sourceId) === loadPromise) {
-          this.loadMutex.delete(sourceId);
+        if (this.loadMutex.get(key) === loadPromise) {
+          this.loadMutex.delete(key);
         }
       });
 
-    this.loadMutex.set(sourceId, loadPromise);
+    this.loadMutex.set(key, loadPromise);
     return loadPromise;
   }
 

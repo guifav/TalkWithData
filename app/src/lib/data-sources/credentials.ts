@@ -108,7 +108,18 @@ function decryptCredentialBlob(blob: Buffer, key: Buffer): object {
 }
 
 function getEncryptionKey(explicitKeyBase64: string | undefined): Buffer {
-  const keyBase64 = explicitKeyBase64 ?? process.env.TWD_CREDENTIAL_ENC_KEY ?? DEV_ENC_KEY;
+  const keyBase64 = explicitKeyBase64 ?? process.env.TWD_CREDENTIAL_ENC_KEY;
+
+  if (!keyBase64) {
+    if (process.env.NODE_ENV === "production") {
+      throw new CredentialConfigError(
+        "TWD_CREDENTIAL_ENC_KEY e obrigatorio em producao",
+      );
+    }
+
+    return Buffer.from(DEV_ENC_KEY, "base64");
+  }
+
   const key = Buffer.from(keyBase64, "base64");
 
   if (key.length !== 32) {

@@ -93,6 +93,7 @@ class GcsExternalBucketStorage implements ExternalBucketStorage {
         prefix: safePrefix,
         pageToken: opts.pageToken,
         maxResults: opts.maxResults,
+        autoPaginate: false,
       });
 
       return {
@@ -123,7 +124,12 @@ class GcsExternalBucketStorage implements ExternalBucketStorage {
         throw new ExternalStorageReadTooLargeError(metadataSize, maxBytes);
       }
 
-      const [content] = await file.download();
+      const generation = readGeneration(metadata);
+      const downloadOptions =
+        generation !== undefined
+          ? ({ generation } as unknown as Parameters<typeof file.download>[0])
+          : undefined;
+      const [content] = await file.download(downloadOptions as never);
 
       if (content.length > maxBytes) {
         throw new ExternalStorageReadTooLargeError(content.length, maxBytes);
@@ -222,6 +228,18 @@ function readContentHash(metadata: { md5Hash?: unknown; etag?: unknown }): strin
 
   const etag = metadata.etag;
   return typeof etag === "string" ? etag : "";
+}
+
+function readGeneration(metadata: { generation?: unknown }): string | undefined {
+  if (typeof metadata.generation === "string" && metadata.generation) {
+    return metadata.generation;
+  }
+
+  if (typeof metadata.generation === "number" && Number.isFinite(metadata.generation)) {
+    return String(metadata.generation);
+  }
+
+  return undefined;
 }
 
 function readNextPageToken(nextQuery: unknown): string | undefined {
