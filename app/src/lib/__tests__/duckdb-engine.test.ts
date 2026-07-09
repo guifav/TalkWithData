@@ -135,7 +135,7 @@ describe("loadSource", () => {
   it("falha fechado quando header equivalente normaliza para ownerColumn", async () => {
     __engineCacheReset();
     const leakyCsv = Buffer.from(
-      ["owner_email,Owner Email,amount", "ana@example.com,ana@example.com,10"].join("\n"),
+      ["owner_email,owner_email ,amount", "ana@example.com,ana@example.com,10"].join("\n"),
     );
     const engine = await loadSource({
       source: source({ id: "src-normalized-owner-duplicate" }),

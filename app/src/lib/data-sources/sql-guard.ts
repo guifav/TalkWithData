@@ -170,13 +170,18 @@ function validateAstSelect(
   const withEntries = arrayValue(node.with);
   for (const entry of withEntries) {
     const cteName = extractCteName(entry);
-    if (cteName) ctes.add(cteName);
-  }
+    if (cteName && isReservedCteName(cteName)) {
+      return `CTE com nome reservado: ${cteName}`;
+    }
 
-  for (const entry of withEntries) {
+    // Valida o corpo ANTES de adicionar a CTE atual. Isso impede
+    // self-shadowing de tabelas internas, ex.: WITH auth_keys AS
+    // (SELECT * FROM auth_keys) SELECT * FROM auth_keys.
     const cteStatement = extractCteStatement(entry);
     const reason = validateAstAny(cteStatement, ctes, allowedViewName);
     if (reason) return reason;
+
+    if (cteName) ctes.add(cteName);
   }
 
   const fromReason = validateAstFromItems(node.from, ctes, allowedViewName);
@@ -538,7 +543,9 @@ function collectFallbackCteNames(tokens: SqlToken[]): Set<string> {
     const nameToken = tokens[index];
     if (!nameToken || nameToken.kind === "symbol") break;
 
-    ctes.add(nameToken.value);
+    if (!isReservedCteName(nameToken.value)) {
+      ctes.add(nameToken.value);
+    }
     index += 1;
 
     if (tokens[index]?.value === "(") {
@@ -892,6 +899,15 @@ function catalogReasonFor(
     return "catálogo proibido";
   }
   return null;
+}
+
+function isReservedCteName(name: string): boolean {
+  const normalized = name.toLowerCase();
+  return (
+    normalized === "auth_keys" ||
+    normalized.startsWith("twd_raw_") ||
+    normalized.startsWith("twd_filtered_")
+  );
 }
 
 function isAllowedRelation(

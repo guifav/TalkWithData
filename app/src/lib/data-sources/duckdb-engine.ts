@@ -457,7 +457,12 @@ function duckType(type: InferredColumnType): string {
 }
 
 function normalizedCsvHeaderIdentity(rawName: string | undefined): string {
-  return (rawName ?? "").toLowerCase().replace(/[^a-z0-9_]/g, "_");
+  return (rawName ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .replace(/_+/g, "_");
 }
 
 function quoteIdentifier(name: string): string {

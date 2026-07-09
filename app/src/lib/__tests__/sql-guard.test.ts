@@ -90,6 +90,28 @@ describe("guardSql", () => {
     );
   });
 
+  it("rejeita CTE com self-shadowing de tabela interna", () => {
+    expectBlocked(
+      `
+        WITH auth_keys AS (SELECT * FROM auth_keys)
+        SELECT * FROM auth_keys
+      `,
+      "CTE com nome reservado: auth_keys",
+    );
+  });
+
+  it("rejeita CTE com nome de raw table deterministica", () => {
+    expectBlocked(
+      `
+        WITH twd_raw_1f0d31f2fc9155ac AS (
+          SELECT * FROM ${allowedViewName}
+        )
+        SELECT * FROM twd_raw_1f0d31f2fc9155ac
+      `,
+      "CTE com nome reservado: twd_raw_1f0d31f2fc9155ac",
+    );
+  });
+
   it.each([
     ["UNION", `SELECT id FROM ${allowedViewName} UNION SELECT id FROM ${allowedViewName}`],
     [
