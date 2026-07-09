@@ -62,19 +62,18 @@ describe("loadSource", () => {
     await expect(countRows(bob.viewName, bob.run)).resolves.toBe(1);
 
     const anaWindow = await ana.run(`
-      SELECT owner_email, amount, RANK() OVER (ORDER BY amount) AS rank_value
+      SELECT amount, RANK() OVER (ORDER BY amount) AS rank_value
       FROM ${ana.viewName}
       ORDER BY amount
     `);
     expect(
-      anaWindow.rows.map(([ownerEmail, amount, rankValue]) => [
-        ownerEmail,
+      anaWindow.rows.map(([amount, rankValue]) => [
         amount,
         Number(rankValue),
       ]),
     ).toEqual([
-      ["ana@example.com", 10, 1],
-      ["ana@example.com", 30, 2],
+      [10, 1],
+      [30, 2],
     ]);
 
     const anaScalarSubquery = await ana.run(`
@@ -92,44 +91,63 @@ describe("loadSource", () => {
       [30, 2],
     ]);
 
-    const anaJoin = await ana.run(`
-      SELECT left_side.amount, totals.total
-      FROM ${ana.viewName} AS left_side
-      JOIN (
-        SELECT owner_email, SUM(amount) AS total
-        FROM ${ana.viewName}
-        GROUP BY owner_email
-      ) AS totals
-        ON left_side.owner_email = totals.owner_email
-      ORDER BY left_side.amount
-    `);
-    expect(
-      anaJoin.rows.map(([amount, total]) => [amount, Number(total)]),
-    ).toEqual([
-      [10, 40],
-      [30, 40],
-    ]);
-
+    // Prova de isolamento antes de agregacao: a VIEW ja filtra pelo viewer,
+    // entao SUM/COUNT so enxergam as linhas do viewer (a coluna de owner foi
+    // removida da view por seguranca e nao pode ser usada no output/JOIN).
     const bobAggregate = await bob.run(`
-      SELECT owner_email, SUM(amount) AS total
+      SELECT SUM(amount) AS total
       FROM ${bob.viewName}
-      GROUP BY owner_email
     `);
     expect(
-      bobAggregate.rows.map(([ownerEmail, total]) => [ownerEmail, Number(total)]),
-    ).toEqual([["bob@example.com", 20]]);
+      bobAggregate.rows.map(([total]) => Number(total)),
+    ).toEqual([20]);
   });
 
-  it("retorna zero linhas quando ownerColumn está ausente", async () => {
+  it("normaliza ownerColumn email do CSV antes do filtro", async () => {
+    const mixedCaseCsv = Buffer.from(
+      ["owner_email,amount", " ANA@Example.com ,10", "bob@example.com,20"].join("\n"),
+    );
     const engine = await loadSource({
-      source: source({ id: "src-no-owner-column", ownerColumn: undefined }),
+      source: source({ id: "src-email-normalization" }),
+      csvBuffer: mixedCaseCsv,
+      viewerScope: { ownerKeys: ["ana@example.com"] },
+      etag: "etag-email-normalization",
+      configVersion: 1,
+    });
+
+    const result = await engine.run(`SELECT amount FROM ${engine.viewName}`);
+    expect(result.rows).toEqual([[10]]);
+  });
+
+  it("falha fechado quando ownerColumn está ausente", async () => {
+    __engineCacheReset();
+    const engine = await loadSource({
+      source: source({ id: "src-no-owner-column", ownerColumn: "" }),
       csvBuffer: csv,
       viewerScope: { ownerKeys: ["ana@example.com"] },
       etag: "etag-no-owner-column",
       configVersion: 1,
     });
 
-    await expect(countRows(engine.viewName, engine.run)).resolves.toBe(0);
+    await expect(countRows(engine.viewName, engine.run)).rejects.toThrow(/ownerColumn valida/);
+  });
+
+  it("falha fechado quando header equivalente normaliza para ownerColumn", async () => {
+    __engineCacheReset();
+    const leakyCsv = Buffer.from(
+      ["owner_email,owner_email ,amount", "ana@example.com,ana@example.com,10"].join("\n"),
+    );
+    const engine = await loadSource({
+      source: source({ id: "src-normalized-owner-duplicate" }),
+      csvBuffer: leakyCsv,
+      viewerScope: { ownerKeys: ["ana@example.com"] },
+      etag: "etag-normalized-owner-duplicate",
+      configVersion: 1,
+    });
+
+    await expect(engine.run(`SELECT * FROM ${engine.viewName}`)).rejects.toThrow(
+      /multiplas colunas de escopo/i,
+    );
   });
 
   it("retorna zero linhas quando ownerKeys está vazio", async () => {
@@ -228,8 +246,8 @@ describe("loadSource", () => {
       });
     await expect(engine.run(`SELECT * FROM ${engine.viewName}`)).resolves.toMatchObject({
       rows: [
-        ["ana@example.com", 10],
-        ["ana@example.com", 30],
+        [10],
+        [30],
       ],
     });
     await expect(
@@ -249,7 +267,7 @@ describe("loadSource", () => {
         configVersion: 1,
       });
       const result = await engine.run(
-        `SELECT owner_email, amount FROM ${engine.viewName} ORDER BY amount`,
+        `SELECT amount FROM ${engine.viewName} ORDER BY amount`,
       );
       expect(result.truncated).toBe(true);
       expect(result.rows.length).toBe(1);
@@ -339,11 +357,11 @@ describe("loadSource", () => {
       configVersion: 1,
     });
     const result = await engine.run(
-      `SELECT owner, flag FROM ${engine.viewName} ORDER BY owner`,
+      `SELECT flag FROM ${engine.viewName} ORDER BY flag`,
     );
     expect(result.rows).toEqual([
-      ["ana", true],
-      ["x", true],
+      [true],
+      [true],
     ]);
   });
 
@@ -357,12 +375,12 @@ describe("loadSource", () => {
       configVersion: 1,
     });
     const result = await engine.run(
-      `SELECT owner, amount FROM ${engine.viewName} ORDER BY owner`,
+      `SELECT amount FROM ${engine.viewName} ORDER BY amount`,
     );
     expect(result.rows).toEqual([
-      ["ana", "10"],
-      ["bob", "abc"],
-      ["x", "30"],
+      ["10"],
+      ["30"],
+      ["abc"],
     ]);
   });
 
@@ -376,9 +394,9 @@ describe("loadSource", () => {
       configVersion: 1,
     });
     const result = await engine.run(
-      `SELECT owner, amount FROM ${engine.viewName} ORDER BY owner`,
+      `SELECT amount FROM ${engine.viewName} ORDER BY amount`,
     );
-    expect(result.rows).toEqual([["001", 10]]);
+    expect(result.rows).toEqual([[10]]);
   });
 
   it("nao trunca/wrap inteiros fora de int4 (rebaixa para decimal)", async () => {
@@ -391,11 +409,11 @@ describe("loadSource", () => {
       configVersion: 1,
     });
     const result = await engine.run(
-      `SELECT owner, big FROM ${engine.viewName} ORDER BY owner`,
+      `SELECT big FROM ${engine.viewName} ORDER BY big`,
     );
     expect(result.rows).toEqual([
-      ["ana", "1"],
-      ["bob", "2147483648"],
+      ["1"],
+      ["2147483648"],
     ]);
   });
 
@@ -409,11 +427,11 @@ describe("loadSource", () => {
       configVersion: 1,
     });
     const result = await engine.run(
-      `SELECT owner, dt FROM ${engine.viewName} ORDER BY owner`,
+      `SELECT dt FROM ${engine.viewName} ORDER BY dt`,
     );
     expect(result.rows).toEqual([
-      ["ana", "2024-01-01"],
-      ["bob", "not-a-date"],
+      ["2024-01-01"],
+      ["not-a-date"],
     ]);
   });
 });

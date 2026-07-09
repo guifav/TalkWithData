@@ -174,7 +174,12 @@ describe("admin data sources routes", () => {
   it("superadmin cria, lista e atualiza sem expor credenciais", async () => {
     setupAuth("superadmin");
     const createRes = await createDataSource(
-      request("POST", "http://localhost/api/admin/data-sources", "token", validPayload()),
+      request(
+        "POST",
+        "http://localhost/api/admin/data-sources",
+        "token",
+        validPayload({ credentialEnc: " encrypted-secret-base64 " }),
+      ),
     );
     const created = await jsonBody(createRes);
 
@@ -188,6 +193,9 @@ describe("admin data sources routes", () => {
     });
     expect(JSON.stringify(created)).not.toContain("credentialRef");
     expect(JSON.stringify(created)).not.toContain("credentialEnc");
+    expect(routeMocks.dataSources.get("source-1")?.data.credentialEnc).toBe(
+      "encrypted-secret-base64",
+    );
 
     routeMocks.dataSources.set("source-secret", {
       exists: true,
@@ -219,7 +227,7 @@ describe("admin data sources routes", () => {
         "PATCH",
         "http://localhost/api/admin/data-sources/source-1",
         "token",
-        { name: "Clientes VIP", prefix: "daily" },
+        { name: "Clientes VIP", prefix: "daily", credentialEnc: "updated-secret" },
       ),
       { params: Promise.resolve({ id: "source-1" }) },
     );
@@ -234,6 +242,10 @@ describe("admin data sources routes", () => {
     });
     expect(JSON.stringify(patched)).not.toContain("credentialRef");
     expect(JSON.stringify(patched)).not.toContain("credentialEnc");
+    expect(JSON.stringify(patched)).not.toContain("updated-secret");
+    expect(routeMocks.dataSources.get("source-1")?.data.credentialEnc).toBe(
+      "updated-secret",
+    );
   });
 
   it.each(["admin", "user"] as const)(
@@ -311,7 +323,7 @@ describe("admin data sources routes", () => {
     const res = await createDataSource(
       request("POST", "http://localhost/api/admin/data-sources", "token", {
         ...validPayload(),
-        credentialEnc: "forbidden",
+        apiKey: "forbidden",
       }),
     );
 

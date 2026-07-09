@@ -70,6 +70,32 @@ export async function getDataSource(
   return toMetadata(toDataSourceDoc(doc.id, doc.data() ?? {}));
 }
 
+/**
+ * Igual a getDataSource, mas inclui credentialRef (necessario no backend para
+ * ler o CSV da fonte via storage GCS). Nunca expor em rotas publicas.
+ */
+export async function getDataSourceWithCredentials(
+  id: string,
+): Promise<
+  (DataSourceMetadata & { credentialRef: CredentialRef; credentialEnc?: string }) | null
+> {
+  const doc = await adminDb.collection(COLLECTION).doc(id).get();
+  if (!doc.exists) return null;
+
+  const dataSource = toDataSourceDoc(doc.id, doc.data() ?? {});
+  const result: DataSourceMetadata & {
+    credentialRef: CredentialRef;
+    credentialEnc?: string;
+  } = {
+    ...toMetadata(dataSource),
+    credentialRef: dataSource.credentialRef,
+  };
+  if (dataSource.credentialEnc !== undefined) {
+    result.credentialEnc = dataSource.credentialEnc;
+  }
+  return result;
+}
+
 export async function createDataSource(
   input: CreateDataSourceInput,
   uid: string,
@@ -207,6 +233,7 @@ function hasConfigChanged(
     changed(current.bucket, patch.bucket) ||
     changed(current.prefix, patch.prefix) ||
     changed(current.credentialRef, patch.credentialRef) ||
+    changed(current.credentialEnc, patch.credentialEnc) ||
     changed(current.ownerColumn, patch.ownerColumn) ||
     changed(current.accessGrants, patch.accessGrants)
   );

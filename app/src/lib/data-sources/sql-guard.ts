@@ -26,6 +26,17 @@ const BLOCKED_FUNCTIONS = new Set([
   "read_text",
   "read_blob",
   "read_xlsx",
+  // Function scans de catalogo/raw que burlariam a VIEW filtrada e leriam a
+  // raw table ou auth_keys (vazamento de owner emails/scope).
+  "query_table",
+  "query",
+  "duckdb_tables",
+  "duckdb_columns",
+  "duckdb_functions",
+  "pragma_table_info",
+  "pragma_database_size",
+  "sqlite_master",
+  "sqlite_schema",
 ]);
 
 const BLOCKED_FUNCTION_PREFIXES = [
@@ -36,6 +47,10 @@ const BLOCKED_FUNCTION_PREFIXES = [
   "read_text",
   "read_blob",
   "read_xlsx",
+  "duckdb_",
+  "pragma_",
+  "sqlite_",
+  "query_",
 ];
 
 const BLOCKED_STATEMENT_TYPES = new Set([
@@ -53,6 +68,8 @@ const BLOCKED_STATEMENT_TYPES = new Set([
   "load",
   "pragma",
   "set",
+  "show",
+  "describe",
   "update",
 ]);
 
@@ -153,13 +170,18 @@ function validateAstSelect(
   const withEntries = arrayValue(node.with);
   for (const entry of withEntries) {
     const cteName = extractCteName(entry);
-    if (cteName) ctes.add(cteName);
-  }
+    if (cteName && isReservedCteName(cteName)) {
+      return `CTE com nome reservado: ${cteName}`;
+    }
 
-  for (const entry of withEntries) {
+    // Valida o corpo ANTES de adicionar a CTE atual. Isso impede
+    // self-shadowing de tabelas internas, ex.: WITH auth_keys AS
+    // (SELECT * FROM auth_keys) SELECT * FROM auth_keys.
     const cteStatement = extractCteStatement(entry);
     const reason = validateAstAny(cteStatement, ctes, allowedViewName);
     if (reason) return reason;
+
+    if (cteName) ctes.add(cteName);
   }
 
   const fromReason = validateAstFromItems(node.from, ctes, allowedViewName);
@@ -234,6 +256,19 @@ function validateAstFromItems(
   if (subquery) {
     const reason = validateAstSelect(subquery, ctes, allowedViewName);
     if (reason) return reason;
+  }
+
+  // Function scans em FROM (ex.: query_table('auth_keys'), duckdb_tables(),
+  // pragma_table_info(...)) burlariam a VIEW filtrada e leriam a raw table ou
+  // auth_keys, vazando owner emails/scope. Bloqueamos por padrao: so relacoes
+  // nomeadas ou subqueries sao autorizadas.
+  const tableNode = node.table ?? node.expr;
+  if (isRecord(tableNode)) {
+    const tableType = normalizedString(tableNode.type);
+    if (tableType === "function" || tableType === "call") {
+      const fnName = astFunctionName(tableNode) ?? "desconhecida";
+      return `function scan proibido: ${fnName}`;
+    }
   }
 
   const relationName = identifierFromAst(node.table);
@@ -401,38 +436,53 @@ function validateFallbackTableRefs(
     if (word !== "from" && word !== "join") continue;
 
     const relationStart = nextRelationTokenIndex(tokens, index + 1);
-    if (relationStart === null) continue;
+    if (relationStart === null) return "tabela ausente apos FROM/JOIN";
 
-    const first = tokens[relationStart];
-    if (!first || first.value === "(") continue;
+    let relationIndex: number | null = relationStart;
+    while (relationIndex !== null) {
+      const first = tokens[relationIndex];
+      if (!first || first.value === "(") break;
 
-    const parsed = readFallbackRelation(tokens, relationStart);
-    if (!parsed) continue;
+      const parsed = readFallbackRelation(tokens, relationIndex);
+      if (!parsed) break;
 
-    const blockedFunction = parsed.isFunctionScan
-      ? blockedFunctionName(parsed.relationName)
-      : null;
-    if (blockedFunction) {
-      return `função bloqueada: ${blockedFunction}`;
+      const reason = validateFallbackRelation(parsed, ctes, allowedViewName);
+      if (reason) return reason;
+
+      const commaIndex = parsed.endIndex;
+      if (tokens[commaIndex]?.value !== ",") break;
+      relationIndex = nextRelationTokenIndex(tokens, commaIndex + 1);
+      if (relationIndex === null) return "tabela ausente apos virgula";
     }
+  }
 
-    const catalogReason = catalogReasonFor(parsed.schemaName, parsed.relationName);
-    if (catalogReason) return catalogReason;
+  return null;
+}
 
-    const cteAllowed = !parsed.schemaName && ctes.has(parsed.relationName);
-    if (
-      !cteAllowed &&
-      !isAllowedRelation(
-        parsed.schemaName,
-        parsed.relationName,
-        allowedViewName,
-      )
-    ) {
-      return `tabela não autorizada: ${formatRelationName(
-        parsed.schemaName,
-        parsed.relationName,
-      )}`;
-    }
+function validateFallbackRelation(
+  parsed: FallbackRelation,
+  ctes: Set<string>,
+  allowedViewName: string,
+): string | null {
+  const blockedFunction = parsed.isFunctionScan
+    ? blockedFunctionName(parsed.relationName)
+    : null;
+  if (blockedFunction) {
+    return `função bloqueada: ${blockedFunction}`;
+  }
+
+  const catalogReason = catalogReasonFor(parsed.schemaName, parsed.relationName);
+  if (catalogReason) return catalogReason;
+
+  const cteAllowed = !parsed.schemaName && ctes.has(parsed.relationName);
+  if (
+    !cteAllowed &&
+    !isAllowedRelation(parsed.schemaName, parsed.relationName, allowedViewName)
+  ) {
+    return `tabela não autorizada: ${formatRelationName(
+      parsed.schemaName,
+      parsed.relationName,
+    )}`;
   }
 
   return null;
@@ -456,6 +506,7 @@ interface FallbackRelation {
   schemaName?: string;
   relationName: string;
   isFunctionScan: boolean;
+  endIndex: number;
 }
 
 function readFallbackRelation(
@@ -472,12 +523,14 @@ function readFallbackRelation(
       schemaName: first.value,
       relationName: third.value,
       isFunctionScan: tokens[startIndex + 3]?.value === "(",
+      endIndex: tokens[startIndex + 3]?.value === "(" ? startIndex + 4 : startIndex + 3,
     };
   }
 
   return {
     relationName: first.value,
     isFunctionScan: second?.value === "(",
+    endIndex: second?.value === "(" ? startIndex + 2 : startIndex + 1,
   };
 }
 
@@ -490,7 +543,9 @@ function collectFallbackCteNames(tokens: SqlToken[]): Set<string> {
     const nameToken = tokens[index];
     if (!nameToken || nameToken.kind === "symbol") break;
 
-    ctes.add(nameToken.value);
+    if (!isReservedCteName(nameToken.value)) {
+      ctes.add(nameToken.value);
+    }
     index += 1;
 
     if (tokens[index]?.value === "(") {
@@ -844,6 +899,15 @@ function catalogReasonFor(
     return "catálogo proibido";
   }
   return null;
+}
+
+function isReservedCteName(name: string): boolean {
+  const normalized = name.toLowerCase();
+  return (
+    normalized === "auth_keys" ||
+    normalized.startsWith("twd_raw_") ||
+    normalized.startsWith("twd_filtered_")
+  );
 }
 
 function isAllowedRelation(

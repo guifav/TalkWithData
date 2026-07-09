@@ -2,10 +2,12 @@ import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import {
   parseCsvTable,
+  CsvParseError,
   type CsvColumn,
   type InferredColumnType,
 } from "@/lib/data-sources/csv-table";
 import { DuckDbSandboxError } from "@/lib/data-sources/duckdb-sandbox";
+import { DataSourceUnavailableError } from "@/lib/data-sources/errors";
 import { guardSql } from "@/lib/data-sources/sql-guard";
 import type { DataSource } from "@/lib/data-sources/types";
 import type {
@@ -145,6 +147,9 @@ async function createRawSource(args: LoadSourceArgs): Promise<CachedRawSource> {
     connection?.closeSync();
     instance.closeSync();
     if (error instanceof DuckDbSandboxError) throw error;
+    if (error instanceof CsvParseError) {
+      throw new DataSourceUnavailableError(error.message);
+    }
     throw new DuckDbSandboxError(errorMessage(error), error);
   }
 }
@@ -232,7 +237,18 @@ async function createFilteredView(
     ? columns.find((column) => column.rawName === source.ownerColumn)
     : undefined;
   const ownerColSafe = ownerColumn?.safeName;
-  if (ownerColSafe) validateIdentifier(ownerColSafe);
+
+  // Falha fechado se a coluna de escopo estiver ausente, vazia ou nao casar
+  // exatamente com uma coluna do CSV. Sem ownerColumn valido, a view cairia em
+  // SELECT * e exporia o schema bruto (incluindo a coluna de owner) no
+  // resultado, violando o contrato de nao vazar ownerColumn/emails de owner.
+  if (!ownerColSafe) {
+    const detail = source.ownerColumn
+      ? `declara ownerColumn "${source.ownerColumn}" ausente no CSV`
+      : "nao declara ownerColumn valida";
+    throw new DataSourceUnavailableError(`DataSource ${source.id} ${detail}`);
+  }
+  validateIdentifier(ownerColSafe);
 
   await connection.runAndReadAll("CREATE TEMP TABLE auth_keys(k VARCHAR)");
   if (ownerColSafe) {
@@ -248,11 +264,48 @@ async function createFilteredView(
     }
   }
 
-  const filterSql = ownerColSafe
-    ? `${quoteIdentifier(ownerColSafe)} IN (SELECT k FROM auth_keys)`
-    : "1 = 0";
+  const ownerExpr = quoteIdentifier(ownerColSafe);
+  const filterSql =
+    source.ownerColumnIdentity === "email"
+      ? `lower(trim(CAST(${ownerExpr} AS VARCHAR))) IN (SELECT k FROM auth_keys)`
+      : `${ownerExpr} IN (SELECT k FROM auth_keys)`;
+
+  // A coluna de escopo (ownerColumn) NUNCA e exposta pela view filtrada.
+  // CSVs podem ter headers duplicados ou equivalentes apos normalizacao
+  // (ex.: "owner,Owner,amount" ou "owner-email,owner_email,amount"). O
+  // csv-table cria safeNames unicos com sufixo, mas os dois headers ainda
+  // representam a mesma identidade de escopo. Falhamos fechado se qualquer
+  // outra coluna normalizar para a mesma identidade da ownerColumn.
+  const ownerRaw = source.ownerColumn;
+  const ownerIdentity = normalizedCsvHeaderIdentity(ownerRaw);
+  const ownerColumns = columns.filter(
+    (column) => normalizedCsvHeaderIdentity(column.rawName) === ownerIdentity,
+  );
+  if (ownerColumns.length > 1) {
+    throw new DataSourceUnavailableError(
+      `DataSource ${source.id} possui multiplas colunas de escopo "${ownerRaw}"`,
+    );
+  }
+  const projectedColumnList = ownerColSafe
+    ? columns
+        .filter(
+          (column) =>
+            normalizedCsvHeaderIdentity(column.rawName) !== ownerIdentity,
+        )
+        .map((column) => quoteIdentifier(column.safeName))
+    : [];
+
+  // Falha fechado se nao houver nenhuma coluna de dados alem da ownerColumn:
+  // nunca podemos cair em SELECT * (que reexporia a coluna de escopo).
+  if (ownerColSafe && projectedColumnList.length === 0) {
+    throw new DataSourceUnavailableError(
+      `DataSource ${source.id} nao possui colunas de dados alem da coluna de escopo`,
+    );
+  }
+  const selectList = ownerColSafe ? projectedColumnList.join(", ") : "*";
+
   await connection.runAndReadAll(
-    `CREATE OR REPLACE TEMP VIEW ${quoteIdentifier(viewName)} AS SELECT * FROM ${quoteIdentifier(rawSafe)} WHERE ${filterSql}`,
+    `CREATE OR REPLACE TEMP VIEW ${quoteIdentifier(viewName)} AS SELECT ${selectList} FROM ${quoteIdentifier(rawSafe)} WHERE ${filterSql}`,
   );
 
   return viewName;
@@ -401,6 +454,15 @@ function duckType(type: InferredColumnType): string {
   if (type === "date") return "DATE";
   if (type === "timestamp") return "TIMESTAMP";
   return "VARCHAR";
+}
+
+function normalizedCsvHeaderIdentity(rawName: string | undefined): string {
+  return (rawName ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .replace(/_+/g, "_");
 }
 
 function quoteIdentifier(name: string): string {

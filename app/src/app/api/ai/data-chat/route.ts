@@ -3,10 +3,18 @@ import { verifyRequest } from "@/lib/api-auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { isAllowedMcpHost } from "@/lib/mcp-hosts";
 import { summarizeIfNeeded } from "@/lib/tool-result-utils";
+import { type BuiltDataChatPrompt } from "@/lib/data-chat-prompt-fallback";
 import {
-  buildDataChatSystemPrompt,
-  type BuiltDataChatPrompt,
-} from "@/lib/data-chat-prompt-fallback";
+  buildDatasetChatSystemPrompt,
+  QUERY_DATASET_TOOL,
+} from "@/lib/dataset-chat-prompt";
+import { listDataSources, type DataSourceMetadata } from "@/lib/data-sources/firestore";
+import { canQueryDataSource } from "@/lib/data-sources/access";
+import { queryDataset, dataSourceToRuntime } from "@/lib/data-sources/query";
+import {
+  publicErrorMessage,
+  publicErrorStatus,
+} from "@/lib/data-sources/errors";
 import { resolveUserModel } from "@/lib/ai-model";
 import { AiProviderError, getAiAdapter } from "@/lib/ai-providers";
 
@@ -65,6 +73,7 @@ function buildToolsFromServers(
   const toolToEndpoint: Record<string, string> = {};
   const toolToServerId: Record<string, string> = {};
   const seenTools = new Set<string>();
+  const reservedToolNames = new Set([SAVE_TOOL.name, QUERY_DATASET_TOOL.name]);
 
   const sorted = [...servers].sort(
     (a, b) => (a.toolCount || 0) - (b.toolCount || 0)
@@ -72,7 +81,7 @@ function buildToolsFromServers(
 
   for (const server of sorted) {
     for (const tool of server.tools || []) {
-      if (seenTools.has(tool.name)) continue;
+      if (reservedToolNames.has(tool.name) || seenTools.has(tool.name)) continue;
       seenTools.add(tool.name);
 
       tools.push({
@@ -270,21 +279,19 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  // mcpServerIds e opcional: o tool local query_dataset funciona sem MCP.
+  // Se vazio, montamos servers=[] e ainda adicionamos QUERY_DATASET_TOOL.
   const mcpServerIds = body.mcpServerIds || [];
-  if (mcpServerIds.length === 0) {
-    return new Response(
-      JSON.stringify({ error: "No MCP servers specified" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  const servers = await verifyMcpAccess(auth.uid, mcpServerIds);
-  if (!servers) {
+  let servers = mcpServerIds.length
+    ? await verifyMcpAccess(auth.uid, mcpServerIds)
+    : [];
+  if (mcpServerIds.length && !servers) {
     return new Response(
       JSON.stringify({ error: "Access denied to one or more MCP servers" }),
-      { status: 403, headers: { "Content-Type": "application/json" } }
+      { status: 403, headers: { "Content-Type": "application/json" } },
     );
   }
+  servers = servers ?? [];
 
   const {
     tools: TOOLS,
@@ -292,9 +299,35 @@ export async function POST(request: NextRequest) {
     toolToServerId,
   } = buildToolsFromServers(servers);
 
+  let allSources: DataSourceMetadata[] = [];
+  try {
+    allSources = await listDataSources();
+  } catch (err) {
+    // Falha de Firestore ao listar fontes nao deve derrubar a rota com 500
+    // nao controlado: degradamos para nenhuma fonte autorizada (o tool
+    // query_dataset ainda falha fechado por fonte inexistente no uso real).
+    console.error("[Data Chat] listDataSources failed:", err);
+  }
+  const authorizedSources: DataSourceMetadata[] = [];
+  for (const dsMeta of allSources) {
+    try {
+      const ds = dataSourceToRuntime(dsMeta);
+      const authz = await canQueryDataSource(auth.uid, ds);
+      if (authz.canQuery) authorizedSources.push(dsMeta);
+    } catch (err) {
+      console.error(
+        `[Data Chat] canQueryDataSource failed for ${dsMeta.id}:`,
+        err,
+      );
+    }
+  }
+  if (authorizedSources.length > 0) {
+    TOOLS.push(QUERY_DATASET_TOOL);
+  }
+
   let built: BuiltDataChatPrompt;
   try {
-    built = await buildDataChatSystemPrompt(servers);
+    built = await buildDatasetChatSystemPrompt(servers, authorizedSources);
   } catch (err) {
     console.error("[Data Chat] buildDataChatSystemPrompt failed:", err);
     return new Response(
@@ -418,6 +451,54 @@ export async function POST(request: NextRequest) {
                   tool_use_id: block.id,
                   content:
                     "Dashboard HTML has been sent to the preview panel. The user can now see it and save it.",
+                });
+              } else if (toolName === "query_dataset") {
+                const dataSourceId =
+                  typeof toolInput.dataSourceId === "string"
+                    ? toolInput.dataSourceId
+                    : "";
+                const query =
+                  typeof toolInput.query === "string" ? toolInput.query : "";
+
+                emit({
+                  type: "tool_use",
+                  name: toolName,
+                  status: "calling",
+                  args: toolInput,
+                });
+
+                let toolResult: string;
+                try {
+                  const result = await queryDataset({
+                    uid: auth.uid,
+                    dataSourceId,
+                    sql: query,
+                  });
+                  toolResult = JSON.stringify(result);
+                } catch (err) {
+                  const status = publicErrorStatus(err);
+                  console.error(
+                    `[Data Chat] query_dataset failed (${status}):`,
+                    err,
+                  );
+                  toolResult = JSON.stringify({
+                    error: publicErrorMessage(err),
+                    status,
+                  });
+                }
+
+                toolResult = summarizeIfNeeded(toolResult);
+
+                emit({
+                  type: "tool_use",
+                  name: toolName,
+                  status: "done",
+                });
+
+                toolResults.push({
+                  type: "tool_result",
+                  tool_use_id: block.id,
+                  content: toolResult,
                 });
               } else {
                 emit({

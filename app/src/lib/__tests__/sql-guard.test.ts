@@ -83,6 +83,35 @@ describe("guardSql", () => {
     `);
   });
 
+  it("rejeita join implicito por virgula com tabela interna", () => {
+    expectBlocked(
+      `SELECT * FROM ${allowedViewName}, auth_keys`,
+      "tabela não autorizada: auth_keys",
+    );
+  });
+
+  it("rejeita CTE com self-shadowing de tabela interna", () => {
+    expectBlocked(
+      `
+        WITH auth_keys AS (SELECT * FROM auth_keys)
+        SELECT * FROM auth_keys
+      `,
+      "CTE com nome reservado: auth_keys",
+    );
+  });
+
+  it("rejeita CTE com nome de raw table deterministica", () => {
+    expectBlocked(
+      `
+        WITH twd_raw_1f0d31f2fc9155ac AS (
+          SELECT * FROM ${allowedViewName}
+        )
+        SELECT * FROM twd_raw_1f0d31f2fc9155ac
+      `,
+      "CTE com nome reservado: twd_raw_1f0d31f2fc9155ac",
+    );
+  });
+
   it.each([
     ["UNION", `SELECT id FROM ${allowedViewName} UNION SELECT id FROM ${allowedViewName}`],
     [
@@ -157,5 +186,53 @@ describe("guardSql", () => {
 
   it("rejeita DDL", () => {
     expectBlocked("CREATE TABLE twd_source_filtered(id integer)", "statement proibido");
+  });
+
+  it("rejeita SHOW TABLES", () => {
+    expectBlocked("SHOW TABLES", "statement proibido");
+  });
+
+  it("rejeita DESCRIBE (parse invalido ou statement bloqueado)", () => {
+    const result = guardSql(`DESCRIBE ${allowedViewName}`, { allowedViewName });
+    expect(result).toMatchObject({ ok: false });
+  });
+
+  it.each([
+    "query_table",
+    "query",
+    "duckdb_tables",
+    "duckdb_columns",
+    "duckdb_functions",
+    "pragma_table_info",
+  ])("rejeita function scan de catálogo/raw %s", (functionName) => {
+    const result = guardSql(`SELECT * FROM ${functionName}('auth_keys')`, {
+      allowedViewName,
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejeita function scan de catálogo sem argumento (duckdb_tables())", () => {
+    const result = guardSql("SELECT * FROM duckdb_tables()", {
+      allowedViewName,
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejeita acesso direto à tabela de escopo auth_keys", () => {
+    expectBlocked("SELECT * FROM auth_keys", "tabela não autorizada: auth_keys");
+  });
+
+  it("rejeita auth_keys dentro de subquery", () => {
+    expectBlocked(
+      "SELECT * FROM (SELECT * FROM auth_keys) AS leaked",
+      "tabela não autorizada: auth_keys",
+    );
+  });
+
+  it("rejeita function scan dentro de subquery", () => {
+    expectBlocked(
+      "SELECT * FROM (SELECT * FROM duckdb_tables()) AS leaked",
+      "função bloqueada: duckdb_tables",
+    );
   });
 });

@@ -65,7 +65,9 @@ export function summarizeIfNeeded(raw: string): string {
     );
     if (rowsKey && parsed[rowsKey].length > 0) {
       const rows = parsed[rowsKey];
-      const columns = Object.keys(rows[0]);
+      const columns = Array.isArray(parsed.columns)
+        ? parsed.columns.map(String)
+        : Object.keys(rows[0]);
       return buildFittingSummary(rows, columns, originalLength, `rows in '${rowsKey}'`);
     }
 
