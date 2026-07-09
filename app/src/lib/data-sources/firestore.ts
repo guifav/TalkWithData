@@ -6,6 +6,7 @@ import {
   type DataSourceAccessGrants,
 } from "@/lib/data-sources/types";
 import type { DataSourceRegistry } from "@/lib/data-sources/registry";
+import { normalizeDataSourcePrefix } from "@/lib/data-sources/inspection-token";
 
 const COLLECTION = "data_sources";
 
@@ -52,6 +53,16 @@ export class DataSourceNotFoundError extends Error {
   constructor(id: string) {
     super(`Data source not found: ${id}`);
     this.name = "DataSourceNotFoundError";
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
+export class DataSourceConcurrentModificationError extends Error {
+  readonly status = 409;
+
+  constructor(id: string) {
+    super(`Data source modified concurrently: ${id}`);
+    this.name = "DataSourceConcurrentModificationError";
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
@@ -111,6 +122,10 @@ export async function createDataSource(
 export async function updateDataSource(
   id: string,
   patch: UpdateDataSourcePatch,
+  options: {
+    expectedConfigVersion?: number;
+    validateCurrent?: (current: DataSourceDoc) => void;
+  } = {},
 ): Promise<DataSourceMetadata> {
   const docRef = adminDb.collection(COLLECTION).doc(id);
 
@@ -121,6 +136,14 @@ export async function updateDataSource(
     }
 
     const current = toDataSourceDoc(doc.id, doc.data() ?? {});
+    if (
+      options.expectedConfigVersion !== undefined &&
+      current.configVersion !== options.expectedConfigVersion
+    ) {
+      throw new DataSourceConcurrentModificationError(id);
+    }
+    options.validateCurrent?.(current);
+
     const normalizedPatch = normalizePatch(patch);
     const updates: Partial<DataSourceDoc> = {
       ...normalizedPatch,
@@ -298,13 +321,11 @@ function toMetadata(doc: DataSourceDoc): DataSourceMetadata {
 }
 
 function normalizePrefix(prefix: string): string {
-  const normalized = prefix.trim();
-  if (!normalized || normalized.endsWith("/")) return normalized;
-  return `${normalized}/`;
+  return normalizeDataSourcePrefix(prefix);
 }
 
 function normalizeCredentialRef(ref: CredentialRef): CredentialRef {
-  return { kind: ref.kind, ref: ref.ref };
+  return { kind: ref.kind, ref: ref.ref.trim() };
 }
 
 function normalizeAccessGrants(

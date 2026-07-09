@@ -140,6 +140,50 @@ describe("data sources Firestore persistence", () => {
     });
   });
 
+  it("normaliza credentialRef removendo espaços externos em create e update", async () => {
+    const created = await createDataSource(
+      {
+        ...baseInput,
+        credentialRef: { kind: "encryptedBlob", ref: " credential-a " },
+      },
+      "super-uid",
+    );
+    expect(firestoreMocks.docs.get(created.id)?.data.credentialRef).toEqual({
+      kind: "encryptedBlob",
+      ref: "credential-a",
+    });
+
+    await updateDataSource(created.id, {
+      credentialRef: { kind: "encryptedBlob", ref: " credential-b " },
+      credentialEnc: "secret-b",
+    });
+    expect(firestoreMocks.docs.get(created.id)?.data.credentialRef).toEqual({
+      kind: "encryptedBlob",
+      ref: "credential-b",
+    });
+  });
+
+  it("normaliza prefixo removendo barras iniciais em create e update", async () => {
+    const created = await createDataSource({ ...baseInput, prefix: "/exports" }, "super-uid");
+    expect(created.prefix).toBe("exports/");
+    expect(firestoreMocks.docs.get(created.id)?.data.prefix).toBe("exports/");
+
+    const updated = await updateDataSource(created.id, { prefix: "/daily" });
+    expect(updated.prefix).toBe("daily/");
+    expect(firestoreMocks.docs.get(created.id)?.data.prefix).toBe("daily/");
+  });
+
+  it("rejeita update quando expectedConfigVersion nao bate", async () => {
+    const created = await createDataSource(baseInput, "super-uid");
+    await expect(
+      updateDataSource(created.id, { prefix: "daily" }, { expectedConfigVersion: 999 }),
+    ).rejects.toMatchObject({
+      name: "DataSourceConcurrentModificationError",
+      status: 409,
+    });
+    expect(firestoreMocks.docs.get(created.id)?.data.configVersion).toBe(1);
+  });
+
   it("updateDataSource incrementa configVersion quando configuração muda", async () => {
     firestoreMocks.docs.set("source-a", {
       exists: true,

@@ -160,7 +160,7 @@ function resolveColumnTypes(
   ownerColumn?: string,
 ): CsvColumn[] {
   return columns.map((column, index) => {
-    if (column.rawName === ownerColumn) {
+    if (ownerColumn && column.rawName.trim() === ownerColumn.trim()) {
       return { ...column, type: "text" };
     }
     if (column.type === "date" || column.type === "timestamp") {
@@ -233,8 +233,9 @@ async function createFilteredView(
   validateIdentifier(viewName);
   validateIdentifier(rawSafe);
 
-  const ownerColumn = source.ownerColumn
-    ? columns.find((column) => column.rawName === source.ownerColumn)
+  const ownerColumnName = source.ownerColumn?.trim();
+  const ownerColumn = ownerColumnName
+    ? columns.find((column) => column.rawName.trim() === ownerColumnName)
     : undefined;
   const ownerColSafe = ownerColumn?.safeName;
 

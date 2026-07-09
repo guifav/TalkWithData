@@ -11,6 +11,7 @@ export interface ExternalBucketStorage {
     key: string,
     opts?: { maxBytes?: number },
   ): Promise<{ content: Buffer; md5Hash: string }>;
+  readPrefix(key: string, maxBytes: number): Promise<Buffer>;
 }
 
 export class ExternalStorageConfigError extends Error {
@@ -145,6 +146,28 @@ class GcsExternalBucketStorage implements ExternalBucketStorage {
         throw error;
       }
 
+      throw wrapCredentialError(error);
+    }
+  }
+  async readPrefix(key: string, maxBytes: number): Promise<Buffer> {
+    const safeKey = validateExternalPath(key, { allowEmpty: false });
+    const limit = normalizeByteLimit(maxBytes, "maxBytes");
+
+    try {
+      const chunks: Buffer[] = [];
+      await new Promise<void>((resolve, reject) => {
+        this.storage
+          .bucket(this.bucketName)
+          .file(safeKey)
+          .createReadStream({ start: 0, end: limit - 1 })
+          .on("data", (chunk: Buffer | string) => {
+            chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+          })
+          .on("error", reject)
+          .on("end", resolve);
+      });
+      return Buffer.concat(chunks).subarray(0, limit);
+    } catch (error) {
       throw wrapCredentialError(error);
     }
   }
