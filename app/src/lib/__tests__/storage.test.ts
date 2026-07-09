@@ -1,3 +1,4 @@
+import { PassThrough } from "stream";
 import { Storage } from "@google-cloud/storage";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -13,6 +14,7 @@ const gcsMocks = vi.hoisted(() => ({
   file: vi.fn(),
   getMetadata: vi.fn(),
   download: vi.fn(),
+  createReadStream: vi.fn(),
 }));
 
 vi.mock("@google-cloud/storage", () => ({
@@ -39,6 +41,7 @@ describe("createGcsStorage", () => {
     gcsMocks.file.mockReturnValue({
       getMetadata: gcsMocks.getMetadata,
       download: gcsMocks.download,
+      createReadStream: gcsMocks.createReadStream,
     });
   });
 
@@ -159,6 +162,23 @@ describe("createGcsStorage", () => {
     await expect(storage.readByKey("exports/a\0.csv")).rejects.toBeInstanceOf(
       ExternalStoragePathError,
     );
+  });
+
+  it("lê prefixo por range sem checar tamanho total do objeto", async () => {
+    const stream = new PassThrough();
+    gcsMocks.createReadStream.mockReturnValue(stream);
+
+    const storage = createGcsStorage({
+      bucketName: "external-bucket",
+      credentials,
+    });
+    const promise = storage.readPrefix("exports/big.csv", 8);
+    stream.end(Buffer.from("header,1\nbody,2\n"));
+
+    await expect(promise).resolves.toEqual(Buffer.from("header,1"));
+    expect(gcsMocks.getMetadata).not.toHaveBeenCalled();
+    expect(gcsMocks.download).not.toHaveBeenCalled();
+    expect(gcsMocks.createReadStream).toHaveBeenCalledWith({ start: 0, end: 7 });
   });
 
   it("bloqueia leitura acima de maxBytes sem baixar o objeto", async () => {

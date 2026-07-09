@@ -5,6 +5,9 @@ import type {
   UpdateDataSourcePatch,
 } from "@/lib/data-sources/firestore";
 
+export type CreateDataSourceRequest = CreateDataSourceInput & { inspectionToken: string };
+export type UpdateDataSourceRequest = UpdateDataSourcePatch & { inspectionToken?: string };
+
 type ParseResult<T> =
   | { ok: true; value: T }
   | { ok: false; error: string };
@@ -18,11 +21,12 @@ const ALLOWED_FIELDS = new Set([
   "credentialEnc",
   "ownerColumn",
   "accessGrants",
+  "inspectionToken",
 ]);
 
 export function parseCreateDataSourceBody(
   body: unknown,
-): ParseResult<CreateDataSourceInput> {
+): ParseResult<CreateDataSourceRequest> {
   const common = parseCommonBody(body);
   if (!common.ok) return common;
 
@@ -45,20 +49,24 @@ export function parseCreateDataSourceBody(
   if (!isNonEmptyString(data.ownerColumn)) {
     return { ok: false, error: "ownerColumn is required" };
   }
-  if (data.credentialEnc !== undefined && !isNonEmptyString(data.credentialEnc)) {
-    return { ok: false, error: "credentialEnc must be a non-empty string" };
+  if (!isNonEmptyString(data.credentialEnc)) {
+    return { ok: false, error: "credentialEnc is required" };
+  }
+  if (!isNonEmptyString(data.inspectionToken)) {
+    return { ok: false, error: "inspectionToken is required" };
   }
 
   const grants = parseAccessGrants(data.accessGrants);
   if (!grants.ok) return grants;
 
-  const input: CreateDataSourceInput = {
+  const input: CreateDataSourceRequest = {
     kind: "csv",
     bucket: data.bucket.trim(),
     prefix: data.prefix,
     credentialRef: data.credentialRef,
     ownerColumn: data.ownerColumn.trim(),
     accessGrants: grants.value,
+    inspectionToken: data.inspectionToken.trim(),
   };
 
   if (data.name !== undefined) {
@@ -76,12 +84,12 @@ export function parseCreateDataSourceBody(
 
 export function parseUpdateDataSourceBody(
   body: unknown,
-): ParseResult<UpdateDataSourcePatch> {
+): ParseResult<UpdateDataSourceRequest> {
   const common = parseCommonBody(body);
   if (!common.ok) return common;
 
   const data = common.value;
-  const patch: UpdateDataSourcePatch = {};
+  const patch: UpdateDataSourceRequest = {};
 
   if ("kind" in data) {
     if (data.kind !== "csv") {
@@ -139,6 +147,13 @@ export function parseUpdateDataSourceBody(
     const grants = parseAccessGrants(data.accessGrants);
     if (!grants.ok) return grants;
     patch.accessGrants = grants.value;
+  }
+
+  if ("inspectionToken" in data) {
+    if (!isNonEmptyString(data.inspectionToken)) {
+      return { ok: false, error: "inspectionToken must be a non-empty string" };
+    }
+    patch.inspectionToken = data.inspectionToken.trim();
   }
 
   return { ok: true, value: patch };

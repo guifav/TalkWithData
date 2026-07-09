@@ -41,6 +41,30 @@ export class CsvParseError extends Error {
   }
 }
 
+export function parseCsvHeader(input: Buffer | string): string[] {
+  const text = Buffer.isBuffer(input) ? input.toString("utf8") : input;
+  let records: string[][];
+  try {
+    records = parse(text, {
+      bom: true,
+      cast: false,
+      columns: false,
+      relax_column_count: true,
+      skip_empty_lines: false,
+      to_line: 1,
+      trim: false,
+    }) as string[][];
+  } catch {
+    throw new CsvParseError(-1, 0, 0, "CSV inválido");
+  }
+
+  const header = records[0];
+  if (!header || isEmptyHeader(header)) {
+    throw new CsvParseError(-1, 0, 0, "CSV sem header");
+  }
+  return header;
+}
+
 export function parseCsvRows(input: Buffer | string): {
   header: string[];
   rows: string[][];

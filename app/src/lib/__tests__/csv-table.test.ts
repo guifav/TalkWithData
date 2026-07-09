@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   CsvParseError,
   inferColumnType,
+  parseCsvHeader,
   parseCsvRows,
   parseCsvTable,
 } from "@/lib/data-sources/csv-table";
@@ -48,6 +49,12 @@ describe("parseCsvRows", () => {
     }
 
     throw new Error("Era esperado CsvParseError");
+  });
+});
+
+describe("parseCsvHeader", () => {
+  it("parseia somente o header e ignora linhas de dados irregulares", () => {
+    expect(parseCsvHeader("owner,amount\nana,10\nbob\n")).toEqual(["owner", "amount"]);
   });
 });
 

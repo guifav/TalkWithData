@@ -3,8 +3,13 @@ import { verifySuperAdmin } from "@/lib/api-auth";
 import {
   createDataSource,
   listDataSources,
+  type CreateDataSourceInput,
 } from "@/lib/data-sources/firestore";
 import { parseCreateDataSourceBody } from "@/app/api/admin/data-sources/validation";
+import {
+  credentialEncProof,
+  verifyDataSourceInspectionToken,
+} from "@/lib/data-sources/inspection-token";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +44,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
 
-    const dataSource = await createDataSource(parsed.value, auth.uid);
+    const verified = verifyDataSourceInspectionToken({
+      token: parsed.value.inspectionToken,
+      bucket: parsed.value.bucket,
+      prefix: parsed.value.prefix,
+      credentialRef: parsed.value.credentialRef,
+      credentialProof: credentialEncProof(parsed.value.credentialEnc ?? ""),
+      ownerColumn: parsed.value.ownerColumn,
+    });
+    if (!verified.ok) {
+      return NextResponse.json({ error: verified.error }, { status: 400 });
+    }
+
+    const input = omitInspectionToken(parsed.value);
+    const dataSource = await createDataSource(input, auth.uid);
     return NextResponse.json(dataSource);
   } catch (error) {
     console.error("Create data source failed:", error);
@@ -48,4 +66,12 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
+}
+
+function omitInspectionToken(
+  input: CreateDataSourceInput & { inspectionToken: string },
+): CreateDataSourceInput {
+  const { inspectionToken: _inspectionToken, ...dataSourceInput } = input;
+  void _inspectionToken;
+  return dataSourceInput;
 }

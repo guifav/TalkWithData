@@ -119,6 +119,23 @@ describe("loadSource", () => {
     expect(result.rows).toEqual([[10]]);
   });
 
+  it("aceita ownerColumn trimado quando o header CSV tem espaços externos", async () => {
+    const spacedHeaderCsv = Buffer.from(
+      [" owner_email ,amount", " ANA@Example.com ,10", "bob@example.com,20"].join("\n"),
+    );
+    const engine = await loadSource({
+      source: source({ id: "src-owner-header-spaces", ownerColumn: "owner_email" }),
+      csvBuffer: spacedHeaderCsv,
+      viewerScope: { ownerKeys: ["ana@example.com"] },
+      etag: "etag-owner-header-spaces",
+      configVersion: 1,
+    });
+
+    const result = await engine.run(`SELECT * FROM ${engine.viewName}`);
+    expect(result.columns).toEqual(["amount"]);
+    expect(result.rows).toEqual([[10]]);
+  });
+
   it("falha fechado quando ownerColumn está ausente", async () => {
     __engineCacheReset();
     const engine = await loadSource({

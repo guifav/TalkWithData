@@ -8,7 +8,7 @@ import { authFetch } from "@/lib/firebase/auth";
 import { AppShell } from "@/components/layout/app-shell";
 import { AdminSkeleton } from "@/components/skeletons/admin-skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Building2, Sparkles } from "lucide-react";
+import { Building2, Database, Shield, Sparkles } from "lucide-react";
 import { McpServersTab } from "@/components/admin/mcp-servers-tab";
 import { McpAccessTab } from "@/components/admin/mcp-access-tab";
 import type { Department } from "@/lib/types";
@@ -20,6 +20,7 @@ import { DashboardsTab } from "@/components/admin/dashboards-tab";
 import { UsersTab } from "@/components/admin/users-tab";
 import { AccessTab } from "@/components/admin/access-tab";
 import { StorageTab } from "@/components/admin/storage-tab";
+import { DataSourcesTab } from "@/components/admin/data-sources-tab";
 import { DepartmentsPanel } from "@/components/admin/categories-panel";
 import type {
   Overview,
@@ -227,6 +228,10 @@ export default function AdminPage() {
             <TabsTrigger value="storage">Storage</TabsTrigger>
             {isSuperAdmin && (
               <>
+                <TabsTrigger value="data-sources">
+                  <Database className="size-4 mr-1" />
+                  Data Sources
+                </TabsTrigger>
                 <TabsTrigger value="mcp">MCP Servers</TabsTrigger>
                 <TabsTrigger value="mcp-access">
                   <Shield className="size-4 mr-1" />
@@ -294,6 +299,17 @@ export default function AdminPage() {
           <TabsContent value="storage" className="space-y-6">
             <StorageTab storageData={storageData} />
           </TabsContent>
+
+          {/* ---- Data Sources (superadmin only) ---- */}
+          {isSuperAdmin && (
+            <TabsContent value="data-sources">
+              <DataSourcesTab
+                users={users}
+                departments={orgDepartments}
+                isSuperAdmin={isSuperAdmin}
+              />
+            </TabsContent>
+          )}
 
           {/* ---- MCP Servers (superadmin only) ---- */}
           {isSuperAdmin && (
