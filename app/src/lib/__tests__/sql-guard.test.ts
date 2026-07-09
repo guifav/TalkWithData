@@ -83,6 +83,13 @@ describe("guardSql", () => {
     `);
   });
 
+  it("rejeita join implicito por virgula com tabela interna", () => {
+    expectBlocked(
+      `SELECT * FROM ${allowedViewName}, auth_keys`,
+      "tabela não autorizada: auth_keys",
+    );
+  });
+
   it.each([
     ["UNION", `SELECT id FROM ${allowedViewName} UNION SELECT id FROM ${allowedViewName}`],
     [

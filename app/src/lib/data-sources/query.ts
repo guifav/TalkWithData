@@ -98,29 +98,34 @@ export async function queryDataset(
   });
 
   // Substitui a referencia de tabela `view` (convencao do prompt) pelo
-  // viewName interno determinístico ANTES de rodar. So troca em contexto de
-  // tabela (apos FROM/JOIN). Para nao corromper strings literais (ex.:
-  // 'from view') nem dollar-quoted strings DuckDB/Postgres (ex.:
-  // $$from view$$), protegemos literais em placeholders, aplicamos o replace
-  // e restauramos. O guardSql ainda valida a viewName real, entao nao ha
-  // vazamento mesmo em casos nao cobertos (join implicito por virgula).
-  const SQL_STRING_RE = /\$([A-Za-z_][A-Za-z0-9_]*)?\$[\s\S]*?\$\1\$|'([^']|'')*'|"([^"]|"")*"/g;
-  const protectedStrings: string[] = [];
+  // viewName interno determinístico ANTES de rodar. So troca na clausula FROM
+  // (inclui JOIN e join implicito por virgula). Para nao corromper strings,
+  // dollar-quoted strings nem comentarios, protegemos esses trechos em
+  // placeholders, aplicamos o replace e restauramos. O guardSql ainda valida a
+  // viewName real, entao nao ha vazamento mesmo em casos nao cobertos.
+  const SQL_PROTECTED_RE = /\$([A-Za-z_][A-Za-z0-9_]*)?\$[\s\S]*?\$\1\$|'([^']|'')*'|"([^"]|"")*"|--[^\n]*|\/\*[\s\S]*?\*\//g;
+  const protectedSegments: string[] = [];
   const sqlWithPlaceholders = args.sql.replace(
-    SQL_STRING_RE,
-    (m) => `\u0000${protectedStrings.push(m) - 1}\u0000`,
+    SQL_PROTECTED_RE,
+    (m) => `\u0000${protectedSegments.push(m) - 1}\u0000`,
   );
-  const guardedSql = sqlWithPlaceholders
-    .replace(/\b(?:from|join)\s+view\b/gi, (match) =>
-      match.replace(/\bview\b/i, engine.viewName),
-    )
-    .replace(/\u0000(\d+)\u0000/g, (_, i) => protectedStrings[Number(i)]);
+  const guardedSql = rewriteViewReferences(sqlWithPlaceholders, engine.viewName)
+    .replace(/\u0000(\d+)\u0000/g, (_, i) => protectedSegments[Number(i)]);
   const result = await engine.run(guardedSql);
   return {
     columns: result.columns,
     rows: result.rows,
     truncated: result.truncated,
   };
+}
+
+function rewriteViewReferences(sql: string, viewName: string): string {
+  const clauseBoundary = /\b(where|group\s+by|having|order\s+by|limit|offset|union|intersect|except)\b/gi;
+  return sql.replace(/\bfrom\b[\s\S]*?(?=\bwhere\b|\bgroup\s+by\b|\bhaving\b|\border\s+by\b|\blimit\b|\boffset\b|\bunion\b|\bintersect\b|\bexcept\b|$)/gi, (fromClause) => {
+    // Reset regex state for each clause because clauseBoundary is global.
+    clauseBoundary.lastIndex = 0;
+    return fromClause.replace(/\bview\b/gi, viewName);
+  });
 }
 
 /**

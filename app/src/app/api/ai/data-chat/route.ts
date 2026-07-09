@@ -73,6 +73,7 @@ function buildToolsFromServers(
   const toolToEndpoint: Record<string, string> = {};
   const toolToServerId: Record<string, string> = {};
   const seenTools = new Set<string>();
+  const reservedToolNames = new Set([SAVE_TOOL.name, QUERY_DATASET_TOOL.name]);
 
   const sorted = [...servers].sort(
     (a, b) => (a.toolCount || 0) - (b.toolCount || 0)
@@ -80,7 +81,7 @@ function buildToolsFromServers(
 
   for (const server of sorted) {
     for (const tool of server.tools || []) {
-      if (seenTools.has(tool.name)) continue;
+      if (reservedToolNames.has(tool.name) || seenTools.has(tool.name)) continue;
       seenTools.add(tool.name);
 
       tools.push({

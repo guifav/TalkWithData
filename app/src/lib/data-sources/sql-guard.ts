@@ -433,36 +433,51 @@ function validateFallbackTableRefs(
     const relationStart = nextRelationTokenIndex(tokens, index + 1);
     if (relationStart === null) return "tabela ausente apos FROM/JOIN";
 
-    const first = tokens[relationStart];
-    if (!first || first.value === "(") continue;
+    let relationIndex: number | null = relationStart;
+    while (relationIndex !== null) {
+      const first = tokens[relationIndex];
+      if (!first || first.value === "(") break;
 
-    const parsed = readFallbackRelation(tokens, relationStart);
-    if (!parsed) continue;
+      const parsed = readFallbackRelation(tokens, relationIndex);
+      if (!parsed) break;
 
-    const blockedFunction = parsed.isFunctionScan
-      ? blockedFunctionName(parsed.relationName)
-      : null;
-    if (blockedFunction) {
-      return `função bloqueada: ${blockedFunction}`;
+      const reason = validateFallbackRelation(parsed, ctes, allowedViewName);
+      if (reason) return reason;
+
+      const commaIndex = parsed.endIndex;
+      if (tokens[commaIndex]?.value !== ",") break;
+      relationIndex = nextRelationTokenIndex(tokens, commaIndex + 1);
+      if (relationIndex === null) return "tabela ausente apos virgula";
     }
+  }
 
-    const catalogReason = catalogReasonFor(parsed.schemaName, parsed.relationName);
-    if (catalogReason) return catalogReason;
+  return null;
+}
 
-    const cteAllowed = !parsed.schemaName && ctes.has(parsed.relationName);
-    if (
-      !cteAllowed &&
-      !isAllowedRelation(
-        parsed.schemaName,
-        parsed.relationName,
-        allowedViewName,
-      )
-    ) {
-      return `tabela não autorizada: ${formatRelationName(
-        parsed.schemaName,
-        parsed.relationName,
-      )}`;
-    }
+function validateFallbackRelation(
+  parsed: FallbackRelation,
+  ctes: Set<string>,
+  allowedViewName: string,
+): string | null {
+  const blockedFunction = parsed.isFunctionScan
+    ? blockedFunctionName(parsed.relationName)
+    : null;
+  if (blockedFunction) {
+    return `função bloqueada: ${blockedFunction}`;
+  }
+
+  const catalogReason = catalogReasonFor(parsed.schemaName, parsed.relationName);
+  if (catalogReason) return catalogReason;
+
+  const cteAllowed = !parsed.schemaName && ctes.has(parsed.relationName);
+  if (
+    !cteAllowed &&
+    !isAllowedRelation(parsed.schemaName, parsed.relationName, allowedViewName)
+  ) {
+    return `tabela não autorizada: ${formatRelationName(
+      parsed.schemaName,
+      parsed.relationName,
+    )}`;
   }
 
   return null;
@@ -486,6 +501,7 @@ interface FallbackRelation {
   schemaName?: string;
   relationName: string;
   isFunctionScan: boolean;
+  endIndex: number;
 }
 
 function readFallbackRelation(
@@ -502,12 +518,14 @@ function readFallbackRelation(
       schemaName: first.value,
       relationName: third.value,
       isFunctionScan: tokens[startIndex + 3]?.value === "(",
+      endIndex: tokens[startIndex + 3]?.value === "(" ? startIndex + 4 : startIndex + 3,
     };
   }
 
   return {
     relationName: first.value,
     isFunctionScan: second?.value === "(",
+    endIndex: second?.value === "(" ? startIndex + 2 : startIndex + 1,
   };
 }
 

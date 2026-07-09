@@ -132,6 +132,24 @@ describe("loadSource", () => {
     await expect(countRows(engine.viewName, engine.run)).rejects.toThrow(/ownerColumn valida/);
   });
 
+  it("falha fechado quando header equivalente normaliza para ownerColumn", async () => {
+    __engineCacheReset();
+    const leakyCsv = Buffer.from(
+      ["owner_email,Owner Email,amount", "ana@example.com,ana@example.com,10"].join("\n"),
+    );
+    const engine = await loadSource({
+      source: source({ id: "src-normalized-owner-duplicate" }),
+      csvBuffer: leakyCsv,
+      viewerScope: { ownerKeys: ["ana@example.com"] },
+      etag: "etag-normalized-owner-duplicate",
+      configVersion: 1,
+    });
+
+    await expect(engine.run(`SELECT * FROM ${engine.viewName}`)).rejects.toThrow(
+      /multiplas colunas de escopo/i,
+    );
+  });
+
   it("retorna zero linhas quando ownerKeys está vazio", async () => {
     const engine = await loadSource({
       source: source({ id: "src-empty-owner-keys" }),

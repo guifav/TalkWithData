@@ -271,22 +271,27 @@ async function createFilteredView(
       : `${ownerExpr} IN (SELECT k FROM auth_keys)`;
 
   // A coluna de escopo (ownerColumn) NUNCA e exposta pela view filtrada.
-  // CSVs podem ter headers duplicados (ex.: "owner,owner,amount"); o
-  // csv-table gera safeNames "owner", "owner_2", ... mas o rawName continua
-  // "owner". Filtramos por rawName para excluir TODAS as colunas de escopo,
-  // nao so a primeira, fechando o vazamento via coluna duplicada.
+  // CSVs podem ter headers duplicados ou equivalentes apos normalizacao
+  // (ex.: "owner,Owner,amount" ou "owner-email,owner_email,amount"). O
+  // csv-table cria safeNames unicos com sufixo, mas os dois headers ainda
+  // representam a mesma identidade de escopo. Falhamos fechado se qualquer
+  // outra coluna normalizar para a mesma identidade da ownerColumn.
   const ownerRaw = source.ownerColumn;
-  const ownerColumns = columns.filter((column) => column.rawName === ownerRaw);
+  const ownerIdentity = normalizedCsvHeaderIdentity(ownerRaw);
+  const ownerColumns = columns.filter(
+    (column) => normalizedCsvHeaderIdentity(column.rawName) === ownerIdentity,
+  );
   if (ownerColumns.length > 1) {
-    // CSV malformado: mais de uma coluna de escopo com o mesmo nome. Falha
-    // fechado em vez de expor a duplicata na view.
     throw new DataSourceUnavailableError(
       `DataSource ${source.id} possui multiplas colunas de escopo "${ownerRaw}"`,
     );
   }
   const projectedColumnList = ownerColSafe
     ? columns
-        .filter((column) => column.rawName !== ownerRaw)
+        .filter(
+          (column) =>
+            normalizedCsvHeaderIdentity(column.rawName) !== ownerIdentity,
+        )
         .map((column) => quoteIdentifier(column.safeName))
     : [];
 
@@ -449,6 +454,10 @@ function duckType(type: InferredColumnType): string {
   if (type === "date") return "DATE";
   if (type === "timestamp") return "TIMESTAMP";
   return "VARCHAR";
+}
+
+function normalizedCsvHeaderIdentity(rawName: string | undefined): string {
+  return (rawName ?? "").toLowerCase().replace(/[^a-z0-9_]/g, "_");
 }
 
 function quoteIdentifier(name: string): string {

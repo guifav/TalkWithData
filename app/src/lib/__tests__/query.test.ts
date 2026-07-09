@@ -241,6 +241,25 @@ describe("queryDataset (P1.7)", () => {
     expect(result.rows).toEqual([[42]]);
   });
 
+  it("reescreve join implicito por virgula sem tocar coluna view", async () => {
+    const viewColCsv = Buffer.from("owner,view,amount\nana,42,10\n");
+    const result = await queryDataset(
+      {
+        uid: "u1",
+        dataSourceId: "ds1",
+        sql: "SELECT a.view FROM view a, view b WHERE a.amount = b.amount",
+      },
+      {
+        readCsv: async () => ({
+          csvBuffer: viewColCsv,
+          etag: "etag-implicit-join",
+        }),
+      },
+    );
+    expect(result.columns).toEqual(["view"]);
+    expect(result.rows).toEqual([[42]]);
+  });
+
   it("nao corrompe dollar-quoted literal contendo 'from view' no rewrite", async () => {
     const viewColCsv = Buffer.from("owner,view,nota\nana,42,from view aqui\n");
     const result = await queryDataset(

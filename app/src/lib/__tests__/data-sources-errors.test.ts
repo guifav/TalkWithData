@@ -29,4 +29,10 @@ describe("data source public error mapping", () => {
       expect(publicErrorMessage(err)).toBe("Data source temporarily unavailable.");
     },
   );
+
+  it("mapeia timeout para 504 com mensagem publica de timeout", () => {
+    const err = new DuckDbSandboxError("query timeout after 5000ms");
+    expect(publicErrorStatus(err)).toBe(504);
+    expect(publicErrorMessage(err)).toBe("Query timed out. Please try again.");
+  });
 });

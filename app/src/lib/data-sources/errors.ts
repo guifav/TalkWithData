@@ -57,6 +57,7 @@ export function publicErrorMessage(err: unknown): string {
   if (err instanceof QueryDatasetInvalidInputError)
     return "Invalid query input.";
   if (err instanceof DuckDbSandboxError) {
+    if (/timeout/i.test(err.message || "")) return "Query timed out. Please try again.";
     return isDuckDbSourceUnavailable(err)
       ? "Data source temporarily unavailable."
       : "Invalid query.";
