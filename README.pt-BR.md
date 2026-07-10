@@ -111,6 +111,13 @@ Consulte [DEPLOYMENT.md](docs/DEPLOYMENT.md) para Docker, Google Cloud Run, Fire
 
 Leia [CONTRIBUTING.md](CONTRIBUTING.md) antes de abrir issues ou pull requests.
 
+Documentos de politica do projeto:
+
+- [GOVERNANCE.md](GOVERNANCE.md), mantenedor, decisoes, triagem, depreciacao, breaking changes e gate E4.
+- [SUPPORT.md](SUPPORT.md), canais publicos de suporte e pedidos fora de escopo.
+- [ROADMAP.md](ROADMAP.md), trabalho comprometido para readiness de release e ideias sem compromisso.
+- [SECURITY.md](SECURITY.md), reporte privado de vulnerabilidades e politica de suporte de seguranca.
+
 ## Licenca
 
 Talk With Data usa a [licenca MIT](LICENSE).

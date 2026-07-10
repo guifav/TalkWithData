@@ -132,6 +132,13 @@ Firestore security rules and indexes are deployed separately with the Firebase C
 
 Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening an issue or pull request.
 
+Project policy documents:
+
+- [GOVERNANCE.md](GOVERNANCE.md), maintainer ownership, decision making, issue triage, deprecation, breaking changes, and the E4 gate.
+- [SUPPORT.md](SUPPORT.md), public support channels and unsupported requests.
+- [ROADMAP.md](ROADMAP.md), committed release-readiness work and ideas that are not yet commitments.
+- [SECURITY.md](SECURITY.md), private vulnerability reporting and security support policy.
+
 ## License
 
 Talk With Data is licensed under the [MIT License](LICENSE).

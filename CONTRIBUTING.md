@@ -122,6 +122,23 @@ PR checklist:
 - No `.env`, service account, or private key files are committed.
 - No emojis or long dash characters were added.
 
+### E4 merge gate
+
+Changes that affect runtime behavior, security posture, deployment,
+governance, release readiness, user data, credentials, authentication, or stored
+dashboard content must pass the E4 gate before merge:
+
+1. Evidence: link the issue or explain why no issue is needed.
+2. Execution: keep the diff focused and follow repository conventions.
+3. Verification: run the relevant local checks and wait for GitHub CI.
+4. Review: complete the requested reviewer path. High-risk changes can require
+   multiple independent reviews or model-assisted review.
+5. Merge authorization: wait for maintainer approval. Security, release, and
+   policy changes always require explicit maintainer authorization.
+
+Small typo-only documentation fixes can use a lighter path, but maintainers can
+require the full gate for any change.
+
 ## Running tests
 
 From `app`:
@@ -203,3 +220,14 @@ When suggesting a feature, include:
 Be respectful, constructive, and direct. Assume good intent, but prioritize user safety and project quality. Do not harass, insult, threaten, or exclude contributors. Keep discussions focused on the work and document decisions in issues or pull requests.
 
 Maintainers may close issues, moderate comments, or block participation when behavior harms the project or its contributors.
+
+## Governance and support
+
+Read [GOVERNANCE.md](GOVERNANCE.md) for maintainer ownership, decision making,
+issue triage, deprecation, breaking-change policy, and the E4 gate.
+
+Read [SUPPORT.md](SUPPORT.md) for supported public support channels and
+unsupported requests.
+
+Read [ROADMAP.md](ROADMAP.md) for committed release-readiness work and ideas
+that are not yet commitments.
