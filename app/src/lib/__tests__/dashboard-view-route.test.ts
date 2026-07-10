@@ -147,6 +147,7 @@ describe("GET /api/dashboards/[id]/view security headers", () => {
       "sandbox allow-scripts"
     );
     expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(response.headers.get("Referrer-Policy")).toBe("no-referrer");
   });
 
   it("keeps security headers on raw=1 responses", async () => {
@@ -194,6 +195,7 @@ describe("GET /api/dashboards/[id]/versions/[versionId]/view security headers", 
       "sandbox allow-scripts"
     );
     expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(response.headers.get("Referrer-Policy")).toBe("no-referrer");
   });
 });
 
@@ -215,6 +217,7 @@ describe("GET /api/dashboards/[id]/view/[...path] security headers", () => {
       "sandbox allow-scripts"
     );
     expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(response.headers.get("Referrer-Policy")).toBe("no-referrer");
   });
 
   it("serves non-HTML assets with nosniff and without CSP sandbox", async () => {
