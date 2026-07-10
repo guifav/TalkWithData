@@ -132,11 +132,14 @@ export async function GET(
       ? "text/html; charset=utf-8"
       : asset.contentType;
 
-    // Assets authenticate via cookie/embed token, so they are private, not
-    // public: "public" would let a shared cache reuse an authenticated
-    // response across viewers. Immutable per-upload, so the browser may still
-    // cache. HTML pages get no-cache like the main view.
-    const cacheControl = isHtml
+    // Active documents (HTML, SVG, XML) must not be cached immutable: a
+    // replace/restore reuses the same URL, and a stale executable copy could
+    // survive with old (or absent) security headers. They get no-store like the
+    // main view. Only inert assets (CSS, JS, images, fonts) are cached, and
+    // private, not public, so a shared cache never reuses an authenticated
+    // response across viewers.
+    const isActiveDoc = isHtml || isActiveDocumentContentType(contentType);
+    const cacheControl = isActiveDoc
       ? "private, no-store, no-cache, max-age=0, must-revalidate"
       : "private, max-age=86400, immutable";
 
@@ -169,7 +172,7 @@ export async function GET(
 
     // SVG and XML render as active documents on direct navigation, so they
     // need the same sandbox as HTML; inert assets get nosniff only.
-    const assetSecurityHeaders = isActiveDocumentContentType(contentType)
+    const assetSecurityHeaders = isActiveDoc
       ? DASHBOARD_HTML_SECURITY_HEADERS
       : DASHBOARD_ASSET_SECURITY_HEADERS;
 

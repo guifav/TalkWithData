@@ -255,5 +255,28 @@ describe("GET /api/dashboards/[id]/view/[...path] security headers", () => {
       "sandbox allow-scripts"
     );
     expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    // Active documents must not be cached immutable: a replace could otherwise
+    // serve a stale executable copy from the same URL.
+    expect(response.headers.get("Cache-Control")).toContain("no-store");
+  });
+
+  // Tipos +xml genericos tambem renderizam como documento ativo, entao o
+  // classificador nao pode se limitar a SVG.
+  it("sandboxes a generic +xml asset served as an active document", async () => {
+    mockGetDashboardAsset.mockResolvedValue({
+      buffer: Buffer.from('<x xmlns="urn:x"/>'),
+      contentType: "application/xhtml+xml",
+    });
+
+    const response = await getAsset(
+      assetRequest("pages/page.xhtml"),
+      assetParams("pages/page.xhtml")
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Security-Policy")).toBe(
+      "sandbox allow-scripts"
+    );
+    expect(response.headers.get("Cache-Control")).toContain("no-store");
   });
 });

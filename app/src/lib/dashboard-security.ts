@@ -41,14 +41,18 @@ export const DASHBOARD_ASSET_SECURITY_HEADERS = {
  * navegacao e script) quando abertos como top-level, e portanto precisam do
  * sandbox mesmo servidos como asset. O nosniff ja bloqueia o sniffing de
  * imagem raster para HTML, entao o residuo real e SVG e as familias XML/XHTML.
+ *
+ * O sufixo `+xml` (RFC 6839) cobre tipos estruturados registrados alem de SVG
+ * (application/xhtml+xml, etc.). Marcar um `+xml` inerte como ativo e inofensivo
+ * (o header CSP so importa em navegacao top-level; fetch/subrecurso ignora), mas
+ * deixar um ativo de fora abriria a mesma brecha do SVG.
  */
 export function isActiveDocumentContentType(contentType: string): boolean {
   const type = contentType.split(";")[0].trim().toLowerCase();
   return (
     type === "text/html" ||
-    type === "image/svg+xml" ||
-    type === "application/xhtml+xml" ||
     type === "application/xml" ||
-    type === "text/xml"
+    type === "text/xml" ||
+    type.endsWith("+xml")
   );
 }
