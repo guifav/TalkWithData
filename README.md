@@ -10,13 +10,9 @@
 
 [Leia em portugues](README.pt-BR.md)
 
-Open-source dashboard hub with AI. Upload, organize, search, chat, and embed dashboards.
+Open-source dashboard hub with AI. Upload, organize, search, chat, and embed dashboards, and talk with your own data through governed, row-scoped data sources.
 
-Talk With Data helps teams publish dashboard HTML packages, search across content, explore data with AI, connect MCP tools, and share dashboards through authenticated or embedded views.
-
-## Screenshots
-
-Screenshots will be added after the public UI assets are finalized. The app uses the shadcn/ui Neutral theme, black, white, gray, and the Inter font.
+Talk With Data helps teams publish dashboard HTML packages, search across content, explore data with AI, connect MCP tools, and share dashboards through authenticated or embedded views. Superadmins can also connect CSV buckets as governed data sources, so users ask questions in natural language and every answer stays scoped to the rows they are allowed to see.
 
 ## Prerequisites
 
@@ -43,6 +39,8 @@ The copied `.env` file contains placeholders. Configure Firebase, storage, and a
 
 ## Features
 
+- Governed data sources: superadmins connect Google Cloud Storage buckets of CSV files as organization data sources, with per-source encrypted credentials, owner-column mapping, and user or department grants.
+- Chat with your data: natural-language questions become read-only SQL executed in a per-request in-memory DuckDB sandbox against viewer-filtered views, so each user only sees the rows they are allowed to see.
 - Dashboard upload for single HTML files and packaged multi-file dashboards.
 - AI chat for dashboard creation, editing, explanations, and data exploration.
 - Search and navigation across dashboards, categories, owners, departments, and shared folders.
@@ -50,7 +48,7 @@ The copied `.env` file contains placeholders. Configure Firebase, storage, and a
 - MCP integration for controlled calls to external data tools and live data refresh.
 - Embed tokens for external sharing without exposing the full app session.
 - Multi-model AI configuration foundation with per-user model selection.
-- Admin panel for users, roles, categories, departments, prompts, MCP access, storage, and usage metrics.
+- Admin panel for users, roles, categories, departments, prompts, MCP access, data sources, storage, and usage metrics.
 
 ## Tech stack
 
@@ -58,6 +56,7 @@ The copied `.env` file contains placeholders. Configure Firebase, storage, and a
 - React 19.
 - Firebase Authentication, Firestore, and Firebase Storage on Google Cloud Storage.
 - Prisma for dashboard-specific structured databases.
+- DuckDB in-process engine for data-source queries.
 - shadcn/ui with the Neutral theme.
 - Tailwind CSS 4.
 - TypeScript in strict mode.
@@ -82,6 +81,8 @@ Copy `.env.example` to `.env`, then replace placeholders with project values.
 | `STORAGE_BUCKET_NAME` | Yes | Bucket used to store dashboard HTML packages and assets. |
 | `DATABASE_URL` | Yes | PostgreSQL connection string used by Prisma. PostgreSQL is required, including for local development. |
 | `DASHBOARD_SESSION_SECRET` | Yes | Secret used to sign dashboard and embed session tokens. |
+| `TWD_CREDENTIAL_ENC_KEY` | Data sources | 32-byte base64 key that encrypts external data-source credentials at rest. Required in production when a data source stores a service-account credential. |
+| `TWD_INSPECTION_TOKEN_SECRET` | Optional | Dedicated secret for signed admin data-source inspection tokens. Falls back to `DASHBOARD_SESSION_SECRET`. |
 | `APP_URL` | Recommended | Public base URL used for links and token generation. |
 | `ANTHROPIC_API_KEY` | AI features | API key for Anthropic models. |
 | `OPENAI_API_KEY` | Optional | Reserved for OpenAI provider support. |

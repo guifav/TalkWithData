@@ -6,9 +6,9 @@
 
 [Read in English](README.md)
 
-Hub open-source de dashboards com IA. Envie, organize, pesquise, converse e incorpore dashboards.
+Hub open-source de dashboards com IA. Envie, organize, pesquise, converse e incorpore dashboards, e converse com seus proprios dados por meio de fontes de dados governadas com escopo por linha.
 
-Talk With Data ajuda equipes a publicar pacotes HTML de dashboards, pesquisar conteudo, explorar dados com IA, conectar ferramentas MCP e compartilhar visualizacoes com autenticacao ou tokens de embed.
+Talk With Data ajuda equipes a publicar pacotes HTML de dashboards, pesquisar conteudo, explorar dados com IA, conectar ferramentas MCP e compartilhar visualizacoes com autenticacao ou tokens de embed. Superadmins tambem podem conectar buckets de CSV como fontes de dados governadas, para perguntas em linguagem natural com respostas sempre restritas as linhas que cada pessoa pode ver.
 
 ## Pre-requisitos
 
@@ -35,6 +35,8 @@ O arquivo `.env` copiado tem placeholders. Configure Firebase, storage e pelo me
 
 ## Recursos
 
+- Fontes de dados governadas: superadmins conectam buckets de CSV no Google Cloud Storage com credenciais criptografadas por fonte, mapeamento de coluna de dono e acessos por usuario ou departamento.
+- Converse com seus dados: perguntas em linguagem natural viram SQL somente leitura executado em um sandbox DuckDB em memoria sobre views filtradas por visualizador, entao cada pessoa ve apenas as linhas permitidas.
 - Upload de dashboards em HTML unico ou pacotes com multiplos arquivos.
 - Chat com IA para criar, editar, explicar e explorar dados.
 - Busca por dashboards, categorias, donos, departamentos e pastas compartilhadas.
@@ -42,7 +44,7 @@ O arquivo `.env` copiado tem placeholders. Configure Firebase, storage e pelo me
 - Integracao MCP para chamadas controladas a ferramentas externas.
 - Tokens de embed para compartilhamento externo.
 - Base para configuracao multi-modelo por usuario.
-- Painel admin para usuarios, permissoes, categorias, departamentos, prompts, MCP e metricas.
+- Painel admin para usuarios, permissoes, categorias, departamentos, prompts, MCP, fontes de dados e metricas.
 
 ## Stack tecnica
 
@@ -50,6 +52,7 @@ O arquivo `.env` copiado tem placeholders. Configure Firebase, storage e pelo me
 - React 19.
 - Firebase Authentication, Firestore e Firebase Storage sobre Google Cloud Storage.
 - Prisma para bases estruturadas por dashboard.
+- DuckDB in-process para consultas de fontes de dados.
 - shadcn/ui com tema Neutral.
 - Tailwind CSS 4.
 - TypeScript em modo strict.
@@ -69,6 +72,7 @@ Variaveis principais:
 - `STORAGE_BUCKET_NAME`, bucket para HTML e assets dos dashboards.
 - `DATABASE_URL`, string de conexao PostgreSQL usada pelo Prisma. PostgreSQL e obrigatorio, inclusive para desenvolvimento local.
 - `DASHBOARD_SESSION_SECRET`, segredo para tokens de sessao e embed.
+- `TWD_CREDENTIAL_ENC_KEY`, chave base64 de 32 bytes que criptografa credenciais de fontes de dados. Obrigatoria em producao quando uma fonte armazena credencial de service account.
 - `APP_URL`, URL publica da aplicacao.
 - `ANTHROPIC_API_KEY`, chave para recursos de IA com Anthropic.
 - `MCP_ALLOWED_HOSTS`, `MCP_API_KEY` e `MCP_URL`, configuracao opcional de MCP.
