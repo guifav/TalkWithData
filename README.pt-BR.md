@@ -6,7 +6,7 @@
 
 [Read in English](README.md)
 
-Hub open-source de dashboards com IA. Envie, organize, pesquise, converse e incorpore dashboards, e converse com seus proprios dados por meio de fontes de dados governadas com escopo por linha.
+Hub open-source de dashboards com IA. Envie, organize, pesquise e incorpore dashboards, e converse com seus proprios dados por meio de fontes de dados governadas com escopo por linha.
 
 Talk With Data ajuda equipes a publicar pacotes HTML de dashboards, pesquisar conteudo, explorar dados com IA, conectar ferramentas MCP e compartilhar visualizacoes com autenticacao ou tokens de embed. Superadmins tambem podem conectar buckets de CSV como fontes de dados governadas, para perguntas em linguagem natural com respostas sempre restritas as linhas que cada pessoa pode ver.
 
@@ -74,6 +74,7 @@ Variaveis principais:
 - `DASHBOARD_SESSION_SECRET`, segredo para tokens de sessao e embed.
 - `TWD_CREDENTIAL_ENC_KEY`, chave base64 de 32 bytes que criptografa credenciais de fontes de dados. Obrigatoria em producao quando uma fonte armazena credencial de service account.
 - `TWD_INSPECTION_TOKEN_SECRET`, segredo opcional dedicado aos tokens de inspecao de fontes de dados no admin. Sem ele, `DASHBOARD_SESSION_SECRET` e usado.
+- `TWD_ORG_ID`, id de organizacao aplicado as fontes de dados criadas pelo admin. `TWD_QUERY_TIMEOUT_MS`, `TWD_MAX_ROWS` e `TWD_ENGINE_LRU_BYTES` ajustam os limites de consulta (com defaults sensatos).
 - `APP_URL`, URL publica da aplicacao.
 - `ANTHROPIC_API_KEY`, chave para recursos de IA com Anthropic.
 - `MCP_ALLOWED_HOSTS`, `MCP_API_KEY` e `MCP_URL`, configuracao opcional de MCP.

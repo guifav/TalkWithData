@@ -10,7 +10,7 @@
 
 [Leia em portugues](README.pt-BR.md)
 
-Open-source dashboard hub with AI. Upload, organize, search, chat, and embed dashboards, and talk with your own data through governed, row-scoped data sources.
+Open-source dashboard hub with AI. Upload, organize, search, and embed dashboards, then talk with your own data through governed, row-scoped data sources.
 
 Talk With Data helps teams publish dashboard HTML packages, search across content, explore data with AI, connect MCP tools, and share dashboards through authenticated or embedded views. Superadmins can also connect CSV buckets as governed data sources, so users ask questions in natural language and every answer stays scoped to the rows they are allowed to see.
 
@@ -83,6 +83,8 @@ Copy `.env.example` to `.env`, then replace placeholders with project values.
 | `DASHBOARD_SESSION_SECRET` | Yes | Secret used to sign dashboard and embed session tokens. |
 | `TWD_CREDENTIAL_ENC_KEY` | Data sources | 32-byte base64 key that encrypts external data-source credentials at rest. Required in production when a data source stores a service-account credential. |
 | `TWD_INSPECTION_TOKEN_SECRET` | Optional | Dedicated secret for signed admin data-source inspection tokens. Falls back to `DASHBOARD_SESSION_SECRET`. |
+| `TWD_ORG_ID` | Optional | Organization id tagged onto data sources created through the admin UI. |
+| `TWD_QUERY_TIMEOUT_MS`, `TWD_MAX_ROWS`, `TWD_ENGINE_LRU_BYTES` | Optional | Data-source query guardrails (timeout, row cap, engine cache size). Sensible defaults apply if unset. |
 | `APP_URL` | Recommended | Public base URL used for links and token generation. |
 | `ANTHROPIC_API_KEY` | AI features | API key for Anthropic models. |
 | `OPENAI_API_KEY` | Optional | Reserved for OpenAI provider support. |
