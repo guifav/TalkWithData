@@ -9,6 +9,7 @@ const mockVerifyEmbedToken = vi.fn();
 const mockGetHtmlFile = vi.fn();
 const mockGetDashboardAsset = vi.fn();
 const mockDashboardGet = vi.fn();
+const mockVersionGet = vi.fn();
 
 function snapshot(exists: boolean, data: Record<string, unknown> = {}) {
   return {
@@ -58,6 +59,7 @@ vi.mock("@/lib/firebase/admin", () => ({
           add: vi.fn().mockResolvedValue(undefined),
           doc: () => ({
             set: vi.fn().mockResolvedValue(undefined),
+            get: mockVersionGet,
           }),
         }),
       }),
@@ -78,6 +80,9 @@ vi.mock("firebase-admin/firestore", () => ({
 const { GET: getView } = await import("@/app/api/dashboards/[id]/view/route");
 const { GET: getAsset } = await import(
   "@/app/api/dashboards/[id]/view/[...path]/route"
+);
+const { GET: getVersion } = await import(
+  "@/app/api/dashboards/[id]/versions/[versionId]/view/route"
 );
 
 function viewRequest(query = ""): NextRequest {
@@ -122,6 +127,11 @@ beforeEach(() => {
     Buffer.from("<html><head></head><body>ok</body></html>")
   );
   mockGetDashboardAsset.mockResolvedValue(null);
+  mockVersionGet.mockResolvedValue(
+    snapshot(true, {
+      storagePath: "dashboards/owner-uid/dash-id/versions/v1.html",
+    })
+  );
 });
 
 // HTML enviado por usuario e executavel; o CSP sandbox (sem allow-same-origin)
@@ -143,6 +153,43 @@ describe("GET /api/dashboards/[id]/view security headers", () => {
     const response = await getView(viewRequest("?raw=1"), viewParams);
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Security-Policy")).toBe(
+      "sandbox allow-scripts"
+    );
+    expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
+  });
+
+  it("keeps security headers on embed token access", async () => {
+    mockVerifyRequest.mockResolvedValue(null);
+    mockVerifyEmbedToken.mockResolvedValue(true);
+
+    const response = await getView(
+      new NextRequest(
+        "http://localhost/api/dashboards/dash-id/view?embed_token=tok"
+      ),
+      viewParams
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Security-Policy")).toBe(
+      "sandbox allow-scripts"
+    );
+    expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
+  });
+});
+
+describe("GET /api/dashboards/[id]/versions/[versionId]/view security headers", () => {
+  it("serves version HTML with CSP sandbox and nosniff headers", async () => {
+    const response = await getVersion(
+      new NextRequest(
+        "http://localhost/api/dashboards/dash-id/versions/v1/view",
+        { headers: { Authorization: "Bearer token" } }
+      ),
+      { params: Promise.resolve({ id: "dash-id", versionId: "v1" }) }
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toContain("text/html");
     expect(response.headers.get("Content-Security-Policy")).toBe(
       "sandbox allow-scripts"
     );
