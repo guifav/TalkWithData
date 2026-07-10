@@ -13,9 +13,6 @@ const MAX_HTML_SIZE = 10 * 1024 * 1024; // 10MB for single HTML
 const MAX_ZIP_SIZE = 50 * 1024 * 1024; // 50MB for ZIP packages
 
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const cookieToken = request.cookies.get("twd_auth")?.value;
-
   const auth = await verifyRequest(request);
   if (!auth) {
     console.log("[Upload] verifyRequest returned null — token invalid or missing");

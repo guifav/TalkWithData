@@ -7,14 +7,12 @@
  */
 
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@/generated/prisma/client";
 import {
   sanitizeIdentifier,
   sanitizeColumnName,
   physicalTableName,
   tableMatchesPrefix,
   COLUMN_TYPE_MAP,
-  type SUPPORTED_COLUMN_TYPES,
 } from "./naming";
 import type { TableColumnDef } from "./registry";
 

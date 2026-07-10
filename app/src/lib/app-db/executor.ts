@@ -37,7 +37,7 @@ import {
   updateRows,
   deleteRows,
 } from "./schema-manager";
-import { physicalTableName, sanitizeIdentifier } from "./naming";
+import { sanitizeIdentifier } from "./naming";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -110,8 +110,6 @@ async function handleEnsure(ctx: DbContext): Promise<ToolResult> {
   await ensureUserSchema(instance.userSchema);
 
   // List existing tables
-  const tables = await listTablesInSchema(instance.userSchema, instance.tablePrefix);
-
   // Get registered table metadata
   const instanceWithTables = await getInstanceWithTables(ctx.dashboardId);
   const registeredTables = (instanceWithTables?.tables ?? []).map((t: AppDbTableRow) => ({

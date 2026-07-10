@@ -73,7 +73,7 @@ function ChatPageInner() {
       }
       mcpIdsInitialisedRef.current = true;
     }
-  }, [mcpLoading, mcpServers, searchParams]);
+  }, [mcpLoading, mcpServers, searchParams, setSelectedMcpIds]);
 
   // Auth gate
   useEffect(() => {
@@ -123,7 +123,7 @@ function ChatPageInner() {
     usedToolsRef.current = [];
     setSelectedMcpIds(mcpServers.map((s) => s.id));
     pendingMcpIdsRef.current = null;
-  }, [setActiveSessionId, mcpServers]);
+  }, [setActiveSessionId, setSelectedMcpIds, mcpServers]);
 
   // Load session messages — guard against stale responses from rapid switching
   const sessionLoadRef = useRef(0);
@@ -185,7 +185,7 @@ function ChatPageInner() {
         }
       }
     },
-    [activeSessionId, messages, setActiveSessionId, mcpServers]
+    [activeSessionId, messages, setActiveSessionId, setSelectedMcpIds, mcpServers]
   );
 
   // Delete session
@@ -223,7 +223,7 @@ function ChatPageInner() {
         toast.error("Failed to delete conversation");
       }
     },
-    [activeSessionId, mcpServers]
+    [activeSessionId, setActiveSessionId, setSelectedMcpIds, mcpServers]
   );
 
   // Save messages to session (auto-save)
@@ -291,7 +291,7 @@ function ChatPageInner() {
       setSelectedMcpIds(ids);
       persistMcpSelection(ids, activeSessionIdRef.current);
     },
-    [persistMcpSelection]
+    [persistMcpSelection, setSelectedMcpIds]
   );
 
   // Send message
@@ -386,8 +386,6 @@ function ChatPageInner() {
         const decoder = new TextDecoder();
         let buffer = "";
         let fullText = "";
-        let htmlContent: string | null = null;
-
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -408,7 +406,6 @@ function ChatPageInner() {
                 fullText += event.content;
                 setStreamingText(fullText);
               } else if (event.type === "html") {
-                htmlContent = event.content;
                 setCurrentHtml(event.content);
               } else if (event.type === "tool_use") {
                 const tc = { name: event.name, status: event.status };
@@ -479,7 +476,16 @@ function ChatPageInner() {
         abortRef.current = null;
       }
     },
-    [messages, isGenerating, activeSessionId, mcpServers, saveToSession, persistMcpSelection]
+    [
+      messages,
+      isGenerating,
+      isLoadingSession,
+      activeSessionId,
+      setActiveSessionId,
+      mcpServers,
+      saveToSession,
+      persistMcpSelection,
+    ]
   );
 
   // Stop generation

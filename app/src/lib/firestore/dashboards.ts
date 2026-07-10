@@ -23,7 +23,6 @@ import type { Dashboard } from "@/lib/types";
  * This helper re-subscribes with exponential backoff (1s, 2s, 4s, max 30s).
  * Returns an unsubscribe function that also cancels pending retries.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function resilientSnapshot(
   q: Query<DocumentData, DocumentData>,
   onNext: (docs: Array<{ id: string } & DocumentData>) => void,

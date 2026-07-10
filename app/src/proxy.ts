@@ -3,7 +3,7 @@ import { getAllowedAuthDomain } from "@/lib/auth-domain";
 
 const PUBLIC_PATHS = ["/login", "/api/auth", "/api/health"];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   getAllowedAuthDomain();

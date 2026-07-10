@@ -106,8 +106,6 @@ export default function UploadPage() {
         throw new Error(data.error || "Upload failed");
       }
 
-      const data = await res.json();
-
       // Thumbnail generation disabled — client-side foreignObject approach
       // is unreliable for HTML with external CSS/fonts. Puppeteer Cloud
       // Function will replace this (see issue #55).

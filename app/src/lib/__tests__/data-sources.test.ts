@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  DataSourceAlreadyRegisteredError,
   DataSourceKind,
-  DataSourceNotFoundError,
   DataSourceRegistry,
   type DataSource,
 } from "@/lib/data-sources";

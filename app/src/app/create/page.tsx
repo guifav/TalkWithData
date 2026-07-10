@@ -26,9 +26,6 @@ import {
   ArrowLeft,
   Wrench,
   Database,
-  ChevronDown,
-  ToggleRight,
-  ToggleLeft,
   Paperclip,
   X,
   FileSpreadsheet,
@@ -114,7 +111,7 @@ function CreatePageInner() {
     if (!mcpLoading && mcpServers.length > 0 && selectedMcpIds.length === 0 && !editId) {
       setSelectedMcpIds(mcpServers.map((s) => s.id));
     }
-  }, [mcpLoading, mcpServers, editId]);
+  }, [mcpLoading, mcpServers, selectedMcpIds.length, editId]);
 
   // Auth gate
   useEffect(() => {
@@ -246,7 +243,7 @@ function CreatePageInner() {
 
     loadDashboard();
     return () => { cancelled = true; };
-  }, [editId, isAuthenticated, authLoading, mcpLoading, router]);
+  }, [editId, isAuthenticated, authLoading, mcpLoading, router, mcpServers]);
 
   // File attachment handler (server-side parsing)
   const handleFileAttach = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -468,24 +465,18 @@ function CreatePageInner() {
         inputRef.current?.focus();
       }
     },
-    [input, isGenerating, dbProvisioning, messages, mcpServers, selectedMcpIds, draftDashboardId, attachedFiles]
+    [
+      input,
+      isGenerating,
+      dbProvisioning,
+      messages,
+      mcpServers,
+      selectedMcpIds,
+      currentHtml,
+      draftDashboardId,
+      attachedFiles,
+    ]
   );
-
-  const handleSaveClick = useCallback(() => {
-    if (!currentHtml) return;
-    if (isEditMode) {
-      // Edit mode: save directly with existing metadata
-      handleSaveWithData({
-        title: editTitle || "Untitled",
-        description: editDescription || "",
-        category: "Other",
-        visibility: "team",
-        allowedEmails: [],
-      });
-    } else {
-      setSaveDialogOpen(true);
-    }
-  }, [currentHtml, isEditMode, editTitle, editDescription]);
 
   const handleSaveWithData = useCallback(async (data: SaveDashboardData) => {
     if (!currentHtml) return;
@@ -536,7 +527,32 @@ function CreatePageInner() {
     } finally {
       setIsSaving(false);
     }
-  }, [currentHtml, messages, router, isEditMode, editId, draftDashboardId]);
+  }, [
+    currentHtml,
+    messages,
+    router,
+    isEditMode,
+    editId,
+    draftDashboardId,
+    usedTools,
+    attachedFiles,
+  ]);
+
+  const handleSaveClick = useCallback(() => {
+    if (!currentHtml) return;
+    if (isEditMode) {
+      // Edit mode: save directly with existing metadata
+      handleSaveWithData({
+        title: editTitle || "Untitled",
+        description: editDescription || "",
+        category: "Other",
+        visibility: "team",
+        allowedEmails: [],
+      });
+    } else {
+      setSaveDialogOpen(true);
+    }
+  }, [currentHtml, isEditMode, editTitle, editDescription, handleSaveWithData]);
 
   if (authLoading || mcpLoading || editLoading) {
     return (

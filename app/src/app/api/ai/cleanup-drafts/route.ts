@@ -14,7 +14,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { verifySuperAdmin } from "@/lib/api-auth";
-import { findOrphanedDrafts, markOrphaned, getInstance } from "@/lib/app-db/registry";
+import { findOrphanedDrafts, markOrphaned } from "@/lib/app-db/registry";
 import { dropTablesWithPrefix } from "@/lib/app-db/schema-manager";
 
 const DRAFT_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours

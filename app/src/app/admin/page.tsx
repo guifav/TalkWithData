@@ -138,13 +138,6 @@ export default function AdminPage() {
 
   if (!isAdmin) return null;
 
-  // Build tool → MCP server name map from stats
-  const toolToMcpName = new Map<string, string>();
-  for (const s of mcpServerStats) {
-    // We don't have tool names in stats, but we can get them from the API
-    // For now, use dashboard-level cross-ref: check which MCPs a dashboard uses
-  }
-
   // Build MCP access map: userId → MCP server names (active servers only)
   const userMcpAccess = new Map<string, string[]>();
   for (const s of mcpServerStats) {

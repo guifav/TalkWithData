@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { getDashboardByIdOrSlug } from "@/lib/firestore/dashboards";
@@ -33,6 +33,7 @@ export default function ViewPage() {
   const id = params?.id ?? "";
   const router = useRouter();
   const { firebaseUser, isAuthenticated, loading } = useAuth();
+  const firebaseUid = firebaseUser?.uid;
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [loadingDash, setLoadingDash] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -55,8 +56,8 @@ export default function ViewPage() {
         setDashboard(d);
         if (d) {
           // Track recently viewed for the current user
-          if (firebaseUser) {
-            trackRecentView(firebaseUser.uid, d.id).catch(() => {});
+          if (firebaseUid) {
+            trackRecentView(firebaseUid, d.id).catch(() => {});
           }
         }
       } catch {
@@ -66,9 +67,9 @@ export default function ViewPage() {
       }
     }
     load();
-  }, [id, isAuthenticated]);
+  }, [id, isAuthenticated, firebaseUid]);
 
-  const isOwner = firebaseUser?.uid === dashboard?.createdBy;
+  const isOwner = firebaseUid === dashboard?.createdBy;
   const liveVersion = dashboard
     ? (dashboard.updatedAt?.toMillis() ?? dashboard.createdAt.toMillis()) + refreshVersion
     : 0;
@@ -92,16 +93,7 @@ export default function ViewPage() {
     return Date.now() - lastRefreshed > staleAfterMs;
   })();
 
-  // Auto-refresh on open when data is stale
-  const autoRefreshTriggered = useRef(false);
-  useEffect(() => {
-    if (isStale && !isRefreshing && !autoRefreshTriggered.current && dashboard) {
-      autoRefreshTriggered.current = true;
-      handleRefresh();
-    }
-  }, [isStale, dashboard]);
-
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     if (!dashboard || isRefreshing) return;
     setIsRefreshing(true);
 
@@ -168,7 +160,16 @@ export default function ViewPage() {
     } finally {
       setIsRefreshing(false);
     }
-  };
+  }, [dashboard, isRefreshing]);
+
+  // Auto-refresh on open when data is stale
+  const autoRefreshTriggered = useRef(false);
+  useEffect(() => {
+    if (isStale && !isRefreshing && !autoRefreshTriggered.current && dashboard) {
+      autoRefreshTriggered.current = true;
+      handleRefresh();
+    }
+  }, [isStale, isRefreshing, dashboard, handleRefresh]);
 
   const handleCopyEmbedLink = async () => {
     if (!dashboard) return;
