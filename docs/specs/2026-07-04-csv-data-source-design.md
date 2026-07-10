@@ -14,10 +14,11 @@ kept the DataSource abstraction, CSV parsing with conservative type inference,
 per-source credentials, owner-column mapping, viewer-scope resolution, and the
 superadmin CRUD, but deviated on the execution engine and secret storage:
 
-- Query engine: per-request in-memory DuckDB instead of Postgres staging with
-  RLS. Row scope is enforced by querying through a viewer-filtered VIEW
-  (filtering applied at table-scan time), combined with a SQL AST guard that
-  only admits a single read-only statement
+- Query engine: in-memory DuckDB (instance and raw table LRU-cached per
+  source) instead of Postgres staging with RLS. Row scope is enforced by
+  querying through a per-request viewer-filtered VIEW (filtering applied at
+  table-scan time), combined with a SQL AST guard that only admits a single
+  read-only statement
   (`app/src/lib/data-sources/sql-guard.ts`, `duckdb-engine.ts`,
   `duckdb-sandbox.ts`).
 - Credentials: encrypted inline in the Firestore document with AES-256-GCM
