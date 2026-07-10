@@ -5,6 +5,11 @@ import { getDashboardAsset } from "@/lib/storage";
 import { verifyEmbedToken } from "@/lib/embed-tokens";
 import { prepareDashboardHtmlForRender } from "@/lib/dashboard-html";
 import { verifyDashSessionToken, createDashSessionToken } from "@/lib/dash-session";
+import {
+  DASHBOARD_HTML_SECURITY_HEADERS,
+  DASHBOARD_ASSET_SECURITY_HEADERS,
+  isActiveDocumentContentType,
+} from "@/lib/dashboard-security";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -127,11 +132,16 @@ export async function GET(
       ? "text/html; charset=utf-8"
       : asset.contentType;
 
-    // Static assets (CSS, JS, images, fonts) can be cached aggressively since
-    // they're immutable per-upload. HTML pages get no-cache like the main view.
-    const cacheControl = isHtml
+    // Active documents (HTML, SVG, XML) must not be cached immutable: a
+    // replace/restore reuses the same URL, and a stale executable copy could
+    // survive with old (or absent) security headers. They get no-store like the
+    // main view. Only inert assets (CSS, JS, images, fonts) are cached, and
+    // private, not public, so a shared cache never reuses an authenticated
+    // response across viewers.
+    const isActiveDoc = isHtml || isActiveDocumentContentType(contentType);
+    const cacheControl = isActiveDoc
       ? "private, no-store, no-cache, max-age=0, must-revalidate"
-      : "public, max-age=86400, immutable";
+      : "private, max-age=86400, immutable";
 
     if (isHtml) {
       let html = prepareDashboardHtmlForRender(asset.buffer.toString("utf-8"));
@@ -155,14 +165,22 @@ export async function GET(
           "Cache-Control": cacheControl,
           Pragma: "no-cache",
           Expires: "0",
+          ...DASHBOARD_HTML_SECURITY_HEADERS,
         },
       });
     }
+
+    // SVG and XML render as active documents on direct navigation, so they
+    // need the same sandbox as HTML; inert assets get nosniff only.
+    const assetSecurityHeaders = isActiveDoc
+      ? DASHBOARD_HTML_SECURITY_HEADERS
+      : DASHBOARD_ASSET_SECURITY_HEADERS;
 
     return new NextResponse(asset.buffer as unknown as BodyInit, {
       headers: {
         "Content-Type": contentType,
         "Cache-Control": cacheControl,
+        ...assetSecurityHeaders,
       },
     });
   } catch (error) {
