@@ -40,7 +40,7 @@ The copied `.env` file contains placeholders. Configure Firebase, storage, and a
 ## Features
 
 - Governed data sources: superadmins connect Google Cloud Storage buckets of CSV files as organization data sources, with per-source encrypted credentials, owner-column mapping, and user or department grants.
-- Chat with your data: natural-language questions become read-only SQL executed in a per-request in-memory DuckDB sandbox against viewer-filtered views, so each user only sees the rows they are allowed to see.
+- Chat with your data: natural-language questions become read-only SQL executed in an in-memory DuckDB sandbox against per-request viewer-filtered views, so each user only sees the rows they are allowed to see.
 - Dashboard upload for single HTML files and packaged multi-file dashboards.
 - AI chat for dashboard creation, editing, explanations, and data exploration.
 - Search and navigation across dashboards, categories, owners, departments, and shared folders.

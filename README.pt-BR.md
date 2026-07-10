@@ -73,6 +73,7 @@ Variaveis principais:
 - `DATABASE_URL`, string de conexao PostgreSQL usada pelo Prisma. PostgreSQL e obrigatorio, inclusive para desenvolvimento local.
 - `DASHBOARD_SESSION_SECRET`, segredo para tokens de sessao e embed.
 - `TWD_CREDENTIAL_ENC_KEY`, chave base64 de 32 bytes que criptografa credenciais de fontes de dados. Obrigatoria em producao quando uma fonte armazena credencial de service account.
+- `TWD_INSPECTION_TOKEN_SECRET`, segredo opcional dedicado aos tokens de inspecao de fontes de dados no admin. Sem ele, `DASHBOARD_SESSION_SECRET` e usado.
 - `APP_URL`, URL publica da aplicacao.
 - `ANTHROPIC_API_KEY`, chave para recursos de IA com Anthropic.
 - `MCP_ALLOWED_HOSTS`, `MCP_API_KEY` e `MCP_URL`, configuracao opcional de MCP.
