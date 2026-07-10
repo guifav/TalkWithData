@@ -8,6 +8,7 @@ import { verifyDashSessionToken, createDashSessionToken } from "@/lib/dash-sessi
 import {
   DASHBOARD_HTML_SECURITY_HEADERS,
   DASHBOARD_ASSET_SECURITY_HEADERS,
+  isActiveDocumentContentType,
 } from "@/lib/dashboard-security";
 
 export const dynamic = "force-dynamic";
@@ -131,11 +132,13 @@ export async function GET(
       ? "text/html; charset=utf-8"
       : asset.contentType;
 
-    // Static assets (CSS, JS, images, fonts) can be cached aggressively since
-    // they're immutable per-upload. HTML pages get no-cache like the main view.
+    // Assets authenticate via cookie/embed token, so they are private, not
+    // public: "public" would let a shared cache reuse an authenticated
+    // response across viewers. Immutable per-upload, so the browser may still
+    // cache. HTML pages get no-cache like the main view.
     const cacheControl = isHtml
       ? "private, no-store, no-cache, max-age=0, must-revalidate"
-      : "public, max-age=86400, immutable";
+      : "private, max-age=86400, immutable";
 
     if (isHtml) {
       let html = prepareDashboardHtmlForRender(asset.buffer.toString("utf-8"));
@@ -164,11 +167,17 @@ export async function GET(
       });
     }
 
+    // SVG and XML render as active documents on direct navigation, so they
+    // need the same sandbox as HTML; inert assets get nosniff only.
+    const assetSecurityHeaders = isActiveDocumentContentType(contentType)
+      ? DASHBOARD_HTML_SECURITY_HEADERS
+      : DASHBOARD_ASSET_SECURITY_HEADERS;
+
     return new NextResponse(asset.buffer as unknown as BodyInit, {
       headers: {
         "Content-Type": contentType,
         "Cache-Control": cacheControl,
-        ...DASHBOARD_ASSET_SECURITY_HEADERS,
+        ...assetSecurityHeaders,
       },
     });
   } catch (error) {

@@ -231,5 +231,26 @@ describe("GET /api/dashboards/[id]/view/[...path] security headers", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
     expect(response.headers.get("Content-Security-Policy")).toBeNull();
+    expect(response.headers.get("Cache-Control")).toContain("private");
+  });
+
+  // Um SVG enviado renderiza como documento ativo em navegacao direta e pode
+  // executar <script> na origem do app, entao precisa do mesmo sandbox do HTML.
+  it("sandboxes uploaded SVG served as an active document", async () => {
+    mockGetDashboardAsset.mockResolvedValue({
+      buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"></svg>'),
+      contentType: "image/svg+xml",
+    });
+
+    const response = await getAsset(
+      assetRequest("assets/logo.svg"),
+      assetParams("assets/logo.svg")
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Security-Policy")).toBe(
+      "sandbox allow-scripts"
+    );
+    expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
   });
 });
