@@ -238,7 +238,7 @@ async function handleUpdate(
     draftDashboardId?: string;
   }
 ) {
-  const { title, description, html, aiRecipe, messages } = opts;
+  const { html, aiRecipe, messages } = opts;
 
   const docRef = adminDb.collection("dashboards").doc(dashboardId);
   const doc = await docRef.get();

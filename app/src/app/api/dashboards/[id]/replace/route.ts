@@ -5,7 +5,6 @@ import { adminStorage } from "@/lib/firebase/admin";
 import {
   uploadHtmlFile,
   uploadZipDashboard,
-  deleteDashboardFiles,
 } from "@/lib/storage";
 import { FieldValue } from "firebase-admin/firestore";
 import { extractTextFromHtml, MAX_SEARCHABLE_TEXT } from "@/lib/html-text";

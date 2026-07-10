@@ -3,7 +3,7 @@ import { verifyRequest } from "@/lib/api-auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { deleteHtmlFile, deleteDashboardFiles } from "@/lib/storage";
 import { FieldValue } from "firebase-admin/firestore";
-import { generateSlug, reserveUniqueSlug, releaseSlug } from "@/lib/slug";
+import { generateSlug, releaseSlug } from "@/lib/slug";
 import { isValidCategory } from "@/lib/categories";
 import { markForDeletion, finalizeDeleted, getInstance } from "@/lib/app-db/registry";
 import { dropTablesWithPrefix } from "@/lib/app-db/schema-manager";
@@ -151,7 +151,6 @@ export async function PATCH(
     if (body.allowedDepartments !== undefined) updates.allowedDepartments = body.allowedDepartments;
 
     // Determine new slug (explicit slug > auto from title > keep current)
-    const wantsNewSlug = body.slug !== undefined || (body.title !== undefined && !body.keepSlug);
     const oldSlug = data?.slug as string | undefined;
     let newSlug: string | undefined;
 

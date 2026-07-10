@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyDataApiRequest } from "@/lib/data-api-auth";
 import { sanitizeIdentifier } from "@/lib/app-db/naming";
-import { readRows, updateRows, deleteRows } from "@/lib/app-db/schema-manager";
+import { updateRows, deleteRows } from "@/lib/app-db/schema-manager";
 import { recordAudit, getInstanceTables } from "@/lib/app-db/registry";
 
 
@@ -66,13 +66,6 @@ export async function GET(request: NextRequest, context: RouteContext) {
   }
 
   try {
-    // Read with a filter by ID — readRows doesn't support WHERE, so read all and filter
-    // For v1 this is acceptable; future: add ID filter to readRows
-    const { rows } = await readRows(auth.instance.userSchema, table.tableName, {
-      limit: 1,
-      offset: 0,
-    });
-    // Actually we need to query by ID. Let me use a raw approach:
     const { prisma } = await import("@/lib/prisma");
     const result = await prisma.$queryRawUnsafe<Record<string, unknown>[]>(
       `SELECT * FROM "${auth.instance.userSchema}"."${table.tableName}" WHERE "id" = $1 LIMIT 1`,

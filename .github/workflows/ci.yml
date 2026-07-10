@@ -61,13 +61,35 @@ jobs:
         run: npx prisma generate
 
       - name: Lint
-        run: npm run lint
+        run: npm run lint -- --max-warnings=0
 
       - name: Typecheck
         run: npm run typecheck
 
       - name: Test
         run: npm run test:coverage
+
+      - name: Build
+        run: npm run build
+
+  functions-generate-thumbnail:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: functions/generate-thumbnail
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: functions/generate-thumbnail/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Build
         run: npm run build

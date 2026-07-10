@@ -9,7 +9,7 @@ import { useMcpAccess } from "@/hooks/mcp-access-context";
 import Link from "next/link";
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { isSuperAdmin, isAdmin } = useRole();
+  const { isAdmin } = useRole();
   const { hasAccess: hasMcpAccess } = useMcpAccess();
 
   return (

@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { verifyDataApiRequest } from "@/lib/data-api-auth";
-import { sanitizeIdentifier, physicalTableName, tableMatchesPrefix } from "@/lib/app-db/naming";
+import { sanitizeIdentifier } from "@/lib/app-db/naming";
 import { readRows, insertRows } from "@/lib/app-db/schema-manager";
 import { recordAudit, getInstanceTables } from "@/lib/app-db/registry";
 

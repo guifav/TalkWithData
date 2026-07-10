@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyRequest } from "@/lib/api-auth";
 import { adminDb } from "@/lib/firebase/admin";
-import { FieldValue } from "firebase-admin/firestore";
 
 /**
  * GET — List user's chat sessions (ordered by updatedAt desc).

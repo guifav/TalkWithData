@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef } from "react";
+import Image from "next/image";
 
 /**
  * Thumbnail image with one automatic retry.
@@ -38,11 +39,14 @@ export function ThumbnailImage({
   );
 
   return (
-    <img
+    <Image
       src={src}
       alt=""
       className={className}
       loading="lazy"
+      width={640}
+      height={360}
+      unoptimized
       onError={handleError}
     />
   );

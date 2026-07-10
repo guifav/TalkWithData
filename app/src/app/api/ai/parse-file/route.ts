@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { verifyRequest } from "@/lib/api-auth";
-import { parseFileBuffer, type ParsedFile } from "@/lib/file-parser";
+import { parseFileBuffer } from "@/lib/file-parser";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 

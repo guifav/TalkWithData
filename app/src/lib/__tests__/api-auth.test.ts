@@ -7,7 +7,6 @@ process.env.STORAGE_BUCKET_NAME = "test-bucket";
 // adminAuth and adminDb are consumed via module-level import in api-auth.ts,
 // so we need to mock the module they come from.
 const mockVerifyIdToken = vi.fn();
-const mockGet = vi.fn();
 
 // Shared Firestore mock — returns empty collections by default (sufficient for auth gating)
 const mockCollectionGet = vi.fn().mockResolvedValue({ docs: [] });
