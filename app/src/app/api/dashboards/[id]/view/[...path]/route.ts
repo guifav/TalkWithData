@@ -5,6 +5,10 @@ import { getDashboardAsset } from "@/lib/storage";
 import { verifyEmbedToken } from "@/lib/embed-tokens";
 import { prepareDashboardHtmlForRender } from "@/lib/dashboard-html";
 import { verifyDashSessionToken, createDashSessionToken } from "@/lib/dash-session";
+import {
+  DASHBOARD_HTML_SECURITY_HEADERS,
+  DASHBOARD_ASSET_SECURITY_HEADERS,
+} from "@/lib/dashboard-security";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -155,6 +159,7 @@ export async function GET(
           "Cache-Control": cacheControl,
           Pragma: "no-cache",
           Expires: "0",
+          ...DASHBOARD_HTML_SECURITY_HEADERS,
         },
       });
     }
@@ -163,6 +168,7 @@ export async function GET(
       headers: {
         "Content-Type": contentType,
         "Cache-Control": cacheControl,
+        ...DASHBOARD_ASSET_SECURITY_HEADERS,
       },
     });
   } catch (error) {

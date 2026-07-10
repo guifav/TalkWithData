@@ -7,6 +7,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { verifyEmbedToken } from "@/lib/embed-tokens";
 import { prepareDashboardHtmlForRender } from "@/lib/dashboard-html";
 import { createDashSessionToken } from "@/lib/dash-session";
+import { DASHBOARD_HTML_SECURITY_HEADERS } from "@/lib/dashboard-security";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -184,6 +185,7 @@ export async function GET(
         "Cache-Control": "private, no-store, no-cache, max-age=0, must-revalidate",
         Pragma: "no-cache",
         Expires: "0",
+        ...DASHBOARD_HTML_SECURITY_HEADERS,
       },
     });
 
