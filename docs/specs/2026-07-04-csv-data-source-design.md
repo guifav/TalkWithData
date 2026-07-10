@@ -29,7 +29,29 @@ superadmin CRUD, but deviated on the execution engine and secret storage:
   section 8 is not wired yet.
 - Postgres staging, the `twd_dataset_reader` role, and the RLS policy
   templates from sections 6-9 were not created; they remain the natural path
-  for the Phase 2 database source.
+  for the Phase 2 database source. Defense in depth as shipped is the SQL AST
+  guard plus the viewer-filtered VIEW, without a database role or read-only
+  transaction layer.
+- Data model as shipped: the Firestore document uses `kind: "csv"` (not
+  `type`), a single `ownerColumn` + `ownerColumnIdentity` per source (no
+  `tables[]` array, no `restricted` flag, no `syncSchedule`), and
+  `ViewerScope` carries only `ownerKeys`
+  (`app/src/lib/data-sources/firestore.ts`, `types.ts`).
+- Module map as shipped: CSV parsing lives in
+  `app/src/lib/data-sources/csv-table.ts` (not `file-parser.ts`), per-source
+  storage access in `app/src/lib/data-sources/storage.ts` (not
+  `storage-provider.ts`), and the engine modules are `duckdb-engine.ts`,
+  `duckdb-sandbox.ts`, `sql-guard.ts`, `query.ts`, `access.ts`,
+  `credentials.ts`, `firestore.ts`, `registry.ts`, `sync-cache.ts`. The
+  app-db (`schema-manager`/`registry`/`naming`), `mcp-access.ts`,
+  `role-access-plan.ts`, and `dashboard-refresh-worker.ts` reuse planned in
+  section 16 did not happen.
+
+Everything below this note is the original 2026-07-04 design text, kept
+verbatim as a historical record. It describes the plan, not the shipped
+system: file references, data-model fields, and the Postgres/RLS mechanics in
+sections 6-16 did not all materialize as written. Where this text conflicts
+with the notes above or with the code, the code wins.
 
 See `docs/ARCHITECTURE.md` for the current system description.
 
