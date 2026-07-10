@@ -146,8 +146,12 @@ Use `.env.example` as the source template. The table below describes deployment 
 | `MCP_URL` | Optional | `https://mcp.example.com/api/mcp/full` | Shared MCP endpoint for deployments that use one. |
 | `THUMBNAIL_FUNCTION_URL` | Optional | URL | Cloud Function endpoint for thumbnail generation. |
 | `THUMBNAIL_SECRET` | Optional | secret | Shared secret for thumbnail generation. |
-| `STORAGE_PROVIDER` | Optional | `gcs` | GCS is the default runtime path. |
-| `LOCAL_STORAGE_ROOT` | Optional | `/data/uploads` | Upload directory when `STORAGE_PROVIDER` is `local`. Defaults to `/data/uploads`. |
+| `STORAGE_PROVIDER` | Optional | `gcs` | Storage adapter selector. Upload and serve currently use Firebase Admin Storage (GCS); the `local` adapter is not yet wired into those paths. |
+| `LOCAL_STORAGE_ROOT` | Optional | `/data/uploads` | Directory for the local storage adapter once wired in. No effect on the current upload and serve paths. |
+| `TWD_CREDENTIAL_ENC_KEY` | Data sources | 32-byte base64 | Encrypts external data-source credentials at rest (AES-256-GCM). Required in production when a data source stores a service-account credential. |
+| `TWD_INSPECTION_TOKEN_SECRET` | Optional | secret | Signs admin data-source inspection tokens. Falls back to `DASHBOARD_SESSION_SECRET`. |
+| `TWD_ORG_ID` | Optional | id | Organization id tagged onto data sources created through the admin UI. |
+| `TWD_QUERY_TIMEOUT_MS`, `TWD_MAX_ROWS`, `TWD_ENGINE_LRU_BYTES` | Optional | `10000`, `1000`, `67108864` | Data-source query guardrails (timeout, row cap, engine cache bytes). |
 
 ## Firebase setup
 
@@ -238,9 +242,9 @@ STORAGE_PROVIDER=gcs
 
 ### Local storage
 
-Use local storage only for single-instance development or experimental deployments that provide a compatible adapter. A local adapter must persist files outside the container filesystem, for example through a mounted volume, and must preserve the same logical paths used by GCS.
+The local-filesystem storage adapter is not yet wired into the upload and serve paths, which use Firebase Admin Storage (GCS). Until it is wired in (tracked in the repository issues), a Google Cloud Storage bucket is required, including for local and containerized runs. `STORAGE_PROVIDER=local` and `LOCAL_STORAGE_ROOT` currently have no effect on where uploads are stored or served from.
 
-Do not use ephemeral container storage for production dashboard assets.
+Once the adapter is wired in, a local adapter must persist files outside the ephemeral container filesystem, for example through a mounted volume, and must preserve the same logical paths used by GCS. Do not use ephemeral container storage for production dashboard assets.
 
 ## Database and Prisma
 

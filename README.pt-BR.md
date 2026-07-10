@@ -44,7 +44,7 @@ O arquivo `.env` copiado tem placeholders. Uma instancia em execucao ainda preci
 - Integracao MCP para chamadas controladas a ferramentas externas.
 - Tokens de embed para compartilhamento externo.
 - Base para configuracao multi-modelo por usuario.
-- Painel admin para usuarios, permissoes, categorias, departamentos, prompts, MCP, fontes de dados e metricas.
+- Painel admin para usuarios, permissoes, categorias, departamentos, prompts, MCP, fontes de dados, armazenamento e metricas.
 
 ## Stack tecnica
 
@@ -74,7 +74,8 @@ Variaveis principais:
 - `DASHBOARD_SESSION_SECRET`, segredo para tokens de sessao e embed.
 - `TWD_CREDENTIAL_ENC_KEY`, chave base64 de 32 bytes que criptografa credenciais de fontes de dados. Obrigatoria em producao quando uma fonte armazena credencial de service account.
 - `TWD_INSPECTION_TOKEN_SECRET`, segredo opcional dedicado aos tokens de inspecao de fontes de dados no admin. Sem ele, `DASHBOARD_SESSION_SECRET` e usado.
-- `TWD_ORG_ID`, id de organizacao aplicado as fontes de dados criadas pelo admin. `TWD_QUERY_TIMEOUT_MS`, `TWD_MAX_ROWS` e `TWD_ENGINE_LRU_BYTES` ajustam os limites de consulta (com defaults sensatos).
+- `TWD_ORG_ID`, id de organizacao aplicado as fontes de dados criadas pelo admin.
+- `TWD_QUERY_TIMEOUT_MS`, `TWD_MAX_ROWS` e `TWD_ENGINE_LRU_BYTES`, limites de consulta das fontes de dados (com defaults sensatos).
 - `APP_URL`, URL publica da aplicacao.
 - `ANTHROPIC_API_KEY`, chave para recursos de IA com Anthropic.
 - `MCP_ALLOWED_HOSTS`, `MCP_API_KEY` e `MCP_URL`, configuracao opcional de MCP.
