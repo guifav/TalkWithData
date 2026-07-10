@@ -16,7 +16,7 @@ Talk With Data ajuda equipes a publicar pacotes HTML de dashboards, pesquisar co
 - Docker, opcional, usado no inicio rapido e recomendado para paridade com producao.
 - Um banco PostgreSQL. PostgreSQL e obrigatorio, inclusive para desenvolvimento local.
 - Um projeto Firebase com Authentication, Firestore e Storage habilitados.
-- Um bucket no Google Cloud Storage, ou `STORAGE_PROVIDER=local` para armazenar uploads no disco local.
+- Um bucket no Google Cloud Storage. Uploads e assets de dashboards sao servidos via Firebase Admin Storage, entao o bucket e obrigatorio. O adaptador de storage em disco local ainda nao esta ligado ao caminho de servir arquivos.
 - Pelo menos uma chave de API de um provedor de IA para os recursos de IA.
 
 ## Inicio rapido com Docker
@@ -31,7 +31,7 @@ docker run --rm --env-file .env -p 3000:8080 talk-with-data
 
 O container escuta na porta `8080`. O parametro `-p 3000:8080` mapeia a porta para 3000 na sua maquina. Abra http://localhost:3000.
 
-O arquivo `.env` copiado tem placeholders. Configure Firebase, storage e pelo menos um provedor de IA antes de usar login e recursos de IA.
+O arquivo `.env` copiado tem placeholders. Uma instancia em execucao ainda precisa de um projeto Firebase, um bucket no Google Cloud Storage, um banco PostgreSQL acessivel e pelo menos um provedor de IA. As variaveis `NEXT_PUBLIC_*` sao embutidas em tempo de build, entao uma imagem ja construida nao le esses valores do `--env-file` em runtime (veja [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 
 ## Recursos
 

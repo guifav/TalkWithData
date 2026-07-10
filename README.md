@@ -20,7 +20,7 @@ Talk With Data helps teams publish dashboard HTML packages, search across conten
 - Docker, optional, used by the quickstart and recommended for production parity.
 - A PostgreSQL database. PostgreSQL is required, including for local development.
 - A Firebase project with Authentication, Firestore, and Storage enabled.
-- A Google Cloud Storage bucket, or set `STORAGE_PROVIDER=local` to store uploads on the local filesystem.
+- A Google Cloud Storage bucket. Uploads and dashboard assets are served through Firebase Admin Storage, so a bucket is required. The local-filesystem storage adapter is not yet wired into the serving path.
 - At least one AI provider API key for AI features.
 
 ## Quickstart with Docker
@@ -35,7 +35,7 @@ docker run --rm --env-file .env -p 3000:8080 talk-with-data
 
 The container listens on port `8080`. The `-p 3000:8080` flag maps it to port 3000 on your machine. Open http://localhost:3000.
 
-The copied `.env` file contains placeholders. Configure Firebase, storage, and at least one AI provider before using authenticated and AI features.
+The copied `.env` file contains placeholders. A running instance still needs a Firebase project, a Google Cloud Storage bucket, a reachable PostgreSQL database, and at least one AI provider. Note that `NEXT_PUBLIC_*` values are inlined at build time, so a prebuilt image does not pick them up from `--env-file` at runtime (see [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 
 ## Features
 
@@ -96,8 +96,8 @@ Copy `.env.example` to `.env`, then replace placeholders with project values.
 | `MCP_URL` | Optional | Default MCP endpoint for deployments that use a shared MCP server. |
 | `THUMBNAIL_FUNCTION_URL` | Optional | Cloud Function URL for thumbnail generation. |
 | `THUMBNAIL_SECRET` | Optional | Shared secret for thumbnail generation. |
-| `STORAGE_PROVIDER` | Optional | Storage adapter selector. GCS is the default runtime path. |
-| `LOCAL_STORAGE_ROOT` | Optional | Directory for uploaded files when `STORAGE_PROVIDER` is `local`. Defaults to `/data/uploads`. Set automatically by `docker-compose.yml`. |
+| `STORAGE_PROVIDER` | Optional | Storage adapter selector. The runtime upload and serve paths currently use Firebase Admin Storage (GCS); the `local` adapter exists but is not yet wired into those paths. |
+| `LOCAL_STORAGE_ROOT` | Optional | Directory used by the local storage adapter. Not yet wired into the upload and serve paths. |
 
 See [.env.example](.env.example) for the current template.
 
