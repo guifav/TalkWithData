@@ -78,7 +78,7 @@ Variaveis principais:
 - `ANTHROPIC_API_KEY`, chave para recursos de IA com Anthropic.
 - `MCP_ALLOWED_HOSTS`, `MCP_API_KEY` e `MCP_URL`, configuracao opcional de MCP.
 - `THUMBNAIL_FUNCTION_URL` e `THUMBNAIL_SECRET`, thumbnails opcionais.
-- `STORAGE_PROVIDER` e `LOCAL_STORAGE_ROOT`, storage local opcional. `LOCAL_STORAGE_ROOT` tem padrao `/data/uploads` quando `STORAGE_PROVIDER=local`.
+- `STORAGE_PROVIDER` e `LOCAL_STORAGE_ROOT`, seletor de adaptador de storage. Upload e serve usam Firebase Admin Storage (GCS); o adaptador `local` existe mas ainda nao esta ligado a esses caminhos.
 
 Veja [.env.example](.env.example) para o template completo.
 
