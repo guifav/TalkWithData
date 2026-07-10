@@ -77,20 +77,20 @@ Copy `.env.example` to `.env`, then replace placeholders with project values.
 | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Yes | Firebase client messaging sender ID. |
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | Yes | Firebase client app ID. |
 | `FIREBASE_PROJECT_ID` | Yes | Firebase Admin project ID. |
-| `SA_KEY_JSON` | Local only | Service account JSON for local development when Application Default Credentials are not available. |
+| `SA_KEY_JSON` | Local/non-GCP | Service account JSON for local or non-GCP environments when Application Default Credentials are not available. |
 | `STORAGE_BUCKET_NAME` | Yes | Bucket used to store dashboard HTML packages and assets. |
 | `DATABASE_URL` | Yes | PostgreSQL connection string used by Prisma. PostgreSQL is required, including for local development. |
 | `DASHBOARD_SESSION_SECRET` | Yes | Secret used to sign dashboard and embed session tokens. |
-| `TWD_CREDENTIAL_ENC_KEY` | Data sources | 32-byte base64 key that encrypts external data-source credentials at rest. Required in production when a data source stores a service-account credential. |
+| `TWD_CREDENTIAL_ENC_KEY` | Data sources | 32-byte base64 AES-256-GCM key for external data-source credentials, which are stored encrypted at rest. Required in production when a data source stores a credential. |
 | `TWD_INSPECTION_TOKEN_SECRET` | Optional | Dedicated secret for signed admin data-source inspection tokens. Falls back to `DASHBOARD_SESSION_SECRET`. |
 | `TWD_ORG_ID` | Optional | Organization id tagged onto data sources created through the admin UI. |
 | `TWD_QUERY_TIMEOUT_MS`, `TWD_MAX_ROWS`, `TWD_ENGINE_LRU_BYTES` | Optional | Data-source query guardrails (timeout, row cap, engine cache size). Sensible defaults apply if unset. |
 | `APP_URL` | Recommended | Public base URL used for links and token generation. |
 | `ANTHROPIC_API_KEY` | AI features | API key for Anthropic models. |
-| `OPENAI_API_KEY` | Optional | Reserved for OpenAI provider support. |
-| `GOOGLE_AI_API_KEY` | Optional | Reserved for Google AI provider support. |
-| `KIMI_API_KEY` | Optional | Reserved for Kimi provider support. |
-| `GLM_API_KEY` | Optional | Reserved for GLM provider support. |
+| `OPENAI_API_KEY` | Optional | API key for the OpenAI provider. |
+| `GOOGLE_AI_API_KEY` | Optional | API key for the Google AI provider. |
+| `KIMI_API_KEY` | Optional | API key for the Kimi provider (OpenAI-compatible). |
+| `GLM_API_KEY` | Optional | API key for the GLM provider (OpenAI-compatible). |
 | `AI_DEFAULT_PROVIDER` | Optional | Default AI provider when supported by the runtime. |
 | `AI_DEFAULT_MODEL` | Optional | Default AI model when supported by the runtime. |
 | `MCP_ALLOWED_HOSTS` | Optional | Comma-separated allowlist of MCP hosts. Empty disables MCP calls. |

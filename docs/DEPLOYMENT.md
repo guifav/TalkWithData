@@ -148,7 +148,7 @@ Use `.env.example` as the source template. The table below describes deployment 
 | `THUMBNAIL_SECRET` | Optional | secret | Shared secret for thumbnail generation. |
 | `STORAGE_PROVIDER` | Optional | `gcs` | Storage adapter selector. Upload and serve currently use Firebase Admin Storage (GCS); the `local` adapter is not yet wired into those paths. |
 | `LOCAL_STORAGE_ROOT` | Optional | `/data/uploads` | Directory for the local storage adapter once wired in. No effect on the current upload and serve paths. |
-| `TWD_CREDENTIAL_ENC_KEY` | Data sources | 32-byte base64 | Encrypts external data-source credentials at rest (AES-256-GCM). Required in production when a data source stores a service-account credential. |
+| `TWD_CREDENTIAL_ENC_KEY` | Data sources | 32-byte base64 | AES-256-GCM key for external data-source credentials, which are stored encrypted at rest. Required in production when a data source stores a credential. |
 | `TWD_INSPECTION_TOKEN_SECRET` | Optional | secret | Signs admin data-source inspection tokens. Falls back to `DASHBOARD_SESSION_SECRET`. |
 | `TWD_ORG_ID` | Optional | id | Organization id tagged onto data sources created through the admin UI. |
 | `TWD_QUERY_TIMEOUT_MS`, `TWD_MAX_ROWS`, `TWD_ENGINE_LRU_BYTES` | Optional | `10000`, `1000`, `67108864` | Data-source query guardrails (timeout, row cap, engine cache bytes). |
@@ -299,11 +299,11 @@ AI_DEFAULT_PROVIDER=anthropic
 AI_DEFAULT_MODEL=claude-sonnet-4-20250514
 ```
 
-The current resolver supports Anthropic model configuration and can be extended for other providers.
+The resolver supports Anthropic, OpenAI, Google AI, Kimi, and GLM, plus a custom OpenAI-compatible endpoint.
 
 ### Additional providers
 
-The environment template reserves keys for OpenAI, Google AI, Kimi, and GLM. Before enabling one of those providers in production, implement and test its server-side adapter.
+OpenAI, Google AI, Kimi, and GLM have implemented server-side adapters (Kimi and GLM reuse the OpenAI-compatible adapter). Provide the matching API key to enable one.
 
 Provider setup checklist:
 
