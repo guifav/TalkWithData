@@ -54,7 +54,9 @@ system: file references, data-model fields, and the Postgres/RLS mechanics in
 sections 6-16 did not all materialize as written. Where this text conflicts
 with the notes above or with the code, the code wins.
 
-See `docs/ARCHITECTURE.md` for the current system description.
+The shipped feature is described by the as-built notes above and the code in
+`app/src/lib/data-sources/`. `docs/ARCHITECTURE.md` does not yet cover data
+sources.
 
 ## 1. Goal
 
