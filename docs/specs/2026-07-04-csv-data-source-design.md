@@ -25,9 +25,11 @@ superadmin CRUD, but deviated on the execution engine and secret storage:
   under `TWD_CREDENTIAL_ENC_KEY` (`app/src/lib/data-sources/credentials.ts`)
   instead of an external secret-manager reference. Firestore rules block all
   client reads of `data_sources`.
-- Sync: on demand with etag-based caching
-  (`app/src/lib/data-sources/sync-cache.ts`); the scheduled cron sync from
-  section 8 is not wired yet.
+- Sync: on demand. The production cache is the etag-keyed in-process LRU
+  `rawSourceCache` in `app/src/lib/data-sources/duckdb-engine.ts` (key
+  `sourceId:etag:configVersion`); `sync-cache.ts` exists but is currently
+  referenced only by its test. The scheduled cron sync from section 8 is not
+  wired yet.
 - Postgres staging, the `twd_dataset_reader` role, and the RLS policy
   templates from sections 6-9 were not created; they remain the natural path
   for the Phase 2 database source. Defense in depth as shipped is the SQL AST
@@ -43,7 +45,7 @@ superadmin CRUD, but deviated on the execution engine and secret storage:
   storage access in `app/src/lib/data-sources/storage.ts` (not
   `storage-provider.ts`), and the engine modules are `duckdb-engine.ts`,
   `duckdb-sandbox.ts`, `sql-guard.ts`, `query.ts`, `access.ts`,
-  `credentials.ts`, `firestore.ts`, `registry.ts`, `sync-cache.ts`. The
+  `credentials.ts`, `firestore.ts`, and `registry.ts`. The
   app-db (`schema-manager`/`registry`/`naming`), `mcp-access.ts`,
   `role-access-plan.ts`, and `dashboard-refresh-worker.ts` reuse planned in
   section 16 did not happen.
