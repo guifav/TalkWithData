@@ -10,13 +10,9 @@
 
 [Leia em portugues](README.pt-BR.md)
 
-Open-source dashboard hub with AI. Upload, organize, search, chat, and embed dashboards.
+Open-source dashboard hub with AI. Upload, organize, search, and embed dashboards, then talk with your own data through governed, row-scoped data sources.
 
-Talk With Data helps teams publish dashboard HTML packages, search across content, explore data with AI, connect MCP tools, and share dashboards through authenticated or embedded views.
-
-## Screenshots
-
-Screenshots will be added after the public UI assets are finalized. The app uses the shadcn/ui Neutral theme, black, white, gray, and the Inter font.
+Talk With Data helps teams publish dashboard HTML packages, search across content, explore data with AI, connect MCP tools, and share dashboards through authenticated or embedded views. Superadmins can also connect CSV buckets as governed data sources, so users ask questions in natural language and every answer stays scoped to the rows they are allowed to see.
 
 ## Prerequisites
 
@@ -24,7 +20,7 @@ Screenshots will be added after the public UI assets are finalized. The app uses
 - Docker, optional, used by the quickstart and recommended for production parity.
 - A PostgreSQL database. PostgreSQL is required, including for local development.
 - A Firebase project with Authentication, Firestore, and Storage enabled.
-- A Google Cloud Storage bucket, or set `STORAGE_PROVIDER=local` to store uploads on the local filesystem.
+- A Google Cloud Storage bucket. Uploads and dashboard assets are served through Firebase Admin Storage, so a bucket is required. The local-filesystem storage adapter is not yet wired into the serving path.
 - At least one AI provider API key for AI features.
 
 ## Quickstart with Docker
@@ -39,10 +35,12 @@ docker run --rm --env-file .env -p 3000:8080 talk-with-data
 
 The container listens on port `8080`. The `-p 3000:8080` flag maps it to port 3000 on your machine. Open http://localhost:3000.
 
-The copied `.env` file contains placeholders. Configure Firebase, storage, and at least one AI provider before using authenticated and AI features.
+The copied `.env` file contains placeholders. A running instance still needs a Firebase project, a Google Cloud Storage bucket, a reachable PostgreSQL database, and at least one AI provider. Note that `NEXT_PUBLIC_*` values are inlined at build time, so a prebuilt image does not pick them up from `--env-file` at runtime (see [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 
 ## Features
 
+- Governed data sources: superadmins connect Google Cloud Storage buckets of CSV files as organization data sources, with per-source encrypted credentials, owner-column mapping, and user or department grants.
+- Chat with your data: natural-language questions become read-only SQL executed in an in-memory DuckDB sandbox against per-request viewer-filtered views, so each user only sees the rows they are allowed to see.
 - Dashboard upload for single HTML files and packaged multi-file dashboards.
 - AI chat for dashboard creation, editing, explanations, and data exploration.
 - Search and navigation across dashboards, categories, owners, departments, and shared folders.
@@ -50,7 +48,7 @@ The copied `.env` file contains placeholders. Configure Firebase, storage, and a
 - MCP integration for controlled calls to external data tools and live data refresh.
 - Embed tokens for external sharing without exposing the full app session.
 - Multi-model AI configuration foundation with per-user model selection.
-- Admin panel for users, roles, categories, departments, prompts, MCP access, storage, and usage metrics.
+- Admin panel for users, roles, categories, departments, prompts, MCP access, data sources, storage, and usage metrics.
 
 ## Tech stack
 
@@ -58,6 +56,7 @@ The copied `.env` file contains placeholders. Configure Firebase, storage, and a
 - React 19.
 - Firebase Authentication, Firestore, and Firebase Storage on Google Cloud Storage.
 - Prisma for dashboard-specific structured databases.
+- DuckDB in-process engine for data-source queries.
 - shadcn/ui with the Neutral theme.
 - Tailwind CSS 4.
 - TypeScript in strict mode.
@@ -78,16 +77,20 @@ Copy `.env.example` to `.env`, then replace placeholders with project values.
 | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Yes | Firebase client messaging sender ID. |
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | Yes | Firebase client app ID. |
 | `FIREBASE_PROJECT_ID` | Yes | Firebase Admin project ID. |
-| `SA_KEY_JSON` | Local only | Service account JSON for local development when Application Default Credentials are not available. |
+| `SA_KEY_JSON` | Local/non-GCP | Service account JSON for local or non-GCP environments when Application Default Credentials are not available. |
 | `STORAGE_BUCKET_NAME` | Yes | Bucket used to store dashboard HTML packages and assets. |
 | `DATABASE_URL` | Yes | PostgreSQL connection string used by Prisma. PostgreSQL is required, including for local development. |
 | `DASHBOARD_SESSION_SECRET` | Yes | Secret used to sign dashboard and embed session tokens. |
+| `TWD_CREDENTIAL_ENC_KEY` | Data sources | 32-byte base64 AES-256-GCM key for external data-source credentials, which are stored encrypted at rest. Required in production when a data source stores a credential. |
+| `TWD_INSPECTION_TOKEN_SECRET` | Optional | Dedicated secret for signed admin data-source inspection tokens. Falls back to `DASHBOARD_SESSION_SECRET`. |
+| `TWD_ORG_ID` | Optional | Organization id tagged onto data sources created through the admin UI. |
+| `TWD_QUERY_TIMEOUT_MS`, `TWD_MAX_ROWS`, `TWD_ENGINE_LRU_BYTES` | Optional | Data-source query guardrails (timeout, row cap, engine cache size). Sensible defaults apply if unset. |
 | `APP_URL` | Recommended | Public base URL used for links and token generation. |
 | `ANTHROPIC_API_KEY` | AI features | API key for Anthropic models. |
-| `OPENAI_API_KEY` | Optional | Reserved for OpenAI provider support. |
-| `GOOGLE_AI_API_KEY` | Optional | Reserved for Google AI provider support. |
-| `KIMI_API_KEY` | Optional | Reserved for Kimi provider support. |
-| `GLM_API_KEY` | Optional | Reserved for GLM provider support. |
+| `OPENAI_API_KEY` | Optional | API key for the OpenAI provider. |
+| `GOOGLE_AI_API_KEY` | Optional | API key for the Google AI provider. |
+| `KIMI_API_KEY` | Optional | API key for the Kimi provider (OpenAI-compatible). |
+| `GLM_API_KEY` | Optional | API key for the GLM provider (OpenAI-compatible). |
 | `AI_DEFAULT_PROVIDER` | Optional | Default AI provider when supported by the runtime. |
 | `AI_DEFAULT_MODEL` | Optional | Default AI model when supported by the runtime. |
 | `MCP_ALLOWED_HOSTS` | Optional | Comma-separated allowlist of MCP hosts. Empty disables MCP calls. |
@@ -95,8 +98,8 @@ Copy `.env.example` to `.env`, then replace placeholders with project values.
 | `MCP_URL` | Optional | Default MCP endpoint for deployments that use a shared MCP server. |
 | `THUMBNAIL_FUNCTION_URL` | Optional | Cloud Function URL for thumbnail generation. |
 | `THUMBNAIL_SECRET` | Optional | Shared secret for thumbnail generation. |
-| `STORAGE_PROVIDER` | Optional | Storage adapter selector. GCS is the default runtime path. |
-| `LOCAL_STORAGE_ROOT` | Optional | Directory for uploaded files when `STORAGE_PROVIDER` is `local`. Defaults to `/data/uploads`. Set automatically by `docker-compose.yml`. |
+| `STORAGE_PROVIDER` | Optional | Storage adapter selector. The runtime upload and serve paths currently use Firebase Admin Storage (GCS); the `local` adapter exists but is not yet wired into those paths. |
+| `LOCAL_STORAGE_ROOT` | Optional | Directory used by the local storage adapter. Not yet wired into the upload and serve paths. |
 
 See [.env.example](.env.example) for the current template.
 
