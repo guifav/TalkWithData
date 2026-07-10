@@ -135,10 +135,10 @@ Use `.env.example` as the source template. The table below describes deployment 
 | `DASHBOARD_SESSION_SECRET` | Yes | generated secret | Generate with `openssl rand -hex 32`. |
 | `APP_URL` | Recommended | `https://app.example.com` | Used for public links and token generation. |
 | `ANTHROPIC_API_KEY` | AI features | secret | Required for current AI model calls. |
-| `OPENAI_API_KEY` | Optional | secret | Reserved for OpenAI provider support. |
-| `GOOGLE_AI_API_KEY` | Optional | secret | Reserved for Google AI provider support. |
-| `KIMI_API_KEY` | Optional | secret | Reserved for Kimi provider support. |
-| `GLM_API_KEY` | Optional | secret | Reserved for GLM provider support. |
+| `OPENAI_API_KEY` | Optional | secret | API key for the OpenAI provider. |
+| `GOOGLE_AI_API_KEY` | Optional | secret | API key for the Google AI provider. |
+| `KIMI_API_KEY` | Optional | secret | API key for the Kimi provider (OpenAI-compatible). |
+| `GLM_API_KEY` | Optional | secret | API key for the GLM provider (OpenAI-compatible). |
 | `AI_DEFAULT_PROVIDER` | Optional | `anthropic` | Default provider where supported. |
 | `AI_DEFAULT_MODEL` | Optional | model ID | Default model where supported. |
 | `MCP_ALLOWED_HOSTS` | Optional | `mcp.example.com` | Comma-separated HTTPS host allowlist. Empty disables MCP calls. |
