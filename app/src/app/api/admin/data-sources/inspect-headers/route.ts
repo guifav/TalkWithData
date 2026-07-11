@@ -107,8 +107,8 @@ export async function POST(request: NextRequest) {
       objectName: csvObject.name,
       ...(generatedCredentialEnc ? { credentialEnc: generatedCredentialEnc } : {}),
     });
-  } catch (error) {
-    console.error("Inspect data source headers failed:", error);
+  } catch {
+    console.error("Inspect data source headers failed");
     return NextResponse.json(
       { error: "Failed to inspect headers" },
       { status: 503 },

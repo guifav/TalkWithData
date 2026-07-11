@@ -203,6 +203,32 @@ describe("admin inspect data source headers route", () => {
     expect(typeof body.inspectionToken).toBe("string");
   });
 
+  it("não inclui credencial em logs quando a inspeção falha", async () => {
+    setupAuth("superadmin");
+    routeMocks.resolve.mockRejectedValueOnce(
+      new Error(`dependency failure: ${rawCredential.private_key}`),
+    );
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const response = await inspectHeaders(
+      request("token", {
+        bucket: "external-bucket",
+        prefix: "exports",
+        credentialRef: { kind: "encryptedBlob", ref: "credential-a" },
+        credential: rawCredential,
+      }),
+    );
+    const body = await response.json();
+    const logged = errorSpy.mock.calls.flat().map(String).join("\n");
+    errorSpy.mockRestore();
+
+    expect(response.status).toBe(503);
+    expect(body).toEqual({ error: "Failed to inspect headers" });
+    expect(logged).not.toContain(rawCredential.private_key);
+    expect(logged).not.toContain(rawCredential.client_email);
+    expect(logged).not.toContain(Buffer.from("generated-ciphertext").toString("base64"));
+  });
+
   it.each([
     ["array", []],
     ["tipo inválido", { ...rawCredential, type: "user" }],
