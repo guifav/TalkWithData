@@ -55,9 +55,23 @@ ci_digest=$(read_single_digest "postgres:16 CI service" \
   's/.*image: postgres:16@\(sha256:[0-9a-f]\{64\}\).*/\1/p' \
   .github/workflows/ci.yml)
 
-local_digest=$(read_single_digest "postgres:16-alpine local runtime" \
+contributing_digest=$(read_single_digest "postgres:16-alpine CONTRIBUTING example" \
   's/.*postgres:16-alpine@\(sha256:[0-9a-f]\{64\}\).*/\1/p' \
-  CONTRIBUTING.md docker-compose.yml docs/DEPLOYMENT.md)
+  CONTRIBUTING.md)
+
+compose_digest=$(read_single_digest "postgres:16-alpine Compose service" \
+  's/.*postgres:16-alpine@\(sha256:[0-9a-f]\{64\}\).*/\1/p' \
+  docker-compose.yml)
+
+deployment_digest=$(read_single_digest "postgres:16-alpine deployment example" \
+  's/.*postgres:16-alpine@\(sha256:[0-9a-f]\{64\}\).*/\1/p' \
+  docs/DEPLOYMENT.md)
+
+if [ "$contributing_digest" != "$compose_digest" ] || \
+   [ "$compose_digest" != "$deployment_digest" ]; then
+  echo "postgres:16-alpine digests differ across local runtime sources" >&2
+  exit 1
+fi
 
 verify_digest "postgres:16" "$ci_digest"
-verify_digest "postgres:16-alpine" "$local_digest"
+verify_digest "postgres:16-alpine" "$compose_digest"

@@ -36,7 +36,8 @@ PostgreSQL. In that case, use one of these container-friendly options:
 
 - On Docker Desktop, set `DATABASE_URL=postgresql://user:password@host.docker.internal:5432/talkwithdata`.
 - Put the app and PostgreSQL on the same Docker network and use the database container name as the host.
-- Or add a Postgres service to your compose stack and point `DATABASE_URL` at that service name.
+- Use the checked-in Compose stack, which points the app and migrator at its
+  internal `db` service automatically.
 
 Open http://localhost:3000.
 
@@ -46,12 +47,13 @@ Before testing authenticated flows, edit `app/.env` and set the Firebase values,
 
 ```bash
 cp app/.env.example app/.env
-docker build -t talk-with-data -f app/Dockerfile app
-docker run --rm --env-file app/.env -p 3000:8080 talk-with-data
+docker compose up --build
 ```
 
-When you use the container flow above, remember to update `DATABASE_URL` away
-from `localhost` before starting the container.
+Replace the application placeholders in `app/.env`. Compose provisions
+PostgreSQL, applies the checked-in migrations, and overrides the host-oriented
+`DATABASE_URL` with its internal `db` service URL. See
+`docs/DEPLOYMENT.md` for reset and migration troubleshooting commands.
 
 ## Code standards
 

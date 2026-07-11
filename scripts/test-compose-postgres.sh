@@ -8,14 +8,22 @@ PROJECT="twd-compose-smoke-$$"
 TMP_DIR=$(mktemp -d)
 ENV_FILE="$TMP_DIR/app.env"
 FAIL_OVERRIDE="$TMP_DIR/fail-migration.yml"
+DB_USER=talkwithdata
+DB_PASSWORD=talkwithdata
+DB_NAME=talkwithdata
+INTERNAL_DATABASE_URL="postgresql://$DB_USER:$DB_PASSWORD@db:5432/$DB_NAME"
 
 compose() {
-  TWD_APP_PORT=0 TWD_ENV_FILE="$ENV_FILE" \
+  POSTGRES_USER="$DB_USER" POSTGRES_PASSWORD="$DB_PASSWORD" \
+    POSTGRES_DB="$DB_NAME" COMPOSE_DATABASE_URL="$INTERNAL_DATABASE_URL" \
+    TWD_APP_PORT=0 TWD_ENV_FILE="$ENV_FILE" \
     docker compose --project-name "$PROJECT" --file "$COMPOSE_FILE" "$@"
 }
 
 compose_with_failure() {
-  TWD_APP_PORT=0 TWD_ENV_FILE="$ENV_FILE" \
+  POSTGRES_USER="$DB_USER" POSTGRES_PASSWORD="$DB_PASSWORD" \
+    POSTGRES_DB="$DB_NAME" COMPOSE_DATABASE_URL="$INTERNAL_DATABASE_URL" \
+    TWD_APP_PORT=0 TWD_ENV_FILE="$ENV_FILE" \
     docker compose --project-name "$PROJECT" \
       --file "$COMPOSE_FILE" --file "$FAIL_OVERRIDE" "$@"
 }
@@ -73,7 +81,7 @@ app_address=$(compose port app 8080 | tail -n 1)
 curl --fail --silent --show-error "http://$app_address/api/health" >/dev/null
 
 migrations_before=$(compose exec -T db \
-  psql -U talkwithdata -d talkwithdata --tuples-only --no-align \
+  psql -U "$DB_USER" -d "$DB_NAME" --tuples-only --no-align \
     --set ON_ERROR_STOP=1 \
     --command 'SELECT count(*) FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL')
 
@@ -83,7 +91,7 @@ if [ "$migrations_before" != "$expected_migrations" ]; then
 fi
 
 compose exec -T db \
-  psql -U talkwithdata -d talkwithdata --set ON_ERROR_STOP=1 \
+  psql -U "$DB_USER" -d "$DB_NAME" --set ON_ERROR_STOP=1 \
     --command 'CREATE TABLE IF NOT EXISTS compose_smoke_sentinel (id integer PRIMARY KEY); INSERT INTO compose_smoke_sentinel (id) VALUES (1) ON CONFLICT (id) DO NOTHING;' \
     >/dev/null
 
@@ -92,11 +100,11 @@ compose stop >/dev/null
 compose up --wait --wait-timeout 240
 
 migrations_after=$(compose exec -T db \
-  psql -U talkwithdata -d talkwithdata --tuples-only --no-align \
+  psql -U "$DB_USER" -d "$DB_NAME" --tuples-only --no-align \
     --set ON_ERROR_STOP=1 \
     --command 'SELECT count(*) FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL')
 sentinel_count=$(compose exec -T db \
-  psql -U talkwithdata -d talkwithdata --tuples-only --no-align \
+  psql -U "$DB_USER" -d "$DB_NAME" --tuples-only --no-align \
     --set ON_ERROR_STOP=1 \
     --command 'SELECT count(*) FROM compose_smoke_sentinel WHERE id = 1')
 migration_runs=$(compose logs migrate | grep -c '^migrate-.*TWD migration run$' || true)
