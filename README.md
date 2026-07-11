@@ -25,17 +25,25 @@ Talk With Data helps teams publish dashboard HTML packages, search across conten
 
 ## Quickstart with Docker
 
-Run the app locally with Docker in three commands:
+Run the complete local stack with Docker Compose:
 
 ```bash
 cp app/.env.example app/.env
-docker build -t talk-with-data -f app/Dockerfile app
-docker run --rm --env-file app/.env -p 3000:8080 talk-with-data
+docker compose up --build
 ```
 
-The container listens on port `8080`. The `-p 3000:8080` flag maps it to port 3000 on your machine. Open http://localhost:3000.
+Replace the application placeholders in `app/.env`, then open
+http://localhost:3000. Compose provisions PostgreSQL in a named volume, waits
+for its bounded healthcheck, applies the checked-in Prisma migrations once, and
+starts the app only after the migration job succeeds.
 
-The copied `app/.env` file contains placeholders. A running instance still needs a Firebase project, a Google Cloud Storage bucket, a reachable PostgreSQL database, and at least one AI provider. The server reads the allowlisted `NEXT_PUBLIC_*` Firebase and authentication values at runtime and bootstraps them to the browser, so one prebuilt image can run with different public configuration (see [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
+The copied `app/.env` file contains placeholders. A running instance still
+needs a Firebase project, a Google Cloud Storage bucket, and at least one AI
+provider. Compose supplies the local PostgreSQL dependency and overrides the
+host-oriented `DATABASE_URL` for its containers. The server reads the
+allowlisted `NEXT_PUBLIC_*` Firebase and authentication values at runtime and
+bootstraps them to the browser, so one prebuilt image can run with different
+public configuration (see [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 
 ## Features
 

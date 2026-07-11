@@ -1,18 +1,57 @@
 services:
+  db:
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
+    environment:
+      # Development defaults. Override all four database settings together.
+      POSTGRES_USER: ${POSTGRES_USER:-talkwithdata}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-talkwithdata}
+      POSTGRES_DB: ${POSTGRES_DB:-talkwithdata}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"
+      interval: 2s
+      timeout: 3s
+      retries: 15
+      start_period: 10s
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+      target: migrator
+    environment:
+      DATABASE_URL: ${COMPOSE_DATABASE_URL:-postgresql://talkwithdata:talkwithdata@db:5432/talkwithdata}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+    command:
+      - sh
+      - -c
+      - echo 'TWD migration run' && exec ./node_modules/.bin/prisma migrate deploy
+
   app:
     build:
       context: ./app
       dockerfile: Dockerfile
     # Cloud Run expects PORT=8080
     ports:
-      - "3000:8080"
+      - "${TWD_APP_PORT:-3000}:8080"
     env_file:
-      - ./app/.env
+      - ${TWD_ENV_FILE:-./app/.env}
     environment:
       # Upload and serve currently use Firebase Admin Storage (GCS) regardless of
       # STORAGE_PROVIDER; the local adapter is not yet wired into those paths.
+      DATABASE_URL: ${COMPOSE_DATABASE_URL:-postgresql://talkwithdata:talkwithdata@db:5432/talkwithdata}
       LOCAL_STORAGE_ROOT: /data/uploads
       PORT: 8080
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
     volumes:
       - app_data:/data
     restart: unless-stopped
@@ -28,3 +67,4 @@ services:
 
 volumes:
   app_data:
+  postgres_data:

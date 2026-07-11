@@ -1,10 +1,13 @@
 FROM node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2 AS base
 
-# Build
-FROM base AS builder
+# Application build dependencies.
+FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
+
+# Build
+FROM deps AS builder
 COPY . .
 RUN npx prisma generate
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -13,6 +16,16 @@ ARG BUILD_TIME=
 ENV NEXT_PUBLIC_GIT_COMMIT=$GIT_COMMIT
 ENV NEXT_PUBLIC_BUILD_TIME=$BUILD_TIME
 RUN npm run build
+
+# One-shot Prisma migrations for Docker Compose and other job runners.
+FROM base AS migrator
+WORKDIR /app
+COPY migrator/package.json migrator/package-lock.json ./
+RUN npm ci --omit=dev
+COPY prisma.config.ts ./
+COPY prisma ./prisma
+USER node
+CMD ["./node_modules/.bin/prisma", "migrate", "deploy"]
 
 # Production
 FROM base AS runner

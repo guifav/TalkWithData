@@ -21,17 +21,25 @@ Talk With Data ajuda equipes a publicar pacotes HTML de dashboards, pesquisar co
 
 ## Inicio rapido com Docker
 
-Rode localmente com Docker em tres comandos:
+Rode a stack local completa com Docker Compose:
 
 ```bash
 cp app/.env.example app/.env
-docker build -t talk-with-data -f app/Dockerfile app
-docker run --rm --env-file app/.env -p 3000:8080 talk-with-data
+docker compose up --build
 ```
 
-O container escuta na porta `8080`. O parametro `-p 3000:8080` mapeia a porta para 3000 na sua maquina. Abra http://localhost:3000.
+Substitua os placeholders da aplicacao em `app/.env` e abra
+http://localhost:3000. O Compose provisiona PostgreSQL em um volume nomeado,
+aguarda o healthcheck limitado, aplica uma vez as migracoes Prisma versionadas e
+so inicia o app quando a migracao termina com sucesso.
 
-O arquivo `app/.env` copiado tem placeholders. Uma instancia em execucao ainda precisa de um projeto Firebase, um bucket no Google Cloud Storage, um banco PostgreSQL acessivel e pelo menos um provedor de IA. O servidor le em runtime apenas as variaveis `NEXT_PUBLIC_*` permitidas de Firebase e autenticacao e as entrega ao navegador, portanto uma unica imagem pode usar configuracoes publicas diferentes (veja [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
+O arquivo `app/.env` copiado tem placeholders. Uma instancia em execucao ainda
+precisa de um projeto Firebase, um bucket no Google Cloud Storage e pelo menos
+um provedor de IA. O Compose fornece o PostgreSQL local e substitui o
+`DATABASE_URL` voltado ao host dentro dos containers. O servidor le em runtime
+apenas as variaveis `NEXT_PUBLIC_*` permitidas de Firebase e autenticacao e as
+entrega ao navegador, portanto uma unica imagem pode usar configuracoes publicas
+diferentes (veja [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 
 ## Recursos
 
