@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllowedAuthDomain } from "@/lib/auth-domain";
 
-const PUBLIC_PATHS = ["/login", "/api/auth", "/api/health"];
+const PUBLIC_PATHS = ["/login", "/api/auth", "/api/health", "/api/ready"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

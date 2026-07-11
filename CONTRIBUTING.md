@@ -55,6 +55,18 @@ PostgreSQL, applies the checked-in migrations, and overrides the host-oriented
 `DATABASE_URL` with its internal `db` service URL. See
 `docs/DEPLOYMENT.md` for reset and migration troubleshooting commands.
 
+Validate the disposable PostgreSQL lifecycle before changing migrations,
+readiness, or deployment orchestration:
+
+```bash
+./scripts/test-compose-postgres.sh
+```
+
+The smoke test starts a fresh database, applies migrations once, proves that
+`/api/health` remains process-local while `/api/ready` fails and recovers with
+PostgreSQL, verifies persistence and migration idempotency, and confirms that a
+failed migration prevents the application from starting.
+
 ## Code standards
 
 ### TypeScript and structure

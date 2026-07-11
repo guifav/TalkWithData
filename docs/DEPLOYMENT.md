@@ -104,11 +104,19 @@ starting the application container manually.
 
 Cloud Run is the recommended GCP deployment target when you want a managed container runtime.
 
+Cloud Run deployments use two images from the same source revision. The
+application image serves requests and never runs Prisma migrations. The
+`migrator` target runs `prisma migrate deploy` as a single-task Cloud Run Job.
+Always use an immutable release tag and execute the steps below in this order:
+build and push both images, deploy and execute the migration job, then roll out
+the service. Never put `prisma migrate deploy` in the service command, startup
+script, or replica lifecycle.
+
 ### 1. Prepare GCP
 
 ```bash
 gcloud config set project YOUR_PROJECT_ID
-gcloud services enable run.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com firestore.googleapis.com storage.googleapis.com
+gcloud services enable run.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com firestore.googleapis.com storage.googleapis.com
 ```
 
 Create an Artifact Registry repository:
@@ -119,26 +127,127 @@ gcloud artifacts repositories create talk-with-data \
   --location=us-central1
 ```
 
-### 2. Build and push the image
+Set deployment identifiers. `RELEASE` must identify one immutable source
+revision, normally the full Git commit SHA.
 
 ```bash
-gcloud builds submit app \
-  --tag us-central1-docker.pkg.dev/YOUR_PROJECT_ID/talk-with-data/app:latest
+export PROJECT_ID=YOUR_PROJECT_ID
+export REGION=us-central1
+export RELEASE="$(git rev-parse HEAD)"
+export REGISTRY="$REGION-docker.pkg.dev/$PROJECT_ID/talk-with-data"
+export APP_IMAGE="$REGISTRY/app:$RELEASE"
+export MIGRATOR_IMAGE="$REGISTRY/migrator:$RELEASE"
+export SERVICE_NAME=talk-with-data
+export MIGRATION_JOB_NAME=talk-with-data-migrate
+export RUNTIME_SERVICE_ACCOUNT=talk-with-data-runtime@$PROJECT_ID.iam.gserviceaccount.com
+export DATABASE_URL_SECRET=talk-with-data-database-url
+export DATABASE_URL_SECRET_VERSION=1
+export SESSION_SECRET=talk-with-data-session-secret
+export SESSION_SECRET_VERSION=1
+export ANTHROPIC_SECRET=talk-with-data-anthropic-api-key
+export ANTHROPIC_SECRET_VERSION=1
 ```
 
-### 3. Deploy
+The runtime service account needs access to the configured Firebase, Firestore,
+Storage, and Secret Manager resources. The PostgreSQL endpoint must be reachable
+from both the Cloud Run service and migration job. Add the same Cloud SQL or VPC
+flags to both commands when the database requires them.
+
+### 2. Build and push both images
 
 ```bash
-gcloud run deploy talk-with-data \
-  --image us-central1-docker.pkg.dev/YOUR_PROJECT_ID/talk-with-data/app:latest \
-  --region us-central1 \
+gcloud auth configure-docker "$REGION-docker.pkg.dev"
+docker build --pull --tag "$APP_IMAGE" --file app/Dockerfile app
+docker build --pull --target migrator --tag "$MIGRATOR_IMAGE" --file app/Dockerfile app
+docker push "$APP_IMAGE"
+docker push "$MIGRATOR_IMAGE"
+```
+
+Do not rebuild either image between migration and service rollout. Both image
+references must retain the same `RELEASE` value.
+
+### 3. Deploy and execute the migration job
+
+The job receives only `DATABASE_URL`, runs one task with no automatic retry, and
+must complete successfully before the service rollout begins:
+
+```bash
+gcloud run jobs deploy "$MIGRATION_JOB_NAME" \
+  --image "$MIGRATOR_IMAGE" \
+  --region "$REGION" \
+  --service-account "$RUNTIME_SERVICE_ACCOUNT" \
+  --tasks 1 \
+  --parallelism 1 \
+  --max-retries 0 \
+  --task-timeout 10m \
+  --set-secrets "DATABASE_URL=$DATABASE_URL_SECRET:$DATABASE_URL_SECRET_VERSION"
+
+gcloud run jobs execute "$MIGRATION_JOB_NAME" \
+  --region "$REGION" \
+  --wait
+```
+
+Stop if either command fails. Do not deploy the service revision and do not run
+a second migration job concurrently. Prisma records completed migrations, so a
+later deliberate retry of the same single job is idempotent.
+
+### 4. Roll out the service with dependency probes
+
+Copy the checked-in non-secret environment contract, replace every placeholder,
+and keep the edited file outside the repository:
+
+```bash
+cp docs/cloud-run.env.yaml.example /tmp/talk-with-data-cloud-run.env.yaml
+export RUNTIME_ENV_FILE=/tmp/talk-with-data-cloud-run.env.yaml
+```
+
+Deploy only after the migration execution succeeds:
+
+```bash
+gcloud run deploy "$SERVICE_NAME" \
+  --image "$APP_IMAGE" \
+  --region "$REGION" \
+  --service-account "$RUNTIME_SERVICE_ACCOUNT" \
   --allow-unauthenticated \
-  --port 8080
+  --port 8080 \
+  --env-vars-file "$RUNTIME_ENV_FILE" \
+  --set-secrets "DATABASE_URL=$DATABASE_URL_SECRET:$DATABASE_URL_SECRET_VERSION,DASHBOARD_SESSION_SECRET=$SESSION_SECRET:$SESSION_SECRET_VERSION,ANTHROPIC_API_KEY=$ANTHROPIC_SECRET:$ANTHROPIC_SECRET_VERSION" \
+  --startup-probe "httpGet.path=/api/ready,httpGet.port=8080,timeoutSeconds=3,periodSeconds=5,failureThreshold=24" \
+  --readiness-probe "httpGet.path=/api/ready,httpGet.port=8080,timeoutSeconds=3,periodSeconds=5,failureThreshold=2,successThreshold=1" \
+  --liveness-probe "httpGet.path=/api/health,httpGet.port=8080,timeoutSeconds=2,periodSeconds=10,failureThreshold=3"
 ```
 
-Then set environment variables in Cloud Run. Use Secret Manager for secrets such as provider API keys, `SA_KEY_JSON`, and `DASHBOARD_SESSION_SECRET`.
+`/api/health` is a cheap process-local liveness check and never queries the
+database. `/api/ready` executes `SELECT 1` against PostgreSQL with the timeout
+from `TWD_READINESS_TIMEOUT_MS`, returns `503` without connection details when
+PostgreSQL is unavailable, and returns `200` again after it recovers. Cloud Run
+startup and readiness probes use `/api/ready`; only liveness uses `/api/health`.
+The readiness probe is a Cloud Run Preview feature. Confirm its availability in
+the selected region before the first production release.
 
-### 4. Service account
+Verify the deployed endpoints without printing configuration values:
+
+```bash
+export SERVICE_URL="$(gcloud run services describe "$SERVICE_NAME" --region "$REGION" --format 'value(status.url)')"
+curl --fail --silent --show-error "$SERVICE_URL/api/health"
+curl --fail --silent --show-error "$SERVICE_URL/api/ready"
+```
+
+### 5. Forward-only rollback policy
+
+Prisma migrations are forward-only in this deployment workflow. A failed
+migration blocks rollout and leaves the currently serving revision unchanged.
+Correct the migration or database configuration, build a new immutable release,
+and rerun the single migration job.
+
+After a migration succeeds, never attempt to undo it by running down migrations
+or restoring an old schema in place. An earlier application image may receive
+traffic only when the applied schema is explicitly backward compatible with it.
+Otherwise, fix forward with a new migration and application image. Database
+restoration is a separately authorized disaster-recovery operation and must use
+a tested backup in a new database before any traffic change.
+
+### 6. Service account
 
 Prefer Application Default Credentials in Cloud Run by granting the Cloud Run service account access to Firebase, Firestore, and the storage bucket.
 
@@ -167,6 +276,7 @@ Use `app/.env.example` as the source template. The table below describes deploym
 | `SA_KEY_JSON` | Local or non-GCP | JSON string | Optional on GCP when the runtime service account has access. |
 | `STORAGE_BUCKET_NAME` | Yes | `project-uploads` | Bucket used for dashboard files. |
 | `DATABASE_URL` | Yes | `postgresql://...` | PostgreSQL connection string used by Prisma. PostgreSQL is required, including for local development. |
+| `TWD_READINESS_TIMEOUT_MS` | Optional | `2000` | PostgreSQL readiness timeout in milliseconds. Accepted range is 100 through 10000; invalid values use 2000. |
 | `DASHBOARD_SESSION_SECRET` | Yes | generated secret | Generate with `openssl rand -hex 32`. |
 | `APP_URL` | Recommended | `https://app.example.com` | Used for public links and token generation. |
 | `ANTHROPIC_API_KEY` | AI features | secret | Required for current AI model calls. |
