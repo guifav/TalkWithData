@@ -7,6 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  acceptEncryptedInspection,
+  parseServiceAccountCredential,
+} from "@/components/admin/data-source-credential-form";
 import type { Department } from "@/lib/types";
 import type { UserRow } from "@/components/admin/admin-shared";
 
@@ -29,6 +34,7 @@ type HeaderInspectResult = {
   duplicateIdentities: string[];
   inspectionToken: string;
   objectName?: string;
+  credentialEnc?: string;
 };
 
 type FormState = {
@@ -37,6 +43,7 @@ type FormState = {
   bucket: string;
   prefix: string;
   credentialRef: CredentialRef;
+  credentialJson: string;
   credentialEnc: string;
   ownerColumn: string;
   assignedUsers: string;
@@ -48,6 +55,7 @@ const EMPTY_FORM: FormState = {
   bucket: "",
   prefix: "",
   credentialRef: { kind: "encryptedBlob", ref: "" },
+  credentialJson: "",
   credentialEnc: "",
   ownerColumn: "",
   assignedUsers: "",
@@ -116,6 +124,7 @@ export function DataSourcesTab({
       bucket: ds.bucket,
       prefix: ds.prefix,
       credentialRef: { kind: "encryptedBlob", ref: "" },
+      credentialJson: "",
       credentialEnc: "",
       ownerColumn: ds.ownerColumn,
       assignedUsers: ds.accessGrants.assignedUsers.join(", "),
@@ -140,23 +149,36 @@ export function DataSourcesTab({
     setError(null);
     setMessage(null);
     try {
+      const hasRawCredential = form.credentialJson.trim().length > 0;
+      const rawCredential = hasRawCredential
+        ? parseServiceAccountCredential(form.credentialJson)
+        : undefined;
       const body = form.id
         ? {
             dataSourceId: form.id,
             bucket: form.bucket,
             prefix: form.prefix,
-            ...(form.credentialEnc.trim()
+            ...(hasRawCredential
               ? {
                   credentialRef: form.credentialRef,
-                  credentialEnc: form.credentialEnc,
+                  credential: rawCredential,
                 }
-              : {}),
+              : form.credentialEnc.trim()
+                ? {
+                    credentialRef: form.credentialRef,
+                    credentialEnc: form.credentialEnc,
+                  }
+                : {}),
           }
         : {
             bucket: form.bucket,
             prefix: form.prefix,
             credentialRef: form.credentialRef,
-            credentialEnc: form.credentialEnc,
+            ...(hasRawCredential
+              ? {
+                  credential: rawCredential,
+                }
+              : { credentialEnc: form.credentialEnc }),
           };
       const res = await authFetch("/api/admin/data-sources/inspect-headers", {
         method: "POST",
@@ -168,11 +190,18 @@ export function DataSourcesTab({
       if (typeof result.inspectionToken !== "string" || !result.inspectionToken) {
         throw new Error("Header inspection did not return a verification token");
       }
-      setHeaders(result);
-      setInspectedSignature(buildInspectSignature(form));
-      if (!result.headers.includes(form.ownerColumn)) {
-        setForm((prev) => ({ ...prev, ownerColumn: result.headers[0] || "" }));
+      if (hasRawCredential && (typeof result.credentialEnc !== "string" || !result.credentialEnc)) {
+        throw new Error("Header inspection did not return an encrypted credential");
       }
+      let inspectedForm = hasRawCredential
+        ? acceptEncryptedInspection(form, result.credentialEnc)
+        : form;
+      if (!result.headers.includes(inspectedForm.ownerColumn)) {
+        inspectedForm = { ...inspectedForm, ownerColumn: result.headers[0] || "" };
+      }
+      setForm(inspectedForm);
+      setHeaders(result);
+      setInspectedSignature(buildInspectSignature(inspectedForm));
       setMessage(`Inspected ${result.objectName || "CSV"}: ${result.headers.length} header(s).`);
     } catch (err) {
       setHeaders(null);
@@ -181,6 +210,16 @@ export function DataSourcesTab({
     } finally {
       setInspecting(false);
     }
+  }
+
+  function updateCredentialJson(value: string) {
+    setForm((current) => ({
+      ...current,
+      credentialJson: value,
+      credentialEnc: "",
+    }));
+    setHeaders(null);
+    setInspectedSignature(null);
   }
 
   async function saveSource() {
@@ -312,8 +351,15 @@ export function DataSourcesTab({
             <Field label="Credential ref">
               <Input value={form.credentialRef.ref} onChange={(e) => setForm({ ...form, credentialRef: { ...form.credentialRef, ref: e.target.value } })} placeholder="credential-a" />
             </Field>
-            <Field label="Credential blob (encrypted, base64)">
-              <Input value={form.credentialEnc} onChange={(e) => setForm({ ...form, credentialEnc: e.target.value })} placeholder={form.id ? "Leave empty to keep current" : "Required for new source"} />
+            <Field label="Service account JSON">
+              <Textarea
+                value={form.credentialJson}
+                onChange={(event) => updateCredentialJson(event.target.value)}
+                placeholder={form.id ? "Leave empty to keep current" : "Paste the service account JSON"}
+                rows={6}
+                autoComplete="off"
+                spellCheck={false}
+              />
             </Field>
             <Field label="Owner column">
               {headers?.headers.length ? (
