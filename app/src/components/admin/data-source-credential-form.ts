@@ -20,6 +20,15 @@ export function acceptEncryptedInspection<
   };
 }
 
+export function hasRequiredCredentialInputs(form: {
+  id?: string;
+  credentialRef: { ref: string };
+  credentialEnc: string;
+}): boolean {
+  if (form.id) return true;
+  return Boolean(form.credentialRef.ref.trim() && form.credentialEnc.trim());
+}
+
 function isPlainObject(value: unknown): value is object {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }

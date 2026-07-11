@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   acceptEncryptedInspection,
+  hasRequiredCredentialInputs,
   parseServiceAccountCredential,
 } from "@/components/admin/data-source-credential-form";
 
@@ -42,5 +43,36 @@ describe("data source credential form helpers", () => {
     });
     expect(form.credentialJson).toContain("secret");
     expect(form.credentialEnc).toBe("");
+  });
+
+  it("permite rotação em fonte existente reutilizando credentialRef armazenado", () => {
+    expect(
+      hasRequiredCredentialInputs({
+        id: "source-1",
+        credentialRef: { ref: "" },
+        credentialEnc: "new-encrypted-base64",
+      }),
+    ).toBe(true);
+  });
+
+  it("exige credentialRef e ciphertext ao criar uma fonte", () => {
+    expect(
+      hasRequiredCredentialInputs({
+        credentialRef: { ref: "" },
+        credentialEnc: "new-encrypted-base64",
+      }),
+    ).toBe(false);
+    expect(
+      hasRequiredCredentialInputs({
+        credentialRef: { ref: "credential-a" },
+        credentialEnc: "",
+      }),
+    ).toBe(false);
+    expect(
+      hasRequiredCredentialInputs({
+        credentialRef: { ref: "credential-a" },
+        credentialEnc: "new-encrypted-base64",
+      }),
+    ).toBe(true);
   });
 });

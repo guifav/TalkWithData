@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   acceptEncryptedInspection,
+  hasRequiredCredentialInputs,
   parseServiceAccountCredential,
 } from "@/components/admin/data-source-credential-form";
 import type { Department } from "@/lib/types";
@@ -107,9 +108,7 @@ export function DataSourcesTab({
     headers !== null && inspectedSignature === currentInspectSignature;
   const canSave = useMemo(() => {
     if (!form.bucket.trim()) return false;
-    if (!form.id && !form.credentialRef.ref.trim()) return false;
-    if (!form.id && !form.credentialEnc.trim()) return false;
-    if (form.id && form.credentialEnc.trim() && !form.credentialRef.ref.trim()) return false;
+    if (!hasRequiredCredentialInputs(form)) return false;
     if (!form.ownerColumn.trim()) return false;
     if (!hasFreshInspection || !headers) return false;
     if (!headers.headers.includes(form.ownerColumn)) return false;
