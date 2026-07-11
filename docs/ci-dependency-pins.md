@@ -29,6 +29,11 @@ Dependabot also checks the Dockerfile under `app/` every Monday. The
 `node:22-alpine` base image keeps its readable tag and an immutable digest, so a
 runtime image update is proposed as a reviewable pull request.
 
+The `Dependency pin review` workflow checks the PostgreSQL service and local
+setup image digests every Monday. It also runs on pull requests that change a
+pin source or the verification script. A moved upstream tag fails the job and
+requires a pull request that reviews the new manifest before updating the pin.
+
 Verify an action pin with the GitHub API:
 
 ```bash
@@ -39,16 +44,16 @@ gh api repos/actions/setup-java/git/ref/tags/v5.5.0 --jq .object.sha
 
 ## Container image updates
 
-The PostgreSQL 16 service is pinned to the multi-platform manifest digest that
-was resolved from the official `postgres:16` image on 2026-07-11. Review the
-digest when PostgreSQL publishes a new supported 16.x image or when Dependabot
-updates the application runtime image. The `node:22-alpine` runtime image was
-resolved the same day and is reviewed through the Docker Dependabot entry.
+The PostgreSQL 16 CI service and the `postgres:16-alpine` local setup examples
+are pinned to multi-platform manifest digests resolved from the official images
+on 2026-07-11. The `node:22-alpine` runtime image was resolved the same day and
+is reviewed through the Docker Dependabot entry.
 
 Resolve and inspect the candidate digest before changing the workflow:
 
 ```bash
 docker buildx imagetools inspect docker.io/library/postgres:16
+docker buildx imagetools inspect docker.io/library/postgres:16-alpine
 ```
 
 After any pin update, run the workflow on a pull request. The migration check
