@@ -210,7 +210,7 @@ git commit -m "docs: explain credential onboarding"
 **Interfaces:**
 - Produces: one GitHub PR closing issue #42 with validation evidence and E4 adjudication.
 
-- [ ] **Step 1: Push and open PR**
+- [x] **Step 1: Push and open PR**
 
 Push `feat/42-credential-onboarding`, open a ready PR against `main`, link `Closes #42`, and include exact validation commands and outcomes.
 
