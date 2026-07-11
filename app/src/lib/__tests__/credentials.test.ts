@@ -31,6 +31,40 @@ describe("SecretService", () => {
     ).resolves.toEqual(fakeServiceAccount);
   });
 
+  it("criptografa credencial e permite round trip pelo mesmo formato", async () => {
+    const encryptingService = new SecretService({
+      encryptionKeyBase64: DEV_ENC_KEY,
+    });
+    const encrypted = encryptingService.encrypt(fakeServiceAccount);
+    const resolvingService = new SecretService({
+      encryptionKeyBase64: DEV_ENC_KEY,
+      loadEncryptedBlob: async () => encrypted,
+    });
+
+    await expect(
+      resolvingService.resolve({ kind: "encryptedBlob", ref: "data-source-a" }),
+    ).resolves.toEqual(fakeServiceAccount);
+  });
+
+  it("gera IV novo para cada criptografia da mesma credencial", () => {
+    const service = new SecretService({ encryptionKeyBase64: DEV_ENC_KEY });
+
+    const first = service.encrypt(fakeServiceAccount);
+    const second = service.encrypt(fakeServiceAccount);
+
+    expect(first.equals(second)).toBe(false);
+  });
+
+  it("exige TWD_CREDENTIAL_ENC_KEY em produção ao criptografar", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("TWD_CREDENTIAL_ENC_KEY", "");
+    const service = new SecretService();
+
+    expect(() => service.encrypt(fakeServiceAccount)).toThrow(
+      "TWD_CREDENTIAL_ENC_KEY e obrigatorio em producao",
+    );
+  });
+
   it("lança para secretManager enquanto a integração está reservada", async () => {
     const service = new SecretService();
     const ref: CredentialRef = { kind: "secretManager", ref: "projects/p/secrets/s" };
