@@ -99,6 +99,7 @@ vi.mock("@/lib/data-sources/storage", () => ({
   })),
 }));
 
+const { CredentialConfigError } = await import("@/lib/data-sources/credentials");
 const { POST: inspectHeaders } = await import(
   "@/app/api/admin/data-sources/inspect-headers/route"
 );
@@ -227,6 +228,35 @@ describe("admin inspect data source headers route", () => {
     expect(logged).not.toContain(rawCredential.private_key);
     expect(logged).not.toContain(rawCredential.client_email);
     expect(logged).not.toContain(Buffer.from("generated-ciphertext").toString("base64"));
+  });
+
+  it("retorna erro explícito quando chave de criptografia está ausente", async () => {
+    setupAuth("superadmin");
+    routeMocks.encrypt.mockImplementationOnce(() => {
+      throw new CredentialConfigError(
+        "TWD_CREDENTIAL_ENC_KEY e obrigatorio em producao",
+      );
+    });
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const response = await inspectHeaders(
+      request("token", {
+        bucket: "external-bucket",
+        prefix: "exports",
+        credentialRef: { kind: "encryptedBlob", ref: "credential-a" },
+        credential: rawCredential,
+      }),
+    );
+    const body = await response.json();
+    const logged = errorSpy.mock.calls.flat().map(String).join("\n");
+    errorSpy.mockRestore();
+
+    expect(response.status).toBe(503);
+    expect(body).toEqual({
+      error: "TWD_CREDENTIAL_ENC_KEY e obrigatorio em producao",
+    });
+    expect(logged).toBe("Inspect data source headers configuration failed");
+    expect(logged).not.toContain(rawCredential.private_key);
   });
 
   it.each([

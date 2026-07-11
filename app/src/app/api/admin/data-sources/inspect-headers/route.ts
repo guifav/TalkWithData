@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySuperAdmin } from "@/lib/api-auth";
-import { SecretService, type CredentialRef } from "@/lib/data-sources/credentials";
+import {
+  CredentialConfigError,
+  SecretService,
+  type CredentialRef,
+} from "@/lib/data-sources/credentials";
 import { getDataSourceWithCredentials } from "@/lib/data-sources/firestore";
 import { createGcsStorage } from "@/lib/data-sources/storage";
 import { parseCsvHeader } from "@/lib/data-sources/csv-table";
@@ -107,7 +111,12 @@ export async function POST(request: NextRequest) {
       objectName: csvObject.name,
       ...(generatedCredentialEnc ? { credentialEnc: generatedCredentialEnc } : {}),
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof CredentialConfigError) {
+      console.error("Inspect data source headers configuration failed");
+      return NextResponse.json({ error: error.message }, { status: 503 });
+    }
+
     console.error("Inspect data source headers failed");
     return NextResponse.json(
       { error: "Failed to inspect headers" },
