@@ -30,17 +30,17 @@
 - Produces: `SecretService.encrypt(value: object): Buffer`
 - Preserves: `SecretService.resolve(ref: CredentialRef): Promise<object>`
 
-- [ ] **Step 1: Write failing encryption tests**
+- [x] **Step 1: Write failing encryption tests**
 
 Add tests that call `service.encrypt(fakeServiceAccount)`, resolve the result through a second service, assert round-trip equality, assert two encryptions differ, and assert production encryption fails without a configured key.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run: `cd app && npm test -- src/lib/__tests__/credentials.test.ts`
 
 Expected: FAIL because `SecretService.encrypt` does not exist.
 
-- [ ] **Step 3: Implement minimal encryption**
+- [x] **Step 3: Implement minimal encryption**
 
 Import `createCipheriv` and `randomBytes`, then add:
 
@@ -60,13 +60,13 @@ encrypt(value: object): Buffer {
 }
 ```
 
-- [ ] **Step 4: Verify GREEN**
+- [x] **Step 4: Verify GREEN**
 
 Run: `cd app && npm test -- src/lib/__tests__/credentials.test.ts`
 
 Expected: all credential tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/src/lib/data-sources/credentials.ts app/src/lib/__tests__/credentials.test.ts
@@ -84,27 +84,27 @@ git commit -m "feat: encrypt data source credentials"
 - Request addition: `credential?: unknown`
 - Conditional response addition: `credentialEnc: string` only when raw input was supplied
 
-- [ ] **Step 1: Write failing route tests**
+- [x] **Step 1: Write failing route tests**
 
 Cover a valid raw service account, missing required fields, non-object input, serialized input over 64 KiB, both `credential` and `credentialEnc`, and the existing ciphertext path. For success, capture the encryption result in the credential mock and assert the response contains only that ciphertext, while the raw `private_key` and `client_email` are absent from response and logged errors.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run: `cd app && npm test -- src/lib/__tests__/data-sources-inspect-headers.test.ts`
 
 Expected: FAIL because raw `credential` is unsupported and no ciphertext is returned.
 
-- [ ] **Step 3: Implement request validation and one-time encryption**
+- [x] **Step 3: Implement request validation and one-time encryption**
 
 Add `credential?: unknown` to the body type. Validate exclusivity and the service-account shape before encryption. Extend resolved input with `generatedCredentialEnc?: string`; for raw input call `new SecretService().encrypt(credential).toString("base64")`, then use that exact string for resolution and `credentialEncProof`. Include `credentialEnc` in the successful JSON response only when `generatedCredentialEnc` exists.
 
-- [ ] **Step 4: Verify GREEN and compatibility**
+- [x] **Step 4: Verify GREEN and compatibility**
 
 Run: `cd app && npm test -- src/lib/__tests__/data-sources-inspect-headers.test.ts src/lib/__tests__/data-sources-admin.test.ts`
 
 Expected: all selected tests pass, including existing ciphertext and stored-credential cases.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/src/app/api/admin/data-sources/inspect-headers/route.ts app/src/lib/__tests__/data-sources-inspect-headers.test.ts
@@ -123,31 +123,31 @@ git commit -m "feat: encrypt credentials during inspection"
 - Produces: `acceptEncryptedInspection<T extends { credentialJson: string; credentialEnc: string }>(form: T, credentialEnc: string): T`
 - Consumes: inspect response `credentialEnc?: string`
 
-- [ ] **Step 1: Write failing form-helper tests**
+- [x] **Step 1: Write failing form-helper tests**
 
 Test that valid JSON parses to an object, invalid JSON and arrays throw `Service account JSON must be a valid JSON object`, and accepting inspected ciphertext returns state with `credentialJson` cleared and `credentialEnc` set.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run: `cd app && npm test -- src/lib/__tests__/data-source-credential-form.test.ts`
 
 Expected: FAIL because the helper module does not exist.
 
-- [ ] **Step 3: Implement helpers and UI flow**
+- [x] **Step 3: Implement helpers and UI flow**
 
 Add `credentialJson` to the form state and keep `credentialEnc` internal. Render `Textarea` labeled `Service account JSON`, parse raw JSON before inspection, send it as `credential`, require a returned ciphertext when raw input was sent, apply `acceptEncryptedInspection`, and never render ciphertext. Leave both fields blank on an existing source to use its stored credential.
 
-- [ ] **Step 4: Invalidate stale inspection state**
+- [x] **Step 4: Invalidate stale inspection state**
 
 When credential JSON changes, clear internal ciphertext, headers, and inspected signature. Build the post-inspection signature from the updated ciphertext state so create and update remain enabled only for the exact inspected configuration.
 
-- [ ] **Step 5: Verify GREEN**
+- [x] **Step 5: Verify GREEN**
 
 Run: `cd app && npm test -- src/lib/__tests__/data-source-credential-form.test.ts src/lib/__tests__/data-sources-inspect-headers.test.ts && npm run typecheck && npm run lint`
 
 Expected: all tests pass with no type or lint errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add app/src/components/admin/data-source-credential-form.ts app/src/components/admin/data-sources-tab.tsx app/src/lib/__tests__/data-source-credential-form.test.ts
@@ -163,11 +163,11 @@ git commit -m "feat: onboard data source credentials in admin"
 **Interfaces:**
 - Documents: key generation, stable key lifecycle, create and rotation flows, TLS requirement, and recovery consequence.
 
-- [ ] **Step 1: Update deployment documentation**
+- [x] **Step 1: Update deployment documentation**
 
 Add `openssl rand -base64 32`, explain that the value belongs in the deployment secret named `TWD_CREDENTIAL_ENC_KEY`, state that changing or losing it makes stored credentials unreadable, and document the authenticated admin inspect-and-save flow for create and rotation.
 
-- [ ] **Step 2: Run focused and full validation**
+- [x] **Step 2: Run focused and full validation**
 
 Run:
 
@@ -183,7 +183,7 @@ npm run test:coverage
 
 Expected: all commands pass. Confirm no secret-like fixture appears in runtime logs.
 
-- [ ] **Step 3: Self-review the diff**
+- [x] **Step 3: Self-review the diff**
 
 Run:
 
@@ -195,7 +195,7 @@ rg -n "\\x{2014}|\\x{2013}|T[O]DO|T[B]D" docs/DEPLOYMENT.md docs/superpowers/spe
 
 Expected: no encrypted-blob UI prompt, no prohibited punctuation or placeholders, and only internal/API uses of `credentialEnc`.
 
-- [ ] **Step 4: Commit documentation and final adjustments**
+- [x] **Step 4: Commit documentation and final adjustments**
 
 ```bash
 git add docs/DEPLOYMENT.md docs/superpowers/plans/2026-07-11-credential-onboarding.md
