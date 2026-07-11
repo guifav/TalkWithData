@@ -2,12 +2,13 @@
  * AI Model Resolver, centralizes provider and model selection for all AI routes.
  *
  * Priority:
- *   1. User aiConfig in Firestore users/{uid}.aiConfig
+ *   1. User aiConfig metadata in Firestore users/{uid}.aiConfig
  *   2. AI_DEFAULT_PROVIDER / AI_DEFAULT_MODEL env vars
  *   3. Built-in Anthropic default
  */
 
 import { adminDb } from "@/lib/firebase/admin";
+import { getUserAiConfigApiKey } from "@/lib/ai-config-secrets";
 import {
   AI_PROVIDER_LABELS,
   AI_PROVIDER_VALUES,
@@ -24,10 +25,12 @@ export { AI_PROVIDER_LABELS, AI_PROVIDER_VALUES, SUPPORTED_MODELS };
 export interface AiModelConfig {
   provider: AiProvider;
   model: string;
-  /** Server-side only. For custom providers this is stored in Firestore. */
+  /** Server-side only. Custom provider keys are stored in ai_config_secrets. */
   apiKey?: string;
   /** Server-side only. Required for custom OpenAI-compatible providers. */
   baseUrl?: string;
+  /** Metadata only. True when a server-side custom provider key exists. */
+  apiKeyConfigured?: boolean;
 }
 
 const PROVIDER_KEY_ENV: Partial<Record<AiProvider, string>> = {
@@ -59,15 +62,21 @@ function getDefaultConfig(): AiModelConfig {
 
 export const DEFAULT_CONFIG: AiModelConfig = getDefaultConfig();
 
-function withCredentials(config: AiModelConfig): AiModelConfig {
+async function withCredentials(config: AiModelConfig, uid?: string): Promise<AiModelConfig> {
   if (config.provider === "custom") {
     if (!config.baseUrl?.trim()) {
       throw new Error("Custom AI provider requires baseUrl in users/{uid}.aiConfig.");
     }
-    if (!config.apiKey?.trim()) {
-      throw new Error("Custom AI provider requires apiKey in users/{uid}.aiConfig.");
+    const storedApiKey = uid ? await getUserAiConfigApiKey(uid) : null;
+    const legacyApiKey = process.env.TWD_AI_CONFIG_LEGACY_READ === "1"
+      ? config.apiKey?.trim()
+      : undefined;
+    const apiKey = storedApiKey ?? legacyApiKey;
+
+    if (!apiKey?.trim()) {
+      throw new Error("Custom AI provider requires a server-side apiKey in ai_config_secrets.");
     }
-    return config;
+    return { ...config, apiKey };
   }
 
   const envKey = PROVIDER_KEY_ENV[config.provider];
@@ -105,7 +114,7 @@ export async function resolveUserModel(uid: string): Promise<{
     console.error("[AI Model] Failed to read user config, using default:", err);
   }
 
-  const configWithCredentials = withCredentials(config);
+  const configWithCredentials = await withCredentials(config, uid);
   return {
     config: configWithCredentials,
     apiKey: configWithCredentials.apiKey || "",
@@ -162,6 +171,7 @@ export function isValidConfig(config: unknown): config is AiModelConfig {
   }
 
   if (c.apiKey !== undefined && typeof c.apiKey !== "string") return false;
+  if (c.apiKeyConfigured !== undefined && typeof c.apiKeyConfigured !== "boolean") return false;
   if (c.baseUrl !== undefined && typeof c.baseUrl !== "string") return false;
   if (c.provider === "custom" && !c.baseUrl?.toString().trim()) return false;
 
@@ -174,7 +184,7 @@ export function sanitizeAiConfig(config: AiModelConfig | null | undefined) {
     provider: config.provider,
     model: config.model,
     baseUrl: config.baseUrl,
-    apiKeyConfigured: Boolean(config.apiKey),
+    apiKeyConfigured: Boolean(config.apiKey || config.apiKeyConfigured),
   };
 }
 

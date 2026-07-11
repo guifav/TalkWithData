@@ -10,6 +10,16 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department;
     }
 
+    function hasLegacyAiConfigSecretMaterial(data) {
+      return ('aiConfig' in data) &&
+        data.aiConfig is map &&
+        (
+          ('apiKey' in data.aiConfig) ||
+          ('apiKeyEnc' in data.aiConfig) ||
+          ('credentialEnc' in data.aiConfig)
+        );
+    }
+
     // Dashboards collection
     match /dashboards/{dashboardId} {
       allow read: if isAuthorizedUser() && (
@@ -53,7 +63,8 @@ service cloud.firestore {
 
     // Users collection — all access requires authorized email domain
     match /users/{userId} {
-      allow read: if isAuthorizedUser() && request.auth.uid == userId;
+      allow read: if isAuthorizedUser() && request.auth.uid == userId
+        && !hasLegacyAiConfigSecretMaterial(resource.data);
       // Authorized users can create their own doc — role field BLOCKED (set server-side via Admin SDK)
       allow create: if isAuthorizedUser() && request.auth.uid == userId
         && !request.resource.data.keys().hasAny(['role', 'department', 'aiConfig']);
@@ -89,6 +100,11 @@ service cloud.firestore {
     match /shared-folders/{folderId} {
       allow read: if false;
       allow write: if false;
+    }
+
+    // AI provider secrets — server-only (Admin SDK bypasses rules)
+    match /ai_config_secrets/{userId} {
+      allow read, write: if false;
     }
 
     // Slugs collection — server-only (Admin SDK bypasses rules)

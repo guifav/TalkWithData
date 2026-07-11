@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin, verifySuperAdmin, type UserRole } from "@/lib/api-auth";
 import { adminDb } from "@/lib/firebase/admin";
-import { isValidConfig, getSupportedModels, sanitizeAiConfig, type AiModelConfig } from "@/lib/ai-model";
+import { sanitizeAiConfig, type AiModelConfig } from "@/lib/ai-model";
+import {
+  AiConfigSecretError,
+  updateUserAiConfig,
+} from "@/lib/ai-config-secrets";
 
 const VALID_ROLES: UserRole[] = ["user", "admin", "superadmin"];
 
@@ -20,27 +24,17 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { uid, role, aiConfig } = body as { uid?: string; role?: string; aiConfig?: AiModelConfig };
+    const { uid, role, aiConfig, keepExistingApiKey } = body as {
+      uid?: string;
+      role?: string;
+      aiConfig?: AiModelConfig | null;
+      keepExistingApiKey?: boolean;
+    };
 
     // Handle AI config update
     if (uid && aiConfig !== undefined) {
-      const userDoc = await adminDb.collection("users").doc(uid).get();
-      if (!userDoc.exists) {
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
-      }
-      if (aiConfig === null) {
-        // Clear config → use default
-        await adminDb.collection("users").doc(uid).update({ aiConfig: null });
-        return NextResponse.json({ success: true, uid, aiConfig: null });
-      }
-      if (!isValidConfig(aiConfig)) {
-        return NextResponse.json(
-          { error: "Invalid AI config. Supported models: " + getSupportedModels().map((m) => m.label).join(", ") },
-          { status: 400 }
-        );
-      }
-      await adminDb.collection("users").doc(uid).update({ aiConfig });
-      return NextResponse.json({ success: true, uid, aiConfig: sanitizeAiConfig(aiConfig) });
+      const storedConfig = await updateUserAiConfig(uid, aiConfig, { keepExistingApiKey });
+      return NextResponse.json({ success: true, uid, aiConfig: sanitizeAiConfig(storedConfig) });
     }
 
     if (!uid || !role || !VALID_ROLES.includes(role as UserRole)) {
@@ -68,9 +62,13 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ success: true, uid, role });
   } catch (error) {
-    console.error("Admin role change failed:", error);
+    if (error instanceof AiConfigSecretError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+
+    console.error("Admin users update failed:", error);
     return NextResponse.json(
-      { error: "Failed to update role" },
+      { error: "Failed to update user" },
       { status: 500 }
     );
   }

@@ -1,0 +1,321 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+type StoredDoc = { exists: boolean; data: Record<string, unknown> };
+
+const collections = new Map<string, Map<string, StoredDoc>>();
+let transactionCount = 0;
+
+function collectionStore(name: string) {
+  let store = collections.get(name);
+  if (!store) {
+    store = new Map<string, StoredDoc>();
+    collections.set(name, store);
+  }
+  return store;
+}
+
+function docRef(collectionName: string, id: string) {
+  const store = collectionStore(collectionName);
+  return {
+    id,
+    get: vi.fn(async () => {
+      const doc = store.get(id);
+      return {
+        exists: doc?.exists ?? false,
+        data: () => doc?.data,
+      };
+    }),
+    set: vi.fn(async (data: Record<string, unknown>, opts?: { merge?: boolean }) => {
+      const current = store.get(id);
+      store.set(id, {
+        exists: true,
+        data: opts?.merge && current?.exists ? { ...current.data, ...data } : { ...data },
+      });
+    }),
+    update: vi.fn(async (data: Record<string, unknown>) => {
+      const current = store.get(id);
+      if (!current?.exists) throw new Error("not found");
+      store.set(id, {
+        exists: true,
+        data: { ...current.data, ...data },
+      });
+    }),
+    delete: vi.fn(async () => {
+      store.delete(id);
+    }),
+  };
+}
+
+vi.mock("@/lib/firebase/admin", () => ({
+  adminDb: {
+    runTransaction: async (fn: (tx: {
+      get: (ref: { get: () => Promise<unknown> }) => Promise<unknown>;
+      set: (
+        ref: { set: (data: Record<string, unknown>, opts?: { merge?: boolean }) => Promise<void> },
+        data: Record<string, unknown>,
+        opts?: { merge?: boolean },
+      ) => void;
+      update: (
+        ref: { update: (data: Record<string, unknown>) => Promise<void> },
+        data: Record<string, unknown>,
+      ) => void;
+      delete: (ref: { delete: () => Promise<void> }) => void;
+    }) => Promise<unknown>) => {
+      transactionCount += 1;
+      return fn({
+        get: (ref) => ref.get(),
+        set: (ref, data, opts) => {
+          void ref.set(data, opts);
+        },
+        update: (ref, data) => {
+          void ref.update(data);
+        },
+        delete: (ref) => {
+          void ref.delete();
+        },
+      });
+    },
+    collection: (name: string) => ({
+      doc: (id: string) => docRef(name, id),
+    }),
+  },
+}));
+
+const {
+  DEV_AI_CONFIG_ENC_KEY,
+  decryptApiKey,
+  encryptApiKey,
+  migrateLegacyUserAiConfig,
+  planLegacyAiConfigMigration,
+  requireConfiguredAiConfigEncryptionKey,
+  updateUserAiConfig,
+} = await import("@/lib/ai-config-secrets");
+const { resolveUserModel } = await import("@/lib/ai-model");
+
+describe("AI config server-only secrets", () => {
+  beforeEach(() => {
+    collections.clear();
+    transactionCount = 0;
+    vi.unstubAllEnvs();
+    collectionStore("users").set("user-a", {
+      exists: true,
+      data: { role: "user" },
+    });
+  });
+
+  it("encrypts and decrypts API keys with AES-GCM", () => {
+    const encrypted = encryptApiKey("sk-custom", DEV_AI_CONFIG_ENC_KEY);
+
+    expect(encrypted).not.toContain("sk-custom");
+    expect(decryptApiKey(encrypted, DEV_AI_CONFIG_ENC_KEY)).toBe("sk-custom");
+  });
+
+  it("requires an explicit configured key for migration use", () => {
+    expect(() => requireConfiguredAiConfigEncryptionKey()).toThrow("TWD_AI_CONFIG_ENC_KEY");
+
+    vi.stubEnv("TWD_AI_CONFIG_ENC_KEY", DEV_AI_CONFIG_ENC_KEY);
+
+    expect(() => requireConfiguredAiConfigEncryptionKey()).not.toThrow();
+  });
+
+  it("stores custom provider keys outside the user document", async () => {
+    const stored = await updateUserAiConfig("user-a", {
+      provider: "custom",
+      model: "custom-model",
+      baseUrl: "https://llm.example.test/v1",
+      apiKey: "sk-custom",
+    });
+
+    const userDoc = collectionStore("users").get("user-a")?.data;
+    const secretDoc = collectionStore("ai_config_secrets").get("user-a")?.data;
+
+    expect(stored).toEqual({
+      provider: "custom",
+      model: "custom-model",
+      baseUrl: "https://llm.example.test/v1",
+      apiKeyConfigured: true,
+    });
+    expect(userDoc?.aiConfig).toEqual(stored);
+    expect(JSON.stringify(userDoc)).not.toContain("sk-custom");
+    expect(secretDoc?.apiKeyEnc).toEqual(expect.any(String));
+    expect(secretDoc?.apiKeyEnc).not.toContain("sk-custom");
+  });
+
+  it("keeps an existing encrypted key when requested", async () => {
+    await updateUserAiConfig("user-a", {
+      provider: "custom",
+      model: "custom-model",
+      baseUrl: "https://llm.example.test/v1",
+      apiKey: "sk-original",
+    });
+    const originalSecret = collectionStore("ai_config_secrets").get("user-a")?.data.apiKeyEnc;
+
+    const stored = await updateUserAiConfig("user-a", {
+      provider: "custom",
+      model: "custom-model-large",
+      baseUrl: "https://llm.example.test/v2",
+    }, { keepExistingApiKey: true });
+
+    expect(stored?.apiKeyConfigured).toBe(true);
+    expect(collectionStore("ai_config_secrets").get("user-a")?.data.apiKeyEnc).toBe(originalSecret);
+  });
+
+  it("rejects malformed API config field types as validation errors", async () => {
+    await expect(updateUserAiConfig("user-a", {
+      provider: "custom",
+      model: 123,
+      baseUrl: "https://llm.example.test/v1",
+      apiKey: "sk-custom",
+    } as unknown as Parameters<typeof updateUserAiConfig>[1])).rejects.toMatchObject({
+      status: 400,
+      message: "model must be a string",
+    });
+  });
+
+  it("rejects malformed uid and keepExistingApiKey field types as validation errors", async () => {
+    await expect(updateUserAiConfig(123 as unknown as string, null)).rejects.toMatchObject({
+      status: 400,
+      message: "uid must be a string",
+    });
+
+    await expect(updateUserAiConfig("user-a", {
+      provider: "custom",
+      model: "custom-model",
+      baseUrl: "https://llm.example.test/v1",
+    }, { keepExistingApiKey: "false" as unknown as boolean })).rejects.toMatchObject({
+      status: 400,
+      message: "keepExistingApiKey must be a boolean",
+    });
+  });
+
+  it("migrates a legacy key during keep-existing update and removes plaintext", async () => {
+    collectionStore("users").set("user-a", {
+      exists: true,
+      data: {
+        aiConfig: {
+          provider: "custom",
+          model: "custom-model",
+          baseUrl: "https://llm.example.test/v1",
+          apiKey: "sk-legacy",
+        },
+      },
+    });
+
+    await updateUserAiConfig("user-a", {
+      provider: "custom",
+      model: "custom-model",
+      baseUrl: "https://llm.example.test/v1",
+    }, { keepExistingApiKey: true });
+
+    const userDoc = collectionStore("users").get("user-a")?.data;
+    expect(JSON.stringify(userDoc)).not.toContain("sk-legacy");
+    expect(collectionStore("ai_config_secrets").get("user-a")?.data.apiKeyEnc).toEqual(expect.any(String));
+  });
+
+  it("deletes server-side keys when config is cleared or changed to built-in provider", async () => {
+    await updateUserAiConfig("user-a", {
+      provider: "custom",
+      model: "custom-model",
+      baseUrl: "https://llm.example.test/v1",
+      apiKey: "sk-custom",
+    });
+
+    await updateUserAiConfig("user-a", {
+      provider: "anthropic",
+      model: "claude-sonnet-4-20250514",
+    });
+    expect(collectionStore("ai_config_secrets").get("user-a")).toBeUndefined();
+
+    await updateUserAiConfig("user-a", {
+      provider: "custom",
+      model: "custom-model",
+      baseUrl: "https://llm.example.test/v1",
+      apiKey: "sk-custom",
+    });
+    await updateUserAiConfig("user-a", null);
+
+    expect(collectionStore("users").get("user-a")?.data.aiConfig).toBeNull();
+    expect(collectionStore("ai_config_secrets").get("user-a")).toBeUndefined();
+  });
+
+  it("migrates a legacy custom key with one transaction and no plaintext in the user document", async () => {
+    collectionStore("users").set("user-a", {
+      exists: true,
+      data: {
+        aiConfig: {
+          provider: "custom",
+          model: "custom-model",
+          baseUrl: "https://llm.example.test/v1",
+          apiKey: "sk-legacy",
+        },
+      },
+    });
+
+    const status = await migrateLegacyUserAiConfig("user-a");
+
+    const userDoc = collectionStore("users").get("user-a")?.data;
+    const secretDoc = collectionStore("ai_config_secrets").get("user-a")?.data;
+
+    expect(status).toBe("migrated");
+    expect(transactionCount).toBe(1);
+    expect(userDoc?.aiConfig).toEqual({
+      provider: "custom",
+      model: "custom-model",
+      baseUrl: "https://llm.example.test/v1",
+      apiKeyConfigured: true,
+    });
+    expect(JSON.stringify(userDoc)).not.toContain("sk-legacy");
+    expect(secretDoc?.apiKeyEnc).toEqual(expect.any(String));
+  });
+
+  it("scrubs built-in provider legacy keys instead of creating orphan secrets", async () => {
+    collectionStore("users").set("user-a", {
+      exists: true,
+      data: {
+        aiConfig: {
+          provider: "anthropic",
+          model: "claude-sonnet-4-20250514",
+          apiKey: "sk-built-in-legacy",
+        },
+      },
+    });
+
+    const status = await migrateLegacyUserAiConfig("user-a");
+
+    expect(status).toBe("scrubbedSecretMaterial");
+    expect(collectionStore("users").get("user-a")?.data.aiConfig).toEqual({
+      provider: "anthropic",
+      model: "claude-sonnet-4-20250514",
+    });
+    expect(collectionStore("ai_config_secrets").get("user-a")).toBeUndefined();
+  });
+
+  it("plans non-string legacy apiKey values as scrubbed material without throwing", () => {
+    const plan = planLegacyAiConfigMigration({
+      provider: "custom",
+      model: "custom-model",
+      baseUrl: "https://llm.example.test/v1",
+      apiKey: 123,
+    });
+
+    expect(plan.status).toBe("scrubbedSecretMaterial");
+  });
+
+  it("resolves custom provider credentials from the server-only collection", async () => {
+    await updateUserAiConfig("user-a", {
+      provider: "custom",
+      model: "custom-model",
+      baseUrl: "https://llm.example.test/v1",
+      apiKey: "sk-custom",
+    });
+
+    const resolved = await resolveUserModel("user-a");
+
+    expect(resolved.config).toMatchObject({
+      provider: "custom",
+      model: "custom-model",
+      baseUrl: "https://llm.example.test/v1",
+      apiKey: "sk-custom",
+    });
+  });
+});
