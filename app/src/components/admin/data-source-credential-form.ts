@@ -29,6 +29,20 @@ export function hasRequiredCredentialInputs(form: {
   return Boolean(form.credentialRef.ref.trim() && form.credentialEnc.trim());
 }
 
+export function isInspectionCurrent({
+  requestId,
+  currentRequestId,
+  formRevision,
+  currentFormRevision,
+}: {
+  requestId: number;
+  currentRequestId: number;
+  formRevision: number;
+  currentFormRevision: number;
+}): boolean {
+  return requestId === currentRequestId && formRevision === currentFormRevision;
+}
+
 function isPlainObject(value: unknown): value is object {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }

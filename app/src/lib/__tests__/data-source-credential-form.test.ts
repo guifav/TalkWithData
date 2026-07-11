@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   acceptEncryptedInspection,
   hasRequiredCredentialInputs,
+  isInspectionCurrent,
   parseServiceAccountCredential,
 } from "@/components/admin/data-source-credential-form";
 
@@ -72,6 +73,39 @@ describe("data source credential form helpers", () => {
       hasRequiredCredentialInputs({
         credentialRef: { ref: "credential-a" },
         credentialEnc: "new-encrypted-base64",
+      }),
+    ).toBe(true);
+  });
+
+  it("rejeita resposta quando o formulário mudou durante a inspeção", () => {
+    expect(
+      isInspectionCurrent({
+        requestId: 1,
+        currentRequestId: 1,
+        formRevision: 3,
+        currentFormRevision: 4,
+      }),
+    ).toBe(false);
+  });
+
+  it("rejeita resposta de inspeção substituída por outra requisição", () => {
+    expect(
+      isInspectionCurrent({
+        requestId: 1,
+        currentRequestId: 2,
+        formRevision: 3,
+        currentFormRevision: 3,
+      }),
+    ).toBe(false);
+  });
+
+  it("aceita somente a resposta da requisição e revisão atuais", () => {
+    expect(
+      isInspectionCurrent({
+        requestId: 2,
+        currentRequestId: 2,
+        formRevision: 4,
+        currentFormRevision: 4,
       }),
     ).toBe(true);
   });

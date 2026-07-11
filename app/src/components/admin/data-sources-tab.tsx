@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type SetStateAction,
+} from "react";
 import { authFetch } from "@/lib/firebase/auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   acceptEncryptedInspection,
   hasRequiredCredentialInputs,
+  isInspectionCurrent,
   parseServiceAccountCredential,
 } from "@/components/admin/data-source-credential-form";
 import type { Department } from "@/lib/types";
@@ -73,7 +82,13 @@ export function DataSourcesTab({
   isSuperAdmin: boolean;
 }) {
   const [dataSources, setDataSources] = useState<DataSourceRow[]>([]);
-  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [form, setFormState] = useState<FormState>(EMPTY_FORM);
+  const formRevision = useRef(0);
+  const inspectionRequestId = useRef(0);
+  const setForm = useCallback((next: SetStateAction<FormState>) => {
+    formRevision.current += 1;
+    setFormState(next);
+  }, []);
   const [headers, setHeaders] = useState<HeaderInspectResult | null>(null);
   const [inspectedSignature, setInspectedSignature] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -144,6 +159,9 @@ export function DataSourcesTab({
   }
 
   async function inspectHeaders() {
+    const requestId = inspectionRequestId.current + 1;
+    inspectionRequestId.current = requestId;
+    const requestFormRevision = formRevision.current;
     setInspecting(true);
     setError(null);
     setMessage(null);
@@ -185,6 +203,16 @@ export function DataSourcesTab({
         body: JSON.stringify(body),
       });
       const result = await res.json();
+      if (
+        !isInspectionCurrent({
+          requestId,
+          currentRequestId: inspectionRequestId.current,
+          formRevision: requestFormRevision,
+          currentFormRevision: formRevision.current,
+        })
+      ) {
+        return;
+      }
       if (!res.ok) throw new Error(result.error || "Failed to inspect headers");
       if (typeof result.inspectionToken !== "string" || !result.inspectionToken) {
         throw new Error("Header inspection did not return a verification token");
@@ -203,11 +231,23 @@ export function DataSourcesTab({
       setInspectedSignature(buildInspectSignature(inspectedForm));
       setMessage(`Inspected ${result.objectName || "CSV"}: ${result.headers.length} header(s).`);
     } catch (err) {
+      if (
+        !isInspectionCurrent({
+          requestId,
+          currentRequestId: inspectionRequestId.current,
+          formRevision: requestFormRevision,
+          currentFormRevision: formRevision.current,
+        })
+      ) {
+        return;
+      }
       setHeaders(null);
       setInspectedSignature(null);
       setError(err instanceof Error ? err.message : "Failed to inspect headers");
     } finally {
-      setInspecting(false);
+      if (requestId === inspectionRequestId.current) {
+        setInspecting(false);
+      }
     }
   }
 
