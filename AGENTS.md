@@ -37,7 +37,7 @@ Use Conventional Commits: `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`
 1. Copy `app/.env.example` to `app/.env`
 2. Fill in Firebase config (create a Firebase project at https://console.firebase.google.com)
 3. Set `ALLOWED_AUTH_DOMAIN` to your domain (e.g., `yourdomain.com`)
-4. Set `STORAGE_BUCKET_NAME` to your Firebase Storage bucket
+4. Choose dashboard storage: set `STORAGE_PROVIDER=gcs` with `STORAGE_BUCKET_NAME`, or `STORAGE_PROVIDER=local` with a persistent `LOCAL_STORAGE_ROOT`
 5. Set `DATABASE_URL` to your PostgreSQL connection string. PostgreSQL is required, including for local development.
 6. Set at least one AI provider API key
 

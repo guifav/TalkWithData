@@ -15,8 +15,8 @@ Talk With Data ajuda equipes a publicar pacotes HTML de dashboards, pesquisar co
 - Node.js 22 ou superior para desenvolvimento local sem Docker.
 - Docker, opcional, usado no inicio rapido e recomendado para paridade com producao.
 - Um banco PostgreSQL. PostgreSQL e obrigatorio, inclusive para desenvolvimento local.
-- Um projeto Firebase com Authentication, Firestore e Storage habilitados.
-- Um bucket no Google Cloud Storage. Uploads e assets de dashboards sao servidos via Firebase Admin Storage, entao o bucket e obrigatorio. O adaptador de storage em disco local ainda nao esta ligado ao caminho de servir arquivos.
+- Um projeto Firebase com Authentication e Firestore habilitados. Firebase Storage e necessario apenas para dashboard storage via GCS.
+- Storage persistente para dashboards: um bucket no Google Cloud Storage ou um volume de filesystem local para deployments com instancia unica.
 - Pelo menos uma chave de API de um provedor de IA para os recursos de IA.
 
 ## Inicio rapido com Docker
@@ -34,8 +34,8 @@ aguarda o healthcheck limitado, aplica uma vez as migracoes Prisma versionadas e
 so inicia o app quando a migracao termina com sucesso.
 
 O arquivo `app/.env` copiado tem placeholders. Uma instancia em execucao ainda
-precisa de um projeto Firebase, um bucket no Google Cloud Storage e pelo menos
-um provedor de IA. O Compose fornece o PostgreSQL local e substitui o
+precisa de um projeto Firebase, storage persistente para dashboards e pelo menos
+um provedor de IA. O Compose fornece storage local persistente e PostgreSQL, e substitui o
 `DATABASE_URL` voltado ao host dentro dos containers. O servidor le em runtime
 apenas as variaveis `NEXT_PUBLIC_*` permitidas de Firebase e autenticacao e as
 entrega ao navegador, portanto uma unica imagem pode usar configuracoes publicas
@@ -58,7 +58,7 @@ diferentes (veja [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 
 - Next.js 16 com App Router.
 - React 19.
-- Firebase Authentication, Firestore e Firebase Storage sobre Google Cloud Storage.
+- Firebase Authentication e Firestore, mais GCS ou storage local persistente para dashboards.
 - Prisma para bases estruturadas por dashboard.
 - DuckDB in-process para consultas de fontes de dados.
 - shadcn/ui com tema Neutral.
@@ -77,7 +77,7 @@ Variaveis principais:
 - `NEXT_PUBLIC_FIREBASE_*`, configuracao publica do app Firebase.
 - `FIREBASE_PROJECT_ID`, projeto usado pelo Firebase Admin.
 - `SA_KEY_JSON`, service account opcional para desenvolvimento local.
-- `STORAGE_BUCKET_NAME`, bucket para HTML e assets dos dashboards.
+- `STORAGE_BUCKET_NAME`, bucket para HTML e assets quando `STORAGE_PROVIDER=gcs`.
 - `DATABASE_URL`, string de conexao PostgreSQL usada pelo Prisma. PostgreSQL e obrigatorio, inclusive para desenvolvimento local.
 - `DASHBOARD_SESSION_SECRET`, segredo para tokens de sessao e embed.
 - `TWD_CREDENTIAL_ENC_KEY`, chave AES-256-GCM base64 de 32 bytes das credenciais de fontes de dados, que ficam criptografadas em repouso. Obrigatoria em producao quando uma fonte armazena credencial.
@@ -88,7 +88,7 @@ Variaveis principais:
 - `ANTHROPIC_API_KEY`, chave para recursos de IA com Anthropic.
 - `MCP_ALLOWED_HOSTS`, `MCP_API_KEY` e `MCP_URL`, configuracao opcional de MCP.
 - `THUMBNAIL_FUNCTION_URL` e `THUMBNAIL_SECRET`, thumbnails opcionais.
-- `STORAGE_PROVIDER` e `LOCAL_STORAGE_ROOT`, seletor de adaptador de storage. Upload e serve usam Firebase Admin Storage (GCS); o adaptador `local` existe mas ainda nao esta ligado a esses caminhos.
+- `STORAGE_PROVIDER` e `LOCAL_STORAGE_ROOT`, seletor do adaptador de dashboard storage e diretorio persistente usado pelo provider `local`. Upload, serve, replace, delete e versoes usam o provider selecionado.
 
 Veja [app/.env.example](app/.env.example) para o template completo.
 

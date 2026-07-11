@@ -1,0 +1,14 @@
+services:
+  storage-smoke:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+      target: storage-smoke
+    environment:
+      STORAGE_PROVIDER: local
+      LOCAL_STORAGE_ROOT: /data/uploads
+    volumes:
+      - storage_smoke_data:/data
+
+volumes:
+  storage_smoke_data:

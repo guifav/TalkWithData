@@ -19,8 +19,8 @@ Talk With Data helps teams publish dashboard HTML packages, search across conten
 - Node.js 22 or newer for local development without Docker.
 - Docker, optional, used by the quickstart and recommended for production parity.
 - A PostgreSQL database. PostgreSQL is required, including for local development.
-- A Firebase project with Authentication, Firestore, and Storage enabled.
-- A Google Cloud Storage bucket. Uploads and dashboard assets are served through Firebase Admin Storage, so a bucket is required. The local-filesystem storage adapter is not yet wired into the serving path.
+- A Firebase project with Authentication and Firestore enabled. Firebase Storage is needed only when using GCS dashboard storage.
+- Persistent dashboard storage: a Google Cloud Storage bucket, or a local filesystem volume for single-instance deployments.
 - At least one AI provider API key for AI features.
 
 ## Quickstart with Docker
@@ -38,8 +38,9 @@ for its bounded healthcheck, applies the checked-in Prisma migrations once, and
 starts the app only after the migration job succeeds.
 
 The copied `app/.env` file contains placeholders. A running instance still
-needs a Firebase project, a Google Cloud Storage bucket, and at least one AI
-provider. Compose supplies the local PostgreSQL dependency and overrides the
+needs a Firebase project, persistent dashboard storage, and at least one AI
+provider. Compose supplies persistent local dashboard storage and the local
+PostgreSQL dependency, and overrides the
 host-oriented `DATABASE_URL` for its containers. The server reads the
 allowlisted `NEXT_PUBLIC_*` Firebase and authentication values at runtime and
 bootstraps them to the browser, so one prebuilt image can run with different
@@ -62,7 +63,7 @@ public configuration (see [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 
 - Next.js 16 with the App Router.
 - React 19.
-- Firebase Authentication, Firestore, and Firebase Storage on Google Cloud Storage.
+- Firebase Authentication and Firestore, plus GCS or persistent local dashboard storage.
 - Prisma for dashboard-specific structured databases.
 - DuckDB in-process engine for data-source queries.
 - shadcn/ui with the Neutral theme.
@@ -86,7 +87,7 @@ Copy `app/.env.example` to `app/.env`, then replace placeholders with project va
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | Yes | Firebase client app ID. |
 | `FIREBASE_PROJECT_ID` | Yes | Firebase Admin project ID. |
 | `SA_KEY_JSON` | Local/non-GCP | Service account JSON for local or non-GCP environments when Application Default Credentials are not available. |
-| `STORAGE_BUCKET_NAME` | Yes | Bucket used to store dashboard HTML packages and assets. |
+| `STORAGE_BUCKET_NAME` | GCS storage | Bucket used to store dashboard HTML packages and assets when `STORAGE_PROVIDER=gcs`. |
 | `DATABASE_URL` | Yes | PostgreSQL connection string used by Prisma. PostgreSQL is required, including for local development. |
 | `DASHBOARD_SESSION_SECRET` | Yes | Secret used to sign dashboard and embed session tokens. |
 | `TWD_CREDENTIAL_ENC_KEY` | Data sources | 32-byte base64 AES-256-GCM key for external data-source credentials, which are stored encrypted at rest. Required in production when a data source stores a credential. |
@@ -108,8 +109,8 @@ Copy `app/.env.example` to `app/.env`, then replace placeholders with project va
 | `MCP_URL` | Optional | Default MCP endpoint for deployments that use a shared MCP server. |
 | `THUMBNAIL_FUNCTION_URL` | Optional | Cloud Function URL for thumbnail generation. |
 | `THUMBNAIL_SECRET` | Optional | Shared secret for thumbnail generation. |
-| `STORAGE_PROVIDER` | Optional | Storage adapter selector. The runtime upload and serve paths currently use Firebase Admin Storage (GCS); the `local` adapter exists but is not yet wired into those paths. |
-| `LOCAL_STORAGE_ROOT` | Optional | Directory used by the local storage adapter. Not yet wired into the upload and serve paths. |
+| `STORAGE_PROVIDER` | Optional | Dashboard storage adapter: `gcs` (default) or `local`. Both adapters support upload, serving, replacement, deletion, and version copies. |
+| `LOCAL_STORAGE_ROOT` | Local storage | Persistent directory used when `STORAGE_PROVIDER=local`. Defaults to `/data/uploads`; Docker Compose mounts it from `app_data`. |
 
 See [app/.env.example](app/.env.example) for the current template.
 

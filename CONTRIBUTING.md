@@ -9,7 +9,7 @@ Thank you for helping improve Talk With Data. This guide explains how to set up 
 - Node.js 22 or newer.
 - npm.
 - Docker, optional but recommended for production parity.
-- A Firebase project with Authentication, Firestore, and Storage enabled.
+- A Firebase project with Authentication and Firestore enabled. Firebase Storage is required only when dashboard storage uses GCS.
 - A PostgreSQL database. PostgreSQL is required, including for local development. The Prisma schema targets PostgreSQL and does not work with SQLite.
 - At least one AI provider API key for AI features.
 
@@ -41,7 +41,7 @@ PostgreSQL. In that case, use one of these container-friendly options:
 
 Open http://localhost:3000.
 
-Before testing authenticated flows, edit `app/.env` and set the Firebase values, `ALLOWED_AUTH_DOMAIN` and its browser copy `NEXT_PUBLIC_ALLOWED_AUTH_DOMAIN` (same value), `STORAGE_BUCKET_NAME`, `DATABASE_URL`, `DASHBOARD_SESSION_SECRET`, and an AI provider key.
+Before testing authenticated flows, edit `app/.env` and set the Firebase values, `ALLOWED_AUTH_DOMAIN` and its browser copy `NEXT_PUBLIC_ALLOWED_AUTH_DOMAIN` (same value), `DATABASE_URL`, `DASHBOARD_SESSION_SECRET`, and an AI provider key. Configure either `STORAGE_PROVIDER=gcs` with `STORAGE_BUCKET_NAME`, or `STORAGE_PROVIDER=local` with a persistent `LOCAL_STORAGE_ROOT`.
 
 ### Docker setup
 

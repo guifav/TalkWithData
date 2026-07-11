@@ -6,9 +6,9 @@ This guide explains how to deploy Talk With Data with Docker, Google Cloud Run, 
 
 - Node.js 22 or newer when running without Docker.
 - Docker for containerized deployment.
-- Firebase project with Authentication, Firestore, and Storage enabled.
+- Firebase project with Authentication and Firestore enabled. Firebase Storage is required only when the deployment uses GCS dashboard storage.
 - A PostgreSQL database reachable through `DATABASE_URL`. PostgreSQL is required, including for local development.
-- A storage bucket for dashboard HTML files and assets.
+- Persistent dashboard storage: a GCS bucket or a local filesystem volume.
 - At least one AI provider API key for AI features.
 - HTTPS for production, especially for auth, embed views, and MCP calls.
 
@@ -44,7 +44,8 @@ docker compose up --build
 
 Compose uses local development database defaults (`talkwithdata` for the user,
 password, and database), stores PostgreSQL data in the `postgres_data` named
-volume, and follows this startup order:
+volume, and stores local dashboard files in the `app_data` named volume when
+`STORAGE_PROVIDER=local`. It follows this startup order:
 
 1. `db` must pass its bounded `pg_isready` healthcheck.
 2. `migrate` runs `prisma migrate deploy` once and exits successfully.
@@ -98,7 +99,8 @@ starting the application container manually.
   environments without placing secrets in the client payload or image layers.
 - Set `PORT=8080` unless your platform overrides it.
 - Ensure `DATABASE_URL` points to a persistent database.
-- Ensure `STORAGE_BUCKET_NAME` points to a persistent bucket.
+- For GCS storage, ensure `STORAGE_BUCKET_NAME` points to a persistent bucket.
+- For local storage, mount a persistent writable volume at `LOCAL_STORAGE_ROOT`.
 
 ## Google Cloud Run
 
@@ -274,7 +276,7 @@ Prefer Application Default Credentials in Cloud Run by granting the Cloud Run se
 Minimum recommended permissions:
 
 - Firestore access for application metadata.
-- Storage Object Admin for the dashboard asset bucket.
+- Storage Object Admin for the dashboard asset bucket when using the GCS provider.
 - Firebase Authentication Admin capability through the Firebase Admin SDK.
 - Secret Manager Secret Accessor if secrets are mounted from Secret Manager.
 
@@ -294,7 +296,7 @@ Use `app/.env.example` as the source template. The table below describes deploym
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | Yes | `1:123:web:abc` | Public Firebase client config, read at server runtime. |
 | `FIREBASE_PROJECT_ID` | Yes | `project` | Firebase Admin project ID. |
 | `SA_KEY_JSON` | Local or non-GCP | JSON string | Optional on GCP when the runtime service account has access. |
-| `STORAGE_BUCKET_NAME` | Yes | `project-uploads` | Bucket used for dashboard files. |
+| `STORAGE_BUCKET_NAME` | GCS storage | `project-uploads` | Bucket used for dashboard files when `STORAGE_PROVIDER=gcs`. |
 | `DATABASE_URL` | Yes | `postgresql://...` | PostgreSQL connection string used by Prisma. PostgreSQL is required, including for local development. |
 | `TWD_READINESS_TIMEOUT_MS` | Optional | `2000` | PostgreSQL readiness timeout in milliseconds. Accepted range is 100 through 10000; invalid values use 2000. |
 | `DASHBOARD_SESSION_SECRET` | Yes | generated secret | Generate with `openssl rand -hex 32`. |
@@ -313,8 +315,8 @@ Use `app/.env.example` as the source template. The table below describes deploym
 | `MCP_URL` | Optional | `https://mcp.example.com/api/mcp/full` | Shared MCP endpoint for deployments that use one. |
 | `THUMBNAIL_FUNCTION_URL` | Optional | URL | Cloud Function endpoint for thumbnail generation. |
 | `THUMBNAIL_SECRET` | Optional | secret | Shared secret for thumbnail generation. |
-| `STORAGE_PROVIDER` | Optional | `gcs` | Storage adapter selector. Upload and serve currently use Firebase Admin Storage (GCS); the `local` adapter is not yet wired into those paths. |
-| `LOCAL_STORAGE_ROOT` | Optional | `/data/uploads` | Directory for the local storage adapter once wired in. No effect on the current upload and serve paths. |
+| `STORAGE_PROVIDER` | Optional | `gcs` | Dashboard storage adapter: `gcs` or `local`. Defaults to `gcs`. |
+| `LOCAL_STORAGE_ROOT` | Local storage | `/data/uploads` | Persistent writable directory used when `STORAGE_PROVIDER=local`. |
 | `TWD_CREDENTIAL_ENC_KEY` | Data sources | 32-byte base64 | AES-256-GCM key for external data-source credentials, which are stored encrypted at rest. Required in production when a data source stores a credential. |
 | `TWD_INSPECTION_TOKEN_SECRET` | Optional | secret | Signs admin data-source inspection tokens. Falls back to `DASHBOARD_SESSION_SECRET`. |
 | `TWD_ORG_ID` | Optional | id | Organization id tagged onto data sources created through the admin UI. |
@@ -404,7 +406,7 @@ Notes:
 - The configuration targets the default Firestore database.
 - Server API routes use the Firebase Admin SDK, which bypasses these rules. The rules gate client SDK access only, so a wrong domain shows up as empty lists and failed reads in the browser while server routes keep working.
 
-### 5. Enable Storage or GCS
+### 5. Enable Storage or GCS when using the GCS provider
 
 1. Create a bucket for dashboard HTML files and assets.
 2. Set `STORAGE_BUCKET_NAME` to that bucket name.
@@ -430,9 +432,16 @@ STORAGE_PROVIDER=gcs
 
 ### Local storage
 
-The local-filesystem storage adapter is not yet wired into the upload and serve paths, which use Firebase Admin Storage (GCS). Until it is wired in (tracked in the repository issues), a Google Cloud Storage bucket is required, including for local and containerized runs. `STORAGE_PROVIDER=local` and `LOCAL_STORAGE_ROOT` currently have no effect on where uploads are stored or served from.
+Local storage supports dashboard uploads, serving, replacement, deletion, and version copies without `STORAGE_BUCKET_NAME`. Set:
 
-Once the adapter is wired in, a local adapter must persist files outside the ephemeral container filesystem, for example through a mounted volume, and must preserve the same logical paths used by GCS. Do not use ephemeral container storage for production dashboard assets.
+```bash
+STORAGE_PROVIDER=local
+LOCAL_STORAGE_ROOT=/data/uploads
+```
+
+The checked-in Docker Compose stack mounts `/data` from the persistent `app_data` named volume. A normal `docker compose down` preserves uploaded dashboards; `docker compose down --volumes` deletes them.
+
+Use local storage only for a single application instance, or with a filesystem that is genuinely shared and provides the required consistency. Do not use ephemeral container storage or independent per-instance disks. Cloud Run deployments should use GCS because the container filesystem is ephemeral and not shared across instances.
 
 ## Database and Prisma
 
@@ -566,7 +575,7 @@ After deployment, verify:
 - Google sign-in works for an allowed domain user.
 - A disallowed domain user is rejected.
 - The dashboard list loads for an allowed domain user, which confirms the deployed Firestore rules use the correct domain.
-- Dashboard upload stores files in the configured bucket.
+- Dashboard upload stores files in the configured storage provider.
 - Search can find uploaded dashboard text.
 - AI chat returns a provider response.
 - Embed token generation and viewing work.

@@ -17,6 +17,16 @@ ENV NEXT_PUBLIC_GIT_COMMIT=$GIT_COMMIT
 ENV NEXT_PUBLIC_BUILD_TIME=$BUILD_TIME
 RUN npm run build
 
+# Disposable image used by the Docker Compose local-storage contract test.
+FROM deps AS storage-smoke
+COPY . .
+RUN addgroup --system --gid 1001 nodejs \
+    && adduser --system --uid 1001 --ingroup nodejs storage-smoke \
+    && mkdir -p /data/uploads \
+    && chown -R storage-smoke:nodejs /data
+USER storage-smoke
+ENTRYPOINT ["./node_modules/.bin/tsx", "scripts/local-storage-smoke.ts"]
+
 # One-shot Prisma migrations for Docker Compose and other job runners.
 FROM base AS migrator
 WORKDIR /app
@@ -37,6 +47,7 @@ ENV HOSTNAME="0.0.0.0"
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
+RUN mkdir -p /data/uploads && chown -R nextjs:nodejs /data
 
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./

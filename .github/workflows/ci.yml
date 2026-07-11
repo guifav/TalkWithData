@@ -123,3 +123,6 @@ jobs:
         env:
           TWD_RUNTIME_CONFIG_NO_CACHE: "1"
         run: ./scripts/test-runtime-firebase-container.sh
+
+      - name: Test bucketless local storage with Docker Compose
+        run: ./scripts/test-local-storage-compose.sh

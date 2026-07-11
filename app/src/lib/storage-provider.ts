@@ -1,4 +1,5 @@
 import { Storage } from "@google-cloud/storage";
+import { randomUUID } from "node:crypto";
 import { promises as fs } from "fs";
 import path from "path";
 import { getStorageBucketName } from "@/lib/storage-bucket";
@@ -11,6 +12,7 @@ export interface StorageUploadOptions {
 export interface StorageProvider {
   upload(path: string, buffer: Buffer, options?: StorageUploadOptions): Promise<void>;
   download(path: string): Promise<Buffer>;
+  copy(sourcePath: string, destinationPath: string): Promise<void>;
   delete(path: string): Promise<void>;
   exists(path: string): Promise<boolean>;
 }
@@ -36,6 +38,11 @@ export class GcsStorage implements StorageProvider {
   async download(filePath: string): Promise<Buffer> {
     const [contents] = await this.storage.bucket(this.bucketName).file(filePath).download();
     return contents;
+  }
+
+  async copy(sourcePath: string, destinationPath: string): Promise<void> {
+    const bucket = this.storage.bucket(this.bucketName);
+    await bucket.file(sourcePath).copy(bucket.file(destinationPath));
   }
 
   async delete(filePath: string): Promise<void> {
@@ -70,12 +77,21 @@ export class LocalStorage implements StorageProvider {
 
   async upload(filePath: string, buffer: Buffer): Promise<void> {
     const fullPath = this.resolvePath(filePath);
-    await fs.mkdir(path.dirname(fullPath), { recursive: true });
-    await fs.writeFile(fullPath, buffer);
+    await this.replaceAtomically(fullPath, (temporaryPath) =>
+      fs.writeFile(temporaryPath, buffer)
+    );
   }
 
   async download(filePath: string): Promise<Buffer> {
     return fs.readFile(this.resolvePath(filePath));
+  }
+
+  async copy(sourcePath: string, destinationPath: string): Promise<void> {
+    const source = this.resolvePath(sourcePath);
+    const destination = this.resolvePath(destinationPath);
+    await this.replaceAtomically(destination, (temporaryPath) =>
+      fs.copyFile(source, temporaryPath)
+    );
   }
 
   async delete(filePath: string): Promise<void> {
@@ -104,10 +120,38 @@ export class LocalStorage implements StorageProvider {
     }
   }
 
+  private async replaceAtomically(
+    destinationPath: string,
+    writeTemporaryFile: (temporaryPath: string) => Promise<void>
+  ): Promise<void> {
+    const destinationDirectory = path.dirname(destinationPath);
+    const temporaryPath = path.join(
+      destinationDirectory,
+      `.${path.basename(destinationPath)}.${randomUUID()}.tmp`
+    );
+
+    await fs.mkdir(destinationDirectory, { recursive: true });
+    try {
+      await writeTemporaryFile(temporaryPath);
+      await fs.rename(temporaryPath, destinationPath);
+    } catch (error) {
+      await fs.rm(temporaryPath, { force: true }).catch(() => {});
+      throw error;
+    }
+  }
+
   private resolvePath(filePath: string): string {
     const normalized = filePath.replace(/\\/g, "/");
+    const logicalPath = normalized.endsWith("/")
+      ? normalized.slice(0, -1)
+      : normalized;
 
-    if (!normalized || normalized.startsWith("/") || normalized.includes("\0")) {
+    if (
+      !logicalPath ||
+      normalized.startsWith("/") ||
+      normalized.includes("\0") ||
+      logicalPath.split("/").some((segment) => !segment || segment === "." || segment === "..")
+    ) {
       throw new Error(`Invalid storage path: ${filePath}`);
     }
 

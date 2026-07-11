@@ -49,7 +49,7 @@ Responsibilities:
 Data sources are services called by API routes and server libraries.
 
 - Firestore stores application metadata, user records, dashboard records, sharing data, prompt versions, MCP configuration, analytics, and embed token metadata.
-- Google Cloud Storage stores dashboard HTML files and assets.
+- The selected dashboard storage provider, GCS or a persistent local filesystem, stores dashboard HTML files and assets.
 - Prisma stores metadata for dashboard-specific structured databases and executes data operations where enabled.
 - AI providers generate and edit dashboards, answer data questions, and summarize data.
 - MCP servers expose external tools through allowlisted hosts and controlled access rules.
@@ -118,25 +118,27 @@ Recommended Firestore rules for production:
 - Keep role checks in server code and back them with tests.
 - Keep service account credentials outside the repository.
 
-## Storage, GCS and local development
+## Dashboard storage
 
-### Google Cloud Storage
+Dashboard files use the provider selected by `STORAGE_PROVIDER`: Google Cloud Storage (`gcs`, the default) or a persistent local filesystem (`local`). `STORAGE_BUCKET_NAME` is required only for GCS; `LOCAL_STORAGE_ROOT` selects the local root and defaults to `/data/uploads`.
 
-The production storage path is Google Cloud Storage through Firebase Admin. The bucket name comes from `STORAGE_BUCKET_NAME`.
+GCS is appropriate for shared and multi-instance deployments. Local storage is appropriate for a single instance with a persistent volume. Independent local disks must not be used across multiple application instances.
 
-Single-file dashboards are stored at:
+The GCS provider uses the Google Cloud Storage client and reads the bucket name from `STORAGE_BUCKET_NAME`. The local provider maps the same logical paths below `LOCAL_STORAGE_ROOT`.
+
+Initial single-file dashboards use this logical path:
 
 ```text
 dashboards/{userId}/{dashboardId}/{fileName}
 ```
 
-Packaged dashboards are extracted and stored under:
+Initial packaged dashboards are extracted under:
 
 ```text
 dashboards/{userId}/{dashboardId}/{relativeAssetPath}
 ```
 
-The dashboard document stores the entrypoint `storagePath`. Multi-file dashboards also keep a storage prefix and entrypoint metadata so sub-assets can be served safely.
+Replacements and version restores use immutable revision prefixes below `dashboards/{userId}/{dashboardId}/revisions/{revisionId}/`. The dashboard document stores the active entrypoint `storagePath`. Multi-file dashboards also keep the active storage prefix and entrypoint metadata, so a complete new package is uploaded before one Firestore update makes it visible. Legacy stable paths remain readable.
 
 ### Validation
 
@@ -154,7 +156,7 @@ Dashboard version data lives in Firestore under `dashboards/{id}/versions`. Stor
 
 ### Local storage
 
-Local development should still use a Firebase Storage or GCS bucket unless a local adapter is added in the deployment environment. If a local adapter is introduced, it must preserve the same logical paths, content type behavior, version metadata, and access checks.
+Set `STORAGE_PROVIDER=local` to use the filesystem adapter without a bucket. The directory at `LOCAL_STORAGE_ROOT` must be writable and persistent. The local provider preserves the same logical paths, version metadata, and access checks as GCS; individual writes use a temporary sibling file followed by an atomic rename. Use GCS for multi-instance deployments unless the filesystem is genuinely shared and provides the required consistency.
 
 ## Prisma
 

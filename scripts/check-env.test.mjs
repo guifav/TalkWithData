@@ -14,12 +14,37 @@ function validEnvironment() {
       ? `${key}=example.com`
       : `${key}=value`,
   );
+  entries.push("STORAGE_BUCKET_NAME=value");
   entries.push(`${AI_PROVIDER_VARIABLES[0]}=provider-key`);
   return entries.join("\n");
 }
 
 test("accepts a complete environment contract", () => {
   assert.deepEqual(validateEnv(validEnvironment()), []);
+});
+
+test("accepts local dashboard storage without a GCS bucket", () => {
+  const contents = validEnvironment()
+    .replace("STORAGE_BUCKET_NAME=value", "")
+    .concat("\nSTORAGE_PROVIDER=local\nLOCAL_STORAGE_ROOT=/data/uploads");
+
+  assert.deepEqual(validateEnv(contents), []);
+});
+
+test("requires a bucket for the default GCS provider", () => {
+  const contents = validEnvironment().replace("STORAGE_BUCKET_NAME=value", "");
+
+  assert.ok(validateEnv(contents).includes("missing required variable STORAGE_BUCKET_NAME"));
+});
+
+test("rejects unknown storage providers", () => {
+  const contents = validEnvironment().concat("\nSTORAGE_PROVIDER=unknown");
+
+  assert.ok(
+    validateEnv(contents).includes(
+      'STORAGE_PROVIDER must be either "gcs" or "local"',
+    ),
+  );
 });
 
 test("reports empty required values and a missing AI provider", () => {

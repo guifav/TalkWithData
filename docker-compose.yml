@@ -44,8 +44,8 @@ services:
     env_file:
       - ${TWD_ENV_FILE:-./app/.env}
     environment:
-      # Upload and serve currently use Firebase Admin Storage (GCS) regardless of
-      # STORAGE_PROVIDER; the local adapter is not yet wired into those paths.
+      # LOCAL_STORAGE_ROOT is used when STORAGE_PROVIDER=local in the env file.
+      # The named volume keeps dashboard files across container replacements.
       DATABASE_URL: ${COMPOSE_DATABASE_URL:-postgresql://talkwithdata:talkwithdata@db:5432/talkwithdata}
       LOCAL_STORAGE_ROOT: /data/uploads
       PORT: 8080
