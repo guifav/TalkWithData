@@ -17,6 +17,10 @@ const routeMocks = vi.hoisted(() => {
     Buffer.from("owner_email,owner email,amount\nana@example.com,ana@example.com,10\n"),
   );
   const resolve = vi.fn(async () => ({ project_id: "test-project" }));
+  const encrypt = vi.fn((value: object) => {
+    void value;
+    return Buffer.from("generated-ciphertext");
+  });
 
   return {
     dataSources,
@@ -25,6 +29,7 @@ const routeMocks = vi.hoisted(() => {
     list,
     readPrefix,
     resolve,
+    encrypt,
     reset: () => {
       dataSources.clear();
       users.clear();
@@ -32,6 +37,7 @@ const routeMocks = vi.hoisted(() => {
       list.mockClear();
       readPrefix.mockClear();
       resolve.mockClear();
+      encrypt.mockClear();
     },
   };
 });
@@ -71,6 +77,14 @@ vi.mock("@/lib/firebase/admin", () => ({
 vi.mock("@/lib/data-sources/credentials", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/data-sources/credentials")>();
   class SecretService {
+    constructor(opts?: unknown) {
+      void opts;
+    }
+
+    encrypt(value: object) {
+      return routeMocks.encrypt(value);
+    }
+
     async resolve() {
       return routeMocks.resolve();
     }
@@ -116,6 +130,13 @@ beforeEach(() => {
 });
 
 describe("admin inspect data source headers route", () => {
+  const rawCredential = {
+    type: "service_account",
+    project_id: "external-project",
+    client_email: "source@example.test",
+    private_key: "private-key-material",
+  };
+
   it("bloqueia admin comum", async () => {
     setupAuth("admin");
 
@@ -159,6 +180,88 @@ describe("admin inspect data source headers route", () => {
     expect(JSON.stringify(body)).not.toContain("secret-base64");
     expect(routeMocks.list).toHaveBeenCalledWith("exports/", { maxResults: 25 });
     expect(routeMocks.readPrefix).toHaveBeenCalledWith("exports/sample.csv", 64 * 1024);
+  });
+
+  it("criptografa credencial bruta durante inspeção sem retornar plaintext", async () => {
+    setupAuth("superadmin");
+
+    const response = await inspectHeaders(
+      request("token", {
+        bucket: "external-bucket",
+        prefix: "exports",
+        credentialRef: { kind: "encryptedBlob", ref: "credential-a" },
+        credential: rawCredential,
+      }),
+    );
+    const body = (await response.json()) as Record<string, unknown>;
+
+    expect(response.status).toBe(200);
+    expect(routeMocks.encrypt).toHaveBeenCalledWith(rawCredential);
+    expect(body.credentialEnc).toBe(Buffer.from("generated-ciphertext").toString("base64"));
+    expect(JSON.stringify(body)).not.toContain(rawCredential.private_key);
+    expect(JSON.stringify(body)).not.toContain(rawCredential.client_email);
+    expect(typeof body.inspectionToken).toBe("string");
+  });
+
+  it.each([
+    ["array", []],
+    ["tipo inválido", { ...rawCredential, type: "user" }],
+    ["project_id ausente", { ...rawCredential, project_id: "" }],
+    ["client_email ausente", { ...rawCredential, client_email: "" }],
+    ["private_key ausente", { ...rawCredential, private_key: "" }],
+  ])("rejeita credencial bruta com formato inválido: %s", async (_label, credential) => {
+    setupAuth("superadmin");
+
+    const response = await inspectHeaders(
+      request("token", {
+        bucket: "external-bucket",
+        prefix: "exports",
+        credentialRef: { kind: "encryptedBlob", ref: "credential-a" },
+        credential,
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error).toBe("credential must be a valid service account JSON object");
+    expect(routeMocks.encrypt).not.toHaveBeenCalled();
+  });
+
+  it("rejeita credencial bruta maior que 64 KiB", async () => {
+    setupAuth("superadmin");
+
+    const response = await inspectHeaders(
+      request("token", {
+        bucket: "external-bucket",
+        prefix: "exports",
+        credentialRef: { kind: "encryptedBlob", ref: "credential-a" },
+        credential: { ...rawCredential, private_key: "x".repeat(64 * 1024) },
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error).toBe("credential exceeds the 64 KiB limit");
+    expect(routeMocks.encrypt).not.toHaveBeenCalled();
+  });
+
+  it("rejeita credencial bruta junto com ciphertext", async () => {
+    setupAuth("superadmin");
+
+    const response = await inspectHeaders(
+      request("token", {
+        bucket: "external-bucket",
+        prefix: "exports",
+        credentialRef: { kind: "encryptedBlob", ref: "credential-a" },
+        credential: rawCredential,
+        credentialEnc: "existing-ciphertext",
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error).toBe("credential and credentialEnc are mutually exclusive");
+    expect(routeMocks.encrypt).not.toHaveBeenCalled();
   });
 
   it("usa credencial server-only de uma fonte existente", async () => {

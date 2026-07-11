@@ -20,7 +20,10 @@ type InspectHeadersBody = {
   prefix?: string;
   credentialRef?: CredentialRef;
   credentialEnc?: string;
+  credential?: unknown;
 };
+
+const MAX_RAW_CREDENTIAL_BYTES = 64 * 1024;
 
 export async function POST(request: NextRequest) {
   const auth = await verifySuperAdmin(request);
@@ -35,7 +38,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: resolved.error }, { status: 400 });
     }
 
-    const { bucket, prefix, credentialRef, credentialEnc, credentialProof } = resolved.value;
+    const {
+      bucket,
+      prefix,
+      credentialRef,
+      credentialEnc,
+      credentialProof,
+      generatedCredentialEnc,
+    } = resolved.value;
     if (credentialRef.kind === "secretManager") {
       return NextResponse.json(
         { error: "secretManager credentials are not supported yet" },
@@ -95,6 +105,7 @@ export async function POST(request: NextRequest) {
       duplicateIdentities,
       inspectionToken,
       objectName: csvObject.name,
+      ...(generatedCredentialEnc ? { credentialEnc: generatedCredentialEnc } : {}),
     });
   } catch (error) {
     console.error("Inspect data source headers failed:", error);
@@ -114,10 +125,16 @@ async function resolveInspectInput(body: InspectHeadersBody): Promise<
         credentialRef: CredentialRef;
         credentialEnc: string;
         credentialProof: InspectionCredentialProof;
+        generatedCredentialEnc?: string;
       };
     }
   | { ok: false; error: string }
 > {
+  const suppliedCredential = resolveSuppliedCredential(body);
+  if (!suppliedCredential.ok) {
+    return suppliedCredential;
+  }
+
   if (body.dataSourceId) {
     const existing = await getDataSourceWithCredentials(body.dataSourceId);
     if (!existing) return { ok: false, error: "Data source not found" };
@@ -125,7 +142,7 @@ async function resolveInspectInput(body: InspectHeadersBody): Promise<
     const bucket = isNonEmptyString(body.bucket) ? body.bucket.trim() : existing.bucket;
     const prefix = typeof body.prefix === "string" ? normalizePrefix(body.prefix) : existing.prefix;
 
-    if (isNonEmptyString(body.credentialEnc)) {
+    if (suppliedCredential.value) {
       const credentialRef = isCredentialRef(body.credentialRef)
         ? body.credentialRef
         : existing.credentialRef;
@@ -135,11 +152,12 @@ async function resolveInspectInput(body: InspectHeadersBody): Promise<
           bucket,
           prefix,
           credentialRef,
-          credentialEnc: body.credentialEnc.trim(),
-          credentialProof: credentialEncProof(body.credentialEnc, {
+          credentialEnc: suppliedCredential.value.credentialEnc,
+          credentialProof: credentialEncProof(suppliedCredential.value.credentialEnc, {
             dataSourceId: existing.id,
             configVersion: existing.configVersion,
           }),
+          generatedCredentialEnc: suppliedCredential.value.generatedCredentialEnc,
         },
       };
     }
@@ -175,7 +193,7 @@ async function resolveInspectInput(body: InspectHeadersBody): Promise<
   if (!isCredentialRef(body.credentialRef)) {
     return { ok: false, error: "credentialRef is invalid" };
   }
-  if (!isNonEmptyString(body.credentialEnc)) {
+  if (!suppliedCredential.value) {
     return { ok: false, error: "credentialEnc is required" };
   }
 
@@ -185,10 +203,81 @@ async function resolveInspectInput(body: InspectHeadersBody): Promise<
       bucket: body.bucket.trim(),
       prefix: normalizePrefix(body.prefix),
       credentialRef: body.credentialRef,
-      credentialEnc: body.credentialEnc.trim(),
-      credentialProof: credentialEncProof(body.credentialEnc),
+      credentialEnc: suppliedCredential.value.credentialEnc,
+      credentialProof: credentialEncProof(suppliedCredential.value.credentialEnc),
+      generatedCredentialEnc: suppliedCredential.value.generatedCredentialEnc,
     },
   };
+}
+
+function resolveSuppliedCredential(body: InspectHeadersBody):
+  | {
+      ok: true;
+      value:
+        | { credentialEnc: string; generatedCredentialEnc?: string }
+        | undefined;
+    }
+  | { ok: false; error: string } {
+  const hasRawCredential = body.credential !== undefined;
+  const hasEncryptedCredential = body.credentialEnc !== undefined;
+
+  if (hasRawCredential && hasEncryptedCredential) {
+    return {
+      ok: false,
+      error: "credential and credentialEnc are mutually exclusive",
+    };
+  }
+
+  if (hasRawCredential) {
+    const validated = validateServiceAccountCredential(body.credential);
+    if (!validated.ok) return validated;
+
+    const credentialEnc = new SecretService()
+      .encrypt(validated.value)
+      .toString("base64");
+    return {
+      ok: true,
+      value: { credentialEnc, generatedCredentialEnc: credentialEnc },
+    };
+  }
+
+  if (isNonEmptyString(body.credentialEnc)) {
+    return {
+      ok: true,
+      value: { credentialEnc: body.credentialEnc.trim() },
+    };
+  }
+
+  return { ok: true, value: undefined };
+}
+
+function validateServiceAccountCredential(value: unknown):
+  | { ok: true; value: object }
+  | { ok: false; error: string } {
+  if (!isPlainObject(value)) {
+    return {
+      ok: false,
+      error: "credential must be a valid service account JSON object",
+    };
+  }
+
+  if (Buffer.byteLength(JSON.stringify(value), "utf8") > MAX_RAW_CREDENTIAL_BYTES) {
+    return { ok: false, error: "credential exceeds the 64 KiB limit" };
+  }
+
+  if (
+    value.type !== "service_account" ||
+    !isNonEmptyString(value.project_id) ||
+    !isNonEmptyString(value.client_email) ||
+    !isNonEmptyString(value.private_key)
+  ) {
+    return {
+      ok: false,
+      error: "credential must be a valid service account JSON object",
+    };
+  }
+
+  return { ok: true, value };
 }
 
 function normalizePrefix(prefix: string): string {
@@ -215,4 +304,8 @@ function isCredentialRef(value: unknown): value is CredentialRef {
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
