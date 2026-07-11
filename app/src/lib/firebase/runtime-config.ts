@@ -1,4 +1,5 @@
 export interface FirebasePublicConfig {
+  allowedAuthDomain: string;
   apiKey: string;
   authDomain: string;
   projectId: string;
@@ -8,6 +9,7 @@ export interface FirebasePublicConfig {
 }
 
 export const FIREBASE_PUBLIC_ENV_KEYS = {
+  allowedAuthDomain: "NEXT_PUBLIC_ALLOWED_AUTH_DOMAIN",
   apiKey: "NEXT_PUBLIC_FIREBASE_API_KEY",
   authDomain: "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
   projectId: "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
@@ -57,6 +59,18 @@ export function getFirebasePublicConfig(): FirebasePublicConfig {
       throw new Error("Firebase runtime configuration is missing");
     }
     return parseFirebasePublicConfig(window.__TWD_FIREBASE_CONFIG__);
+  }
+
+  if (process.env.NEXT_PHASE === "phase-production-build") {
+    return {
+      allowedAuthDomain: "build-placeholder.invalid",
+      apiKey: "build-placeholder",
+      authDomain: "build-placeholder.invalid",
+      projectId: "build-placeholder",
+      storageBucket: "build-placeholder.invalid",
+      messagingSenderId: "0",
+      appId: "build-placeholder",
+    };
   }
 
   const serverInput = Object.fromEntries(

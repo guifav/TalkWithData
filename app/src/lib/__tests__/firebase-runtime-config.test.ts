@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   FIREBASE_PUBLIC_ENV_KEYS,
+  getFirebasePublicConfig,
   parseFirebasePublicConfig,
 } from "@/lib/firebase/runtime-config";
 import {
@@ -10,6 +11,7 @@ import {
 } from "@/lib/firebase/runtime-config.server";
 
 const completeConfig = {
+  allowedAuthDomain: "example.com",
   apiKey: "public-api-key",
   authDomain: "project.firebaseapp.com",
   projectId: "project-one",
@@ -19,6 +21,10 @@ const completeConfig = {
 };
 
 describe("Firebase runtime configuration", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("returns only the allowlisted public Firebase fields", () => {
     expect(
       parseFirebasePublicConfig({
@@ -55,6 +61,23 @@ describe("Firebase runtime configuration", () => {
     expect(JSON.parse(serialized)).toEqual({
       ...completeConfig,
       apiKey: "</script><script>&\u2028\u2029",
+    });
+  });
+
+  it("uses inert public placeholders only while Next.js collects build pages", () => {
+    vi.stubEnv("NEXT_PHASE", "phase-production-build");
+    for (const envName of Object.values(FIREBASE_PUBLIC_ENV_KEYS)) {
+      vi.stubEnv(envName, "");
+    }
+
+    expect(getFirebasePublicConfig()).toEqual({
+      allowedAuthDomain: "build-placeholder.invalid",
+      apiKey: "build-placeholder",
+      authDomain: "build-placeholder.invalid",
+      projectId: "build-placeholder",
+      storageBucket: "build-placeholder.invalid",
+      messagingSenderId: "0",
+      appId: "build-placeholder",
     });
   });
 

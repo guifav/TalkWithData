@@ -3,7 +3,8 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getFirebasePublicConfig } from "@/lib/firebase/runtime-config";
 
-const firebaseConfig = getFirebasePublicConfig();
+const { allowedAuthDomain: _allowedAuthDomain, ...firebaseConfig } =
+  getFirebasePublicConfig();
 
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);

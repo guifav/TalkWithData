@@ -17,6 +17,7 @@ vi.mock("firebase/auth", () => ({ getAuth: firebaseMocks.getAuth }));
 vi.mock("firebase/firestore", () => ({ getFirestore: firebaseMocks.getFirestore }));
 
 const runtimeConfig = {
+  allowedAuthDomain: "example.com",
   apiKey: "runtime-api-key",
   authDomain: "runtime.firebaseapp.com",
   projectId: "runtime-project",
@@ -40,7 +41,8 @@ describe("Firebase client runtime configuration", () => {
 
     await import("@/lib/firebase/client");
 
-    expect(firebaseMocks.initializeApp).toHaveBeenCalledWith(runtimeConfig);
+    const { allowedAuthDomain: _allowedAuthDomain, ...firebaseOptions } = runtimeConfig;
+    expect(firebaseMocks.initializeApp).toHaveBeenCalledWith(firebaseOptions);
     expect(firebaseMocks.getAuth).toHaveBeenCalledWith({ name: "runtime-app" });
     expect(firebaseMocks.getFirestore).toHaveBeenCalledWith({ name: "runtime-app" });
   });
