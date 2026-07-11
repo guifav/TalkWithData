@@ -41,7 +41,25 @@ vi.mock("@/lib/versions", () => ({
 }));
 
 vi.mock("@/lib/permissions", () => ({
+  canViewDashboard: vi.fn().mockReturnValue(true),
   canViewDashboardViaSharedFolder: vi.fn().mockResolvedValue({ allowed: false }),
+}));
+
+vi.mock("@/lib/app-db/registry", () => ({
+  finalizeDeleted: vi.fn().mockResolvedValue(undefined),
+  getInstance: vi.fn().mockResolvedValue(null),
+  markForDeletion: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/app-db/schema-manager", () => ({
+  dropTablesWithPrefix: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock("@/lib/prisma", () => ({
+  prisma: {
+    dashboardFieldAudit: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+    dashboardFieldSchema: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+  },
 }));
 
 vi.mock("@/lib/embed-tokens", () => ({
@@ -61,6 +79,7 @@ vi.mock("firebase-admin/firestore", () => ({
   FieldValue: {
     delete: vi.fn().mockReturnValue("deleted-field"),
     increment: vi.fn().mockReturnValue(1),
+    arrayRemove: vi.fn().mockReturnValue("array-remove"),
     serverTimestamp: vi.fn().mockReturnValue("timestamp"),
   },
 }));
@@ -85,6 +104,9 @@ vi.mock("@/lib/firebase/admin", () => ({
               dashboardData.set(id, { ...dashboardData.get(id), ...updates });
             }
           }),
+          delete: vi.fn().mockImplementation(async () => {
+            if (collectionName === "dashboards") dashboardData.delete(id);
+          }),
           collection: (subcollectionName: string) => ({
             add: vi.fn().mockResolvedValue(undefined),
             doc: (versionId = "generated-version") => ({
@@ -108,6 +130,15 @@ vi.mock("@/lib/firebase/admin", () => ({
         get: vi.fn().mockResolvedValue({ docs: [] }),
       }),
     }),
+    collectionGroup: vi.fn().mockReturnValue({
+      where: vi.fn().mockReturnValue({
+        get: vi.fn().mockResolvedValue({ empty: true, docs: [] }),
+      }),
+    }),
+    batch: vi.fn().mockReturnValue({
+      update: vi.fn(),
+      commit: vi.fn().mockResolvedValue(undefined),
+    }),
   },
 }));
 
@@ -118,7 +149,13 @@ const { POST: replaceDashboard } = await import("@/app/api/dashboards/[id]/repla
 const { POST: restoreDashboardVersion } = await import(
   "@/app/api/dashboards/[id]/versions/route"
 );
-const { getHtmlFile, uploadHtmlFile, uploadZipDashboard } = await import("@/lib/storage");
+const { DELETE: deleteDashboard } = await import("@/app/api/dashboards/[id]/route");
+const {
+  getHtmlFile,
+  uploadHtmlFile,
+  uploadZipDashboard,
+  uploadZipDashboardRevision,
+} = await import("@/lib/storage");
 const { getStorageProvider } = await import("@/lib/storage-provider");
 
 let storageRoot: string;
@@ -359,6 +396,40 @@ describe("local storage routes", () => {
     await expect(getHtmlFile(restoredPath)).resolves.toEqual(
       Buffer.from("<html><body>restored</body></html>")
     );
+  });
+
+  it("deletes a revisioned multi-page package through its stable parent prefix", async () => {
+    const id = "delete-revisioned-package";
+    const zip = new AdmZip();
+    zip.addFile("index.html", Buffer.from("<html><body>delete me</body></html>"));
+    zip.addFile("assets/main.css", Buffer.from("body { color: black; }"));
+    const livePackage = await uploadZipDashboardRevision(
+      auth.uid,
+      id,
+      zip.toBuffer()
+    );
+    dashboardData.set(id, {
+      createdBy: auth.uid,
+      fileName: livePackage.entrypoint,
+      fileSizeBytes: livePackage.totalSizeBytes,
+      storagePath: livePackage.storagePath,
+      storagePrefix: livePackage.storagePrefix,
+      isMultiPage: true,
+      entrypoint: livePackage.entrypoint,
+      files: livePackage.files,
+      slug: "delete-revisioned-package",
+    });
+
+    const response = await deleteDashboard(
+      new NextRequest(`http://localhost/api/dashboards/${id}`, { method: "DELETE" }),
+      { params: Promise.resolve({ id }) }
+    );
+
+    expect(response.status).toBe(200);
+    expect(dashboardData.has(id)).toBe(false);
+    await expect(getHtmlFile(livePackage.storagePath)).rejects.toMatchObject({
+      code: "ENOENT",
+    });
   });
 });
 
