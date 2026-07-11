@@ -107,10 +107,11 @@ Cloud Run is the recommended GCP deployment target when you want a managed conta
 Cloud Run deployments use two images from the same source revision. The
 application image serves requests and never runs Prisma migrations. The
 `migrator` target runs `prisma migrate deploy` as a single-task Cloud Run Job.
-Always use an immutable release tag and execute the steps below in this order:
-build and push both images, deploy and execute the migration job, then roll out
-the service. Never put `prisma migrate deploy` in the service command, startup
-script, or replica lifecycle.
+Always create a release tag from one source revision, resolve both pushed tags
+to immutable registry digests, and execute the steps below in this order: build
+and push both images, deploy and execute the migration job by digest, then roll
+out the service by digest. Never put `prisma migrate deploy` in the service
+command, startup script, or replica lifecycle.
 
 ### 1. Prepare GCP
 
@@ -161,10 +162,16 @@ docker build --pull --tag "$APP_IMAGE" --file app/Dockerfile app
 docker build --pull --target migrator --tag "$MIGRATOR_IMAGE" --file app/Dockerfile app
 docker push "$APP_IMAGE"
 docker push "$MIGRATOR_IMAGE"
+
+export APP_DIGEST="$(docker buildx imagetools inspect "$APP_IMAGE" --format '{{.Manifest.Digest}}')"
+export MIGRATOR_DIGEST="$(docker buildx imagetools inspect "$MIGRATOR_IMAGE" --format '{{.Manifest.Digest}}')"
+export APP_IMAGE_REF="$REGISTRY/app@$APP_DIGEST"
+export MIGRATOR_IMAGE_REF="$REGISTRY/migrator@$MIGRATOR_DIGEST"
 ```
 
-Do not rebuild either image between migration and service rollout. Both image
-references must retain the same `RELEASE` value.
+Confirm that both digest variables start with `sha256:`. Do not rebuild or retag
+either image between migration and service rollout. The digest references, not
+the movable tags, are the deployment contract.
 
 ### 3. Deploy and execute the migration job
 
@@ -173,7 +180,7 @@ must complete successfully before the service rollout begins:
 
 ```bash
 gcloud run jobs deploy "$MIGRATION_JOB_NAME" \
-  --image "$MIGRATOR_IMAGE" \
+  --image "$MIGRATOR_IMAGE_REF" \
   --region "$REGION" \
   --service-account "$RUNTIME_SERVICE_ACCOUNT" \
   --tasks 1 \
@@ -201,19 +208,24 @@ cp docs/cloud-run.env.yaml.example /tmp/talk-with-data-cloud-run.env.yaml
 export RUNTIME_ENV_FILE=/tmp/talk-with-data-cloud-run.env.yaml
 ```
 
+The environment file and `--set-secrets` list below are authoritative for the
+new revision. Add every optional variable and secret used by your deployment to
+these inputs before running the command; omitted previous configuration is not
+part of the canonical revision contract.
+
 Deploy only after the migration execution succeeds:
 
 ```bash
-gcloud run deploy "$SERVICE_NAME" \
-  --image "$APP_IMAGE" \
+gcloud beta run deploy "$SERVICE_NAME" \
+  --image "$APP_IMAGE_REF" \
   --region "$REGION" \
   --service-account "$RUNTIME_SERVICE_ACCOUNT" \
   --allow-unauthenticated \
   --port 8080 \
   --env-vars-file "$RUNTIME_ENV_FILE" \
   --set-secrets "DATABASE_URL=$DATABASE_URL_SECRET:$DATABASE_URL_SECRET_VERSION,DASHBOARD_SESSION_SECRET=$SESSION_SECRET:$SESSION_SECRET_VERSION,ANTHROPIC_API_KEY=$ANTHROPIC_SECRET:$ANTHROPIC_SECRET_VERSION" \
-  --startup-probe "httpGet.path=/api/ready,httpGet.port=8080,timeoutSeconds=3,periodSeconds=5,failureThreshold=24" \
-  --readiness-probe "httpGet.path=/api/ready,httpGet.port=8080,timeoutSeconds=3,periodSeconds=5,failureThreshold=2,successThreshold=1" \
+  --startup-probe "httpGet.path=/api/ready,httpGet.port=8080,timeoutSeconds=10,periodSeconds=10,failureThreshold=12" \
+  --readiness-probe "httpGet.path=/api/ready,httpGet.port=8080,timeoutSeconds=10,periodSeconds=10,failureThreshold=2,successThreshold=1" \
   --liveness-probe "httpGet.path=/api/health,httpGet.port=8080,timeoutSeconds=2,periodSeconds=10,failureThreshold=3"
 ```
 
@@ -222,8 +234,10 @@ database. `/api/ready` executes `SELECT 1` against PostgreSQL with the timeout
 from `TWD_READINESS_TIMEOUT_MS`, returns `503` without connection details when
 PostgreSQL is unavailable, and returns `200` again after it recovers. Cloud Run
 startup and readiness probes use `/api/ready`; only liveness uses `/api/health`.
-The readiness probe is a Cloud Run Preview feature. Confirm its availability in
-the selected region before the first production release.
+The readiness probe is a Cloud Run Preview feature, so the example deliberately
+uses `gcloud beta run deploy`. Confirm Preview availability in the selected
+region before the first production release. The 10-second probe timeout covers
+the full accepted `TWD_READINESS_TIMEOUT_MS` range.
 
 Verify the deployed endpoints without printing configuration values:
 
@@ -239,6 +253,12 @@ Prisma migrations are forward-only in this deployment workflow. A failed
 migration blocks rollout and leaves the currently serving revision unchanged.
 Correct the migration or database configuration, build a new immutable release,
 and rerun the single migration job.
+
+The previous service revision continues serving between migration success and
+the new revision becoming ready. Every migration must therefore remain backward
+compatible with the currently serving application for that entire window. Use
+expand-and-contract changes across separate releases for destructive renames,
+column removals, and incompatible type changes.
 
 After a migration succeeds, never attempt to undo it by running down migrations
 or restoring an old schema in place. An earlier application image may receive

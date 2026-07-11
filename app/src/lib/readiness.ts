@@ -35,16 +35,16 @@ export async function probePostgres(
   timeoutMs: number
 ): Promise<boolean> {
   let timeout: ReturnType<typeof setTimeout> | undefined;
+  const queryResult = pool.query("SELECT 1").then(
+    () => true,
+    () => false
+  );
+  const timeoutResult = new Promise<boolean>((resolve) => {
+    timeout = setTimeout(() => resolve(false), timeoutMs);
+  });
+
   try {
-    await Promise.race([
-      pool.query("SELECT 1"),
-      new Promise<never>((_, reject) => {
-        timeout = setTimeout(() => reject(new Error("readiness timeout")), timeoutMs);
-      }),
-    ]);
-    return true;
-  } catch {
-    return false;
+    return await Promise.race([queryResult, timeoutResult]);
   } finally {
     if (timeout) clearTimeout(timeout);
   }
