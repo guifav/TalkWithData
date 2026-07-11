@@ -30,32 +30,64 @@ Edit `app/.env` before using real auth, storage, and AI features.
 
 ### Docker Compose
 
-Use Docker Compose when you want a repeatable local or VM deployment. Create a `docker-compose.yml` file in the repository root with this service definition:
+The checked-in `docker-compose.yml` provides the application, PostgreSQL 16,
+and a one-shot Prisma migration job. Docker Compose v2 is required for the
+health and successful-completion dependency conditions.
 
-```yaml
-services:
-  app:
-    build:
-      context: ./app
-      dockerfile: Dockerfile
-    env_file:
-      - ./app/.env
-    ports:
-      - "3000:8080"
-    restart: unless-stopped
-```
-
-Then run:
+Prepare the application configuration and start the stack:
 
 ```bash
+cp app/.env.example app/.env
+# Replace the application placeholders in app/.env.
 docker compose up --build
 ```
 
-If your Docker installation uses the legacy binary, the equivalent command is:
+Compose uses local development database defaults (`talkwithdata` for the user,
+password, and database), stores PostgreSQL data in the `postgres_data` named
+volume, and follows this startup order:
+
+1. `db` must pass its bounded `pg_isready` healthcheck.
+2. `migrate` runs `prisma migrate deploy` once and exits successfully.
+3. `app` starts and exposes http://localhost:3000.
+
+The Compose `environment` block overrides the host-oriented `DATABASE_URL` from
+`app/.env` with the internal `db` hostname. The migration container receives
+only that database URL, not the unrelated secrets from `app/.env`.
+
+Inspect status and migration logs with:
 
 ```bash
-docker-compose up --build
+docker compose ps --all
+docker compose logs db migrate
 ```
+
+Stop containers while preserving application and database data:
+
+```bash
+docker compose down
+```
+
+Reset all Compose-managed data and apply every migration to a new empty volume:
+
+```bash
+docker compose down --volumes
+docker compose up --build
+```
+
+`down --volumes` permanently removes the Compose PostgreSQL and application data
+volumes. A normal `down` preserves them, and the next `up` reruns the idempotent
+migration job without reapplying completed migrations.
+
+For custom development credentials, set `POSTGRES_USER`, `POSTGRES_PASSWORD`,
+`POSTGRES_DB`, and `COMPOSE_DATABASE_URL` together in the invoking shell or an
+ignored root `.env` file. URL-encode reserved password characters inside
+`COMPOSE_DATABASE_URL`. Do not use the documented development password for an
+internet-exposed or production database.
+
+If migration fails, Compose intentionally leaves `app` stopped. Read
+`docker compose logs migrate`, correct the database configuration or migration,
+and run `docker compose up --build` again. Do not bypass the migration service by
+starting the application container manually.
 
 ### Production container notes
 
@@ -284,7 +316,8 @@ DATABASE_URL=postgresql://user:password@localhost:5432/talkwithdata
 
 That hostname is correct when the app runs directly on your host. If the app
 runs in a container, `localhost` resolves to the app container itself, not the
-database.
+database. The checked-in Compose stack handles this automatically by replacing
+the application and migration URLs with its internal `db` service URL.
 
 To run a matching local PostgreSQL instance with Docker:
 
@@ -292,7 +325,8 @@ To run a matching local PostgreSQL instance with Docker:
 docker run -d --name talkwithdata-db -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password -e POSTGRES_DB=talkwithdata -p 5432:5432 -v talkwithdata-db-data:/var/lib/postgresql/data postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
 ```
 
-For a containerized app, use one of these connection patterns instead:
+For a containerized app outside the checked-in Compose stack, use one of these
+connection patterns instead:
 
 - `host.docker.internal` on Docker Desktop, for example `postgresql://user:password@host.docker.internal:5432/talkwithdata`
 - a shared Docker network and the database container name as the host

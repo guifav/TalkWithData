@@ -55,9 +55,9 @@ ci_digest=$(read_single_digest "postgres:16 CI service" \
   's/.*image: postgres:16@\(sha256:[0-9a-f]\{64\}\).*/\1/p' \
   .github/workflows/ci.yml)
 
-local_digest=$(read_single_digest "postgres:16-alpine setup examples" \
+local_digest=$(read_single_digest "postgres:16-alpine local runtime" \
   's/.*postgres:16-alpine@\(sha256:[0-9a-f]\{64\}\).*/\1/p' \
-  CONTRIBUTING.md docs/DEPLOYMENT.md)
+  CONTRIBUTING.md docker-compose.yml docs/DEPLOYMENT.md)
 
 verify_digest "postgres:16" "$ci_digest"
 verify_digest "postgres:16-alpine" "$local_digest"

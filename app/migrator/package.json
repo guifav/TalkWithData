@@ -1,0 +1,15 @@
+{
+  "name": "talk-with-data-migrator",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "dependencies": {
+    "dotenv": "17.4.2",
+    "prisma": "7.8.0"
+  },
+  "overrides": {
+    "@hono/node-server": "1.19.13"
+  }
+}
