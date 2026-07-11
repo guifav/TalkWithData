@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyRequest } from "@/lib/api-auth";
 import { adminDb } from "@/lib/firebase/admin";
-import { adminStorage } from "@/lib/firebase/admin";
 import {
+  deleteHtmlFile,
   uploadHtmlFile,
   uploadZipDashboard,
 } from "@/lib/storage";
@@ -10,7 +10,6 @@ import { FieldValue } from "firebase-admin/firestore";
 import { extractTextFromHtml, MAX_SEARCHABLE_TEXT } from "@/lib/html-text";
 import { triggerThumbnailGeneration } from "@/lib/thumbnail";
 import { archiveCurrentVersion } from "@/lib/versions";
-import { getStorageBucketName } from "@/lib/storage-bucket";
 
 const MAX_HTML_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_ZIP_SIZE = 50 * 1024 * 1024; // 50MB
@@ -125,16 +124,13 @@ export async function POST(
     if (wasMultiPage && Array.isArray(data!.files)) {
       // Delete specific old ZIP files (not prefix-wide, to avoid deleting the new HTML)
       const oldPrefix = `dashboards/${data!.createdBy}/${id}/`;
-      const bucket = adminStorage.bucket(getStorageBucketName());
       await Promise.all(
         (data!.files as string[]).map((f) =>
-          bucket.file(`${oldPrefix}${f}`).delete({ ignoreNotFound: true }).catch(() => {})
+          deleteHtmlFile(`${oldPrefix}${f}`).catch(() => {})
         )
       );
     } else if (oldStoragePath && oldStoragePath !== storagePath) {
-      await adminStorage.bucket(getStorageBucketName())
-        .file(oldStoragePath)
-        .delete({ ignoreNotFound: true })
+      await deleteHtmlFile(oldStoragePath)
         .catch((err) => console.warn(`[Replace] Failed to delete old file:`, err));
     }
 
@@ -170,7 +166,7 @@ async function handleZipReplace({
   entrypoint,
   wasMultiPage,
 }: ZipReplaceParams) {
-  // Upload new ZIP FIRST (GCS overwrites existing files atomically per-file).
+  // Upload new ZIP FIRST (providers overwrite existing files atomically per file).
   // Only clean up stale files AFTER the new upload succeeds, so a failed
   // upload never leaves the dashboard in a broken state.
   let zipResult;
@@ -196,8 +192,8 @@ async function handleZipReplace({
   }
 
   // Update Firestore with multi-page fields.
-  // Note: no GCS rollback attempted on failure. Firestore single-document
-  // updates are atomic and practically never fail. If they did, GCS rollback
+  // Note: no storage rollback attempted on failure. Firestore single-document
+  // updates are atomic and practically never fail. If they did, rollback
   // would be incomplete anyway (overlapping files like index.html are already
   // overwritten and unrecoverable without a staging prefix). Accepted risk:
   // on the near-impossible Firestore failure, the dashboard serves new content
@@ -217,25 +213,21 @@ async function handleZipReplace({
     });
 
   // Clean up orphaned files AFTER Firestore update commits.
-  // If this fails, we have stale files in GCS (harmless) but the
+  // If this fails, we have stale files in storage (harmless) but the
   // dashboard is never left pointing at deleted content.
   if (wasMultiPage && Array.isArray(data.files)) {
     const newFiles = new Set(zipResult.files);
     const oldPrefix = `dashboards/${data.createdBy || auth.uid}/${id}/`;
     const orphaned = (data.files as string[]).filter((f) => !newFiles.has(f));
     if (orphaned.length > 0) {
-      const bucket = adminStorage.bucket(getStorageBucketName());
       await Promise.all(
         orphaned.map((f) =>
-          bucket.file(`${oldPrefix}${f}`).delete({ ignoreNotFound: true }).catch(() => {})
+          deleteHtmlFile(`${oldPrefix}${f}`).catch(() => {})
         )
       );
     }
   } else if (!wasMultiPage && data.storagePath) {
-    await adminStorage.bucket(getStorageBucketName())
-      .file(data.storagePath as string)
-      .delete({ ignoreNotFound: true })
-      .catch(() => {});
+    await deleteHtmlFile(data.storagePath as string).catch(() => {});
   }
 
   triggerThumbnailGeneration(id);

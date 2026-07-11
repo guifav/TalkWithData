@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     const htmlContent = buffer.toString("utf-8");
     const searchableText = extractTextFromHtml(htmlContent).slice(0, MAX_SEARCHABLE_TEXT);
 
-    // Phase 1: Upload file to GCS
+    // Phase 1: Upload file to the configured storage provider
     const storagePath = await uploadHtmlFile(auth.uid, dashboardId, file.name, buffer);
 
     // Phase 2: Reserve slug
@@ -155,7 +155,7 @@ async function handleZipUpload({
   auth, docRef, dashboardId, buffer, title,
   description, category, visibility, allowedEmails, entrypoint,
 }: ZipUploadParams) {
-  // Phase 1: Extract and upload ZIP to GCS
+  // Phase 1: Extract and upload ZIP to the configured storage provider
   let zipResult;
   try {
     zipResult = await uploadZipDashboard(auth.uid, dashboardId, buffer, entrypoint);

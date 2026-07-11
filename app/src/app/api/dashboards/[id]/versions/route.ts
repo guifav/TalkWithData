@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyRequest } from "@/lib/api-auth";
 import { adminDb } from "@/lib/firebase/admin";
-import { adminStorage } from "@/lib/firebase/admin";
 import { archiveCurrentVersion } from "@/lib/versions";
 import { extractTextFromHtml, MAX_SEARCHABLE_TEXT } from "@/lib/html-text";
-import { getStorageBucketName } from "@/lib/storage-bucket";
+import { copyStorageFile, getHtmlFile } from "@/lib/storage";
 
 
 export async function GET(
@@ -110,8 +109,6 @@ export async function POST(
       );
     }
 
-    const bucket = adminStorage.bucket(getStorageBucketName());
-
     // Archive the current live file BEFORE restoring (so it's not lost)
     // Pass versionId as protectVersionId so FIFO cleanup won't delete
     // the version we're about to restore
@@ -126,10 +123,10 @@ export async function POST(
 
     // Copy version file to the primary dashboard path
     const restoredPath = `dashboards/${data?.createdBy}/${id}/${vData.fileName}`;
-    await bucket.file(vData.storagePath).copy(bucket.file(restoredPath));
+    await copyStorageFile(vData.storagePath, restoredPath);
 
     // Re-extract searchable text from restored HTML
-    const [restoredBuffer] = await bucket.file(restoredPath).download();
+    const restoredBuffer = await getHtmlFile(restoredPath);
     const htmlContent = restoredBuffer.toString("utf-8");
     const searchableText = extractTextFromHtml(htmlContent).slice(
       0,

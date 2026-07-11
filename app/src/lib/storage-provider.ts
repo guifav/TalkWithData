@@ -11,6 +11,7 @@ export interface StorageUploadOptions {
 export interface StorageProvider {
   upload(path: string, buffer: Buffer, options?: StorageUploadOptions): Promise<void>;
   download(path: string): Promise<Buffer>;
+  copy(sourcePath: string, destinationPath: string): Promise<void>;
   delete(path: string): Promise<void>;
   exists(path: string): Promise<boolean>;
 }
@@ -36,6 +37,11 @@ export class GcsStorage implements StorageProvider {
   async download(filePath: string): Promise<Buffer> {
     const [contents] = await this.storage.bucket(this.bucketName).file(filePath).download();
     return contents;
+  }
+
+  async copy(sourcePath: string, destinationPath: string): Promise<void> {
+    const bucket = this.storage.bucket(this.bucketName);
+    await bucket.file(sourcePath).copy(bucket.file(destinationPath));
   }
 
   async delete(filePath: string): Promise<void> {
@@ -78,6 +84,12 @@ export class LocalStorage implements StorageProvider {
     return fs.readFile(this.resolvePath(filePath));
   }
 
+  async copy(sourcePath: string, destinationPath: string): Promise<void> {
+    const destination = this.resolvePath(destinationPath);
+    await fs.mkdir(path.dirname(destination), { recursive: true });
+    await fs.copyFile(this.resolvePath(sourcePath), destination);
+  }
+
   async delete(filePath: string): Promise<void> {
     const fullPath = this.resolvePath(filePath);
 
@@ -106,8 +118,16 @@ export class LocalStorage implements StorageProvider {
 
   private resolvePath(filePath: string): string {
     const normalized = filePath.replace(/\\/g, "/");
+    const logicalPath = normalized.endsWith("/")
+      ? normalized.slice(0, -1)
+      : normalized;
 
-    if (!normalized || normalized.startsWith("/") || normalized.includes("\0")) {
+    if (
+      !logicalPath ||
+      normalized.startsWith("/") ||
+      normalized.includes("\0") ||
+      logicalPath.split("/").some((segment) => !segment || segment === "." || segment === "..")
+    ) {
       throw new Error(`Invalid storage path: ${filePath}`);
     }
 

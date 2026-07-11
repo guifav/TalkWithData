@@ -118,11 +118,13 @@ Recommended Firestore rules for production:
 - Keep role checks in server code and back them with tests.
 - Keep service account credentials outside the repository.
 
-## Storage, GCS and local development
+## Dashboard storage
 
-### Google Cloud Storage
+Dashboard files use the provider selected by `STORAGE_PROVIDER`: Google Cloud Storage (`gcs`, the default) or a persistent local filesystem (`local`). `STORAGE_BUCKET_NAME` is required only for GCS; `LOCAL_STORAGE_ROOT` selects the local root and defaults to `/data/uploads`.
 
-The production storage path is Google Cloud Storage through Firebase Admin. The bucket name comes from `STORAGE_BUCKET_NAME`.
+GCS is appropriate for shared and multi-instance deployments. Local storage is appropriate for a single instance with a persistent volume. Independent local disks must not be used across multiple application instances.
+
+The GCS provider uses the Google Cloud Storage client and reads the bucket name from `STORAGE_BUCKET_NAME`. The local provider maps the same logical paths below `LOCAL_STORAGE_ROOT`.
 
 Single-file dashboards are stored at:
 

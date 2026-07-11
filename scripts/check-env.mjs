@@ -14,7 +14,6 @@ export const REQUIRED_VARIABLES = [
   "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
   "NEXT_PUBLIC_FIREBASE_APP_ID",
   "FIREBASE_PROJECT_ID",
-  "STORAGE_BUCKET_NAME",
   "DATABASE_URL",
   "DASHBOARD_SESSION_SECRET",
 ];
@@ -86,6 +85,15 @@ export function validateEnv(contents) {
     if (!values.get(key)?.trim()) {
       validationErrors.push(`missing required variable ${key}`);
     }
+  }
+
+  const storageProvider = (values.get("STORAGE_PROVIDER") || "gcs")
+    .trim()
+    .toLowerCase();
+  if (storageProvider !== "gcs" && storageProvider !== "local") {
+    validationErrors.push('STORAGE_PROVIDER must be either "gcs" or "local"');
+  } else if (storageProvider === "gcs" && !values.get("STORAGE_BUCKET_NAME")?.trim()) {
+    validationErrors.push("missing required variable STORAGE_BUCKET_NAME");
   }
 
   if (!AI_PROVIDER_VARIABLES.some((key) => values.get(key)?.trim())) {

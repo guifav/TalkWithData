@@ -1,6 +1,5 @@
-import { adminStorage } from "@/lib/firebase/admin";
 import AdmZip from "adm-zip";
-import { getStorageBucketName } from "@/lib/storage-bucket";
+import { getStorageProvider } from "@/lib/storage-provider";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB per single file
 const MAX_ZIP_SIZE = 50 * 1024 * 1024; // 50MB for ZIP packages
@@ -51,36 +50,33 @@ export async function uploadHtmlFile(
   }
 
   const storagePath = `dashboards/${userId}/${dashboardId}/${fileName}`;
-  const bucket = adminStorage.bucket(getStorageBucketName());
-  const file = bucket.file(storagePath);
-
-  await file.save(buffer, {
+  await getStorageProvider().upload(storagePath, buffer, {
     contentType: "text/html",
-    metadata: {
-      cacheControl: "public, max-age=3600",
-    },
+    cacheControl: "public, max-age=3600",
   });
 
   return storagePath;
 }
 
 export async function getHtmlFile(storagePath: string): Promise<Buffer> {
-  const bucket = adminStorage.bucket(getStorageBucketName());
-  const file = bucket.file(storagePath);
-  const [contents] = await file.download();
-  return contents;
+  return getStorageProvider().download(storagePath);
 }
 
 export async function deleteHtmlFile(storagePath: string): Promise<void> {
-  const bucket = adminStorage.bucket(getStorageBucketName());
-  const file = bucket.file(storagePath);
-  await file.delete({ ignoreNotFound: true });
+  await getStorageProvider().delete(storagePath);
+}
+
+export async function copyStorageFile(
+  sourcePath: string,
+  destinationPath: string
+): Promise<void> {
+  await getStorageProvider().copy(sourcePath, destinationPath);
 }
 
 // ── ZIP / multi-page upload ─────────────────────────────────────────────────
 
 export interface ZipUploadResult {
-  /** GCS prefix where all files were uploaded: dashboards/{userId}/{dashboardId}/ */
+  /** Storage prefix where all files were uploaded: dashboards/{userId}/{dashboardId}/ */
   storagePrefix: string;
   /** storagePath of the entrypoint file (index.html by default). Used as the Dashboard.storagePath. */
   storagePath: string;
@@ -110,7 +106,7 @@ function isPathSafe(relativePath: string): boolean {
 }
 
 /**
- * Extract and upload a ZIP package to GCS. Returns metadata about the uploaded files.
+ * Extract and upload a ZIP package. Returns metadata about the uploaded files.
  *
  * @param userId        - Firebase UID of the uploader
  * @param dashboardId   - Firestore doc ID for the dashboard
@@ -185,9 +181,9 @@ export async function uploadZipDashboard(
     );
   }
 
-  // Upload files to GCS with uncompressed size guard.
+  // Upload files with an uncompressed size guard.
   // Extract and upload sequentially to avoid materializing entire ZIP in memory.
-  const bucket = adminStorage.bucket(getStorageBucketName());
+  const storage = getStorageProvider();
   const storagePrefix = `dashboards/${userId}/${dashboardId}/`;
   let totalSizeBytes = 0;
 
@@ -203,15 +199,12 @@ export async function uploadZipDashboard(
       );
     }
 
-    const gcsPath = `${storagePrefix}${relativePath}`;
-    const file = bucket.file(gcsPath);
+    const storagePath = `${storagePrefix}${relativePath}`;
     const contentType = getContentType(relativePath);
 
-    await file.save(data, {
+    await storage.upload(storagePath, data, {
       contentType,
-      metadata: {
-        cacheControl: "public, max-age=3600",
-      },
+      cacheControl: "public, max-age=3600",
     });
   }
 
@@ -225,7 +218,7 @@ export async function uploadZipDashboard(
 }
 
 /**
- * Get a specific asset file from a dashboard's GCS storage.
+ * Get a specific asset file from dashboard storage.
  * Used by the sub-path serving route for multi-page dashboards.
  */
 export async function getDashboardAsset(
@@ -236,14 +229,12 @@ export async function getDashboardAsset(
     return null;
   }
 
-  const gcsPath = `${storagePrefix}${relativePath}`;
-  const bucket = adminStorage.bucket(getStorageBucketName());
-  const file = bucket.file(gcsPath);
+  const storagePath = `${storagePrefix}${relativePath}`;
+  const storage = getStorageProvider();
 
   try {
-    const [exists] = await file.exists();
-    if (!exists) return null;
-    const [contents] = await file.download();
+    if (!(await storage.exists(storagePath))) return null;
+    const contents = await storage.download(storagePath);
     return {
       buffer: contents,
       contentType: getContentType(relativePath),
@@ -257,8 +248,7 @@ export async function getDashboardAsset(
  * Delete all files under a storage prefix (for multi-page dashboard cleanup).
  */
 export async function deleteDashboardFiles(storagePrefix: string): Promise<void> {
-  const bucket = adminStorage.bucket(getStorageBucketName());
-  await bucket.deleteFiles({ prefix: storagePrefix, force: true });
+  await getStorageProvider().delete(storagePrefix);
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
