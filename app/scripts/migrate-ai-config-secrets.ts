@@ -13,6 +13,8 @@ interface MigrationCounts {
   migrated: number;
   skippedNoLegacyKey: number;
   skippedInvalidConfig: number;
+  scrubbedSecretMaterial: number;
+  clearedInvalidConfig: number;
 }
 
 async function main() {
@@ -22,6 +24,8 @@ async function main() {
     migrated: 0,
     skippedNoLegacyKey: 0,
     skippedInvalidConfig: 0,
+    scrubbedSecretMaterial: 0,
+    clearedInvalidConfig: 0,
   };
 
   requireConfiguredAiConfigEncryptionKey();
@@ -32,23 +36,34 @@ async function main() {
     counts.examined += 1;
     const aiConfig = doc.data().aiConfig as AiModelConfig | undefined;
 
-    if (!aiConfig?.apiKey?.trim()) {
+    if (!hasLegacySecretMaterial(aiConfig)) {
       counts.skippedNoLegacyKey += 1;
       continue;
     }
 
-    const storedConfig: StoredAiConfig = toStoredAiConfig(aiConfig, true);
-    if (!isValidStoredConfig(storedConfig)) {
+    const legacyApiKey = aiConfig?.apiKey?.trim();
+    const storedConfig = safeStoredConfig(aiConfig, Boolean(legacyApiKey));
+    if (!storedConfig || !isValidStoredConfig(storedConfig)) {
+      if (!dryRun) {
+        await doc.ref.update({ aiConfig: null });
+      }
+      counts.clearedInvalidConfig += 1;
       counts.skippedInvalidConfig += 1;
       continue;
     }
 
     if (!dryRun) {
-      await setUserAiConfigApiKey(doc.id, aiConfig.apiKey);
+      if (legacyApiKey) {
+        await setUserAiConfigApiKey(doc.id, legacyApiKey);
+      }
       await doc.ref.update({ aiConfig: storedConfig });
     }
 
-    counts.migrated += 1;
+    if (legacyApiKey) {
+      counts.migrated += 1;
+    } else {
+      counts.scrubbedSecretMaterial += 1;
+    }
   }
 
   console.log(JSON.stringify({ dryRun, ...counts }));
@@ -58,3 +73,23 @@ main().catch((error) => {
   console.error("AI config secret migration failed:", error instanceof Error ? error.message : "unknown error");
   process.exit(1);
 });
+
+function hasLegacySecretMaterial(config: unknown): config is AiModelConfig {
+  if (!config || typeof config !== "object") return false;
+  return (
+    "apiKey" in config ||
+    "apiKeyEnc" in config ||
+    "credentialEnc" in config
+  );
+}
+
+function safeStoredConfig(
+  config: AiModelConfig,
+  apiKeyConfigured: boolean,
+): StoredAiConfig | null {
+  try {
+    return toStoredAiConfig(config, apiKeyConfigured);
+  } catch {
+    return null;
+  }
+}

@@ -24,15 +24,16 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { uid, role, aiConfig } = body as {
+    const { uid, role, aiConfig, keepExistingApiKey } = body as {
       uid?: string;
       role?: string;
       aiConfig?: AiModelConfig | null;
+      keepExistingApiKey?: boolean;
     };
 
     // Handle AI config update
     if (uid && aiConfig !== undefined) {
-      const storedConfig = await updateUserAiConfig(uid, aiConfig);
+      const storedConfig = await updateUserAiConfig(uid, aiConfig, { keepExistingApiKey });
       return NextResponse.json({ success: true, uid, aiConfig: sanitizeAiConfig(storedConfig) });
     }
 
