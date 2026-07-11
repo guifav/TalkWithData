@@ -7,11 +7,10 @@ services:
     ports:
       - "3000:8080"
     env_file:
-      - .env
+      - ./app/.env
     environment:
       # Upload and serve currently use Firebase Admin Storage (GCS) regardless of
       # STORAGE_PROVIDER; the local adapter is not yet wired into those paths.
-      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-gcs}
       LOCAL_STORAGE_ROOT: /data/uploads
       PORT: 8080
     volumes:

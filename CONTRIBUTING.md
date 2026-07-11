@@ -18,14 +18,13 @@ Thank you for helping improve Talk With Data. This guide explains how to set up 
 ```bash
 git clone https://github.com/guifav/TalkWithData.git
 cd TalkWithData
-cp .env.example .env
+./setup.sh
+# Replace the placeholders in app/.env, then:
 cd app
-npm install
-npm run db:generate
 npm run dev
 ```
 
-Start a local PostgreSQL that matches the DATABASE_URL in .env.example:
+Start a local PostgreSQL that matches `DATABASE_URL` in `app/.env.example`:
 
 ```bash
 docker run -d --name talkwithdata-db -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password -e POSTGRES_DB=talkwithdata -p 5432:5432 -v talkwithdata-db-data:/var/lib/postgresql/data postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
@@ -41,14 +40,14 @@ PostgreSQL. In that case, use one of these container-friendly options:
 
 Open http://localhost:3000.
 
-Before testing authenticated flows, edit `.env` and set the Firebase values, `ALLOWED_AUTH_DOMAIN` and its browser copy `NEXT_PUBLIC_ALLOWED_AUTH_DOMAIN` (same value), `STORAGE_BUCKET_NAME`, `DATABASE_URL`, `DASHBOARD_SESSION_SECRET`, and an AI provider key.
+Before testing authenticated flows, edit `app/.env` and set the Firebase values, `ALLOWED_AUTH_DOMAIN` and its browser copy `NEXT_PUBLIC_ALLOWED_AUTH_DOMAIN` (same value), `STORAGE_BUCKET_NAME`, `DATABASE_URL`, `DASHBOARD_SESSION_SECRET`, and an AI provider key.
 
 ### Docker setup
 
 ```bash
-cp .env.example .env
+cp app/.env.example app/.env
 docker build -t talk-with-data -f app/Dockerfile app
-docker run --rm --env-file .env -p 3000:8080 talk-with-data
+docker run --rm --env-file app/.env -p 3000:8080 talk-with-data
 ```
 
 When you use the container flow above, remember to update `DATABASE_URL` away
@@ -187,7 +186,7 @@ General steps:
 
 1. Add the provider type to the model resolver in `app/src/lib/ai-model.ts`.
 2. Add supported model IDs and a human-readable label.
-3. Add the provider API key environment variable to `.env.example`.
+3. Add the provider API key environment variable to `app/.env.example`.
 4. Implement a request adapter for the provider response shape, headers, tool calls, and streaming behavior if streaming is used.
 5. Update AI routes that call the provider, including chat, data chat, dashboard save, and refresh paths when relevant.
 6. Ensure prompt construction stays provider-neutral.

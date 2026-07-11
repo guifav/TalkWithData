@@ -24,14 +24,14 @@ Talk With Data ajuda equipes a publicar pacotes HTML de dashboards, pesquisar co
 Rode localmente com Docker em tres comandos:
 
 ```bash
-cp .env.example .env
+cp app/.env.example app/.env
 docker build -t talk-with-data -f app/Dockerfile app
-docker run --rm --env-file .env -p 3000:8080 talk-with-data
+docker run --rm --env-file app/.env -p 3000:8080 talk-with-data
 ```
 
 O container escuta na porta `8080`. O parametro `-p 3000:8080` mapeia a porta para 3000 na sua maquina. Abra http://localhost:3000.
 
-O arquivo `.env` copiado tem placeholders. Uma instancia em execucao ainda precisa de um projeto Firebase, um bucket no Google Cloud Storage, um banco PostgreSQL acessivel e pelo menos um provedor de IA. As variaveis `NEXT_PUBLIC_*` sao embutidas em tempo de build, entao uma imagem ja construida nao le esses valores do `--env-file` em runtime (veja [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
+O arquivo `app/.env` copiado tem placeholders. Uma instancia em execucao ainda precisa de um projeto Firebase, um bucket no Google Cloud Storage, um banco PostgreSQL acessivel e pelo menos um provedor de IA. As variaveis `NEXT_PUBLIC_*` sao embutidas em tempo de build, entao uma imagem ja construida nao le esses valores do `--env-file` em runtime (veja [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 
 ## Recursos
 
@@ -60,7 +60,7 @@ O arquivo `.env` copiado tem placeholders. Uma instancia em execucao ainda preci
 
 ## Configuracao
 
-Copie `.env.example` para `.env` e preencha as variaveis do seu projeto.
+Copie `app/.env.example` para `app/.env` e preencha as variaveis do seu projeto. Next.js, Prisma, Docker Compose e o script de setup usam esse caminho.
 
 Variaveis principais:
 
@@ -82,14 +82,14 @@ Variaveis principais:
 - `THUMBNAIL_FUNCTION_URL` e `THUMBNAIL_SECRET`, thumbnails opcionais.
 - `STORAGE_PROVIDER` e `LOCAL_STORAGE_ROOT`, seletor de adaptador de storage. Upload e serve usam Firebase Admin Storage (GCS); o adaptador `local` existe mas ainda nao esta ligado a esses caminhos.
 
-Veja [.env.example](.env.example) para o template completo.
+Veja [app/.env.example](app/.env.example) para o template completo.
 
 ## Desenvolvimento
 
 ```bash
+./setup.sh
+# Preencha os placeholders em app/.env e depois rode:
 cd app
-npm install
-npm run db:generate
 npm run dev
 ```
 

@@ -1,6 +1,6 @@
 # Environment
 .env*
-!.env.example
+!app/.env.example
 
 # Dependencies
 node_modules/

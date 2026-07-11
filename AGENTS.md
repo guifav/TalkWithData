@@ -6,7 +6,7 @@ For canonical rules (design system, code conventions), see CLAUDE.md.
 ## Quick Start
 
 ```bash
-cd app && npm install        # Install dependencies
+./setup.sh                   # Create and validate app/.env, install dependencies
 cd app && npm run dev        # Start dev server (http://localhost:3000)
 cd app && npm test           # Run tests (vitest)
 cd app && npm run lint       # ESLint
@@ -34,7 +34,7 @@ Use Conventional Commits: `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`
 
 ## Environment Setup
 
-1. Copy `.env.example` to `.env`
+1. Copy `app/.env.example` to `app/.env`
 2. Fill in Firebase config (create a Firebase project at https://console.firebase.google.com)
 3. Set `ALLOWED_AUTH_DOMAIN` to your domain (e.g., `yourdomain.com`)
 4. Set `STORAGE_BUCKET_NAME` to your Firebase Storage bucket
@@ -63,9 +63,9 @@ talkwithdata/
       lib/          # Core libraries (firebase, ai, db, etc)
     prisma/         # Prisma schema
     public/         # Static assets
+    .env.example    # Canonical environment variable template
   functions/        # Cloud Functions (thumbnail generation)
   scripts/          # Utility scripts
   CLAUDE.md         # Canonical rules (design system, conventions)
   AGENTS.md         # This file (operational guide)
-  .env.example      # Environment variable template
 ```
