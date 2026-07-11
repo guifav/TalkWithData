@@ -290,6 +290,23 @@ describe("admin inspect data source headers route", () => {
     expect(routeMocks.encrypt).not.toHaveBeenCalled();
   });
 
+  it("valida configuração da fonte antes de criptografar credencial", async () => {
+    setupAuth("superadmin");
+
+    const response = await inspectHeaders(
+      request("token", {
+        prefix: "exports",
+        credentialRef: { kind: "encryptedBlob", ref: "credential-a" },
+        credential: rawCredential,
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error).toBe("bucket is required");
+    expect(routeMocks.encrypt).not.toHaveBeenCalled();
+  });
+
   it("usa credencial server-only de uma fonte existente", async () => {
     setupAuth("superadmin");
     routeMocks.dataSources.set("source-1", {

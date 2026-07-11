@@ -130,17 +130,16 @@ async function resolveInspectInput(body: InspectHeadersBody): Promise<
     }
   | { ok: false; error: string }
 > {
-  const suppliedCredential = resolveSuppliedCredential(body);
-  if (!suppliedCredential.ok) {
-    return suppliedCredential;
-  }
-
   if (body.dataSourceId) {
     const existing = await getDataSourceWithCredentials(body.dataSourceId);
     if (!existing) return { ok: false, error: "Data source not found" };
 
     const bucket = isNonEmptyString(body.bucket) ? body.bucket.trim() : existing.bucket;
     const prefix = typeof body.prefix === "string" ? normalizePrefix(body.prefix) : existing.prefix;
+    const suppliedCredential = resolveSuppliedCredential(body);
+    if (!suppliedCredential.ok) {
+      return suppliedCredential;
+    }
 
     if (suppliedCredential.value) {
       const credentialRef = isCredentialRef(body.credentialRef)
@@ -192,6 +191,10 @@ async function resolveInspectInput(body: InspectHeadersBody): Promise<
   }
   if (!isCredentialRef(body.credentialRef)) {
     return { ok: false, error: "credentialRef is invalid" };
+  }
+  const suppliedCredential = resolveSuppliedCredential(body);
+  if (!suppliedCredential.ok) {
+    return suppliedCredential;
   }
   if (!suppliedCredential.value) {
     return { ok: false, error: "credentialEnc is required" };
