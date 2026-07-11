@@ -46,9 +46,28 @@ describe("Firebase runtime configuration", () => {
     expect(
       readFirebasePublicConfig({
         ...env,
+        ALLOWED_AUTH_DOMAIN: completeConfig.allowedAuthDomain,
         DASHBOARD_SESSION_SECRET: "must-not-cross-the-boundary",
       }),
     ).toEqual(completeConfig);
+  });
+
+  it("rejects different server and browser authentication domains at runtime", () => {
+    const env = Object.fromEntries(
+      Object.entries(FIREBASE_PUBLIC_ENV_KEYS).map(([field, envName]) => [
+        envName,
+        completeConfig[field as keyof typeof completeConfig],
+      ]),
+    );
+
+    expect(() =>
+      readFirebasePublicConfig({
+        ...env,
+        ALLOWED_AUTH_DOMAIN: "other.example.com",
+      }),
+    ).toThrow(
+      "ALLOWED_AUTH_DOMAIN and NEXT_PUBLIC_ALLOWED_AUTH_DOMAIN must match",
+    );
   });
 
   it("escapes characters that could break out of the bootstrap script", () => {

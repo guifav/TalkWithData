@@ -14,7 +14,20 @@ export function readFirebasePublicConfig(
     ]),
   );
 
-  return parseFirebasePublicConfig(input);
+  const config = parseFirebasePublicConfig(input);
+  const serverDomain = env.ALLOWED_AUTH_DOMAIN?.trim();
+  if (!serverDomain) {
+    throw new Error(
+      "Invalid server authentication configuration: missing ALLOWED_AUTH_DOMAIN",
+    );
+  }
+  if (serverDomain !== config.allowedAuthDomain) {
+    throw new Error(
+      "ALLOWED_AUTH_DOMAIN and NEXT_PUBLIC_ALLOWED_AUTH_DOMAIN must match",
+    );
+  }
+
+  return config;
 }
 
 export function serializeFirebaseRuntimeConfig(
