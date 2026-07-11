@@ -115,6 +115,56 @@ export async function updateUserAiConfig(
   });
 }
 
+export async function migrateLegacyUserAiConfig(
+  uid: string,
+  storedConfig: StoredAiConfig | null,
+  legacyCustomApiKey: string | null,
+): Promise<void> {
+  const normalizedUid = uid.trim();
+  if (!normalizedUid) {
+    throw new AiConfigValidationError("uid is required");
+  }
+
+  const userRef = adminDb.collection("users").doc(normalizedUid);
+  const secretRef = adminDb.collection(COLLECTION).doc(normalizedUid);
+
+  await adminDb.runTransaction(async (tx) => {
+    const userDoc = await tx.get(userRef);
+    if (!userDoc.exists) {
+      throw new AiConfigUserNotFoundError();
+    }
+
+    if (storedConfig === null) {
+      tx.update(userRef, { aiConfig: null });
+      tx.delete(secretRef);
+      return;
+    }
+
+    if (!isValidStoredConfig(storedConfig)) {
+      throw new AiConfigValidationError(
+        "Invalid AI config. Select a supported provider/model. Custom requires baseUrl and model.",
+      );
+    }
+
+    const configToStore: StoredAiConfig = { ...storedConfig };
+    const apiKey = legacyCustomApiKey?.trim() || null;
+
+    if (configToStore.provider === "custom" && apiKey) {
+      tx.set(secretRef, encryptedSecretPayload(apiKey), { merge: true });
+      configToStore.apiKeyConfigured = true;
+    } else {
+      tx.delete(secretRef);
+      delete configToStore.apiKeyConfigured;
+    }
+
+    if (configToStore.provider !== "custom") {
+      delete configToStore.baseUrl;
+    }
+
+    tx.update(userRef, { aiConfig: configToStore });
+  });
+}
+
 export async function getUserAiConfigApiKey(uid: string): Promise<string | null> {
   const doc = await adminDb.collection(COLLECTION).doc(uid).get();
   if (!doc.exists) return null;

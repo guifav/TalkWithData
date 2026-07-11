@@ -1,8 +1,8 @@
 import { adminDb } from "@/lib/firebase/admin";
 import {
   isValidStoredConfig,
+  migrateLegacyUserAiConfig,
   requireConfiguredAiConfigEncryptionKey,
-  setUserAiConfigApiKey,
   toStoredAiConfig,
   type StoredAiConfig,
 } from "@/lib/ai-config-secrets";
@@ -41,11 +41,12 @@ async function main() {
       continue;
     }
 
-    const legacyApiKey = aiConfig?.apiKey?.trim();
-    const storedConfig = safeStoredConfig(aiConfig, Boolean(legacyApiKey));
+    const legacyApiKey = legacyApiKeyFrom(aiConfig);
+    const legacyCustomApiKey = aiConfig?.provider === "custom" ? legacyApiKey : null;
+    const storedConfig = safeStoredConfig(aiConfig, Boolean(legacyCustomApiKey));
     if (!storedConfig || !isValidStoredConfig(storedConfig)) {
       if (!dryRun) {
-        await doc.ref.update({ aiConfig: null });
+        await migrateLegacyUserAiConfig(doc.id, null, null);
       }
       counts.clearedInvalidConfig += 1;
       counts.skippedInvalidConfig += 1;
@@ -53,13 +54,10 @@ async function main() {
     }
 
     if (!dryRun) {
-      if (legacyApiKey) {
-        await setUserAiConfigApiKey(doc.id, legacyApiKey);
-      }
-      await doc.ref.update({ aiConfig: storedConfig });
+      await migrateLegacyUserAiConfig(doc.id, storedConfig, legacyCustomApiKey);
     }
 
-    if (legacyApiKey) {
+    if (legacyCustomApiKey) {
       counts.migrated += 1;
     } else {
       counts.scrubbedSecretMaterial += 1;
@@ -81,6 +79,12 @@ function hasLegacySecretMaterial(config: unknown): config is AiModelConfig {
     "apiKeyEnc" in config ||
     "credentialEnc" in config
   );
+}
+
+function legacyApiKeyFrom(config: AiModelConfig | undefined): string | null {
+  if (typeof config?.apiKey !== "string") return null;
+
+  return config.apiKey.trim() || null;
 }
 
 function safeStoredConfig(

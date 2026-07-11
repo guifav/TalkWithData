@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 type StoredDoc = { exists: boolean; data: Record<string, unknown> };
 
 const collections = new Map<string, Map<string, StoredDoc>>();
+let transactionCount = 0;
 
 function collectionStore(name: string) {
   let store = collections.get(name);
@@ -59,8 +60,9 @@ vi.mock("@/lib/firebase/admin", () => ({
         data: Record<string, unknown>,
       ) => void;
       delete: (ref: { delete: () => Promise<void> }) => void;
-    }) => Promise<unknown>) =>
-      fn({
+    }) => Promise<unknown>) => {
+      transactionCount += 1;
+      return fn({
         get: (ref) => ref.get(),
         set: (ref, data, opts) => {
           void ref.set(data, opts);
@@ -71,7 +73,8 @@ vi.mock("@/lib/firebase/admin", () => ({
         delete: (ref) => {
           void ref.delete();
         },
-      }),
+      });
+    },
     collection: (name: string) => ({
       doc: (id: string) => docRef(name, id),
     }),
@@ -82,6 +85,7 @@ const {
   DEV_AI_CONFIG_ENC_KEY,
   decryptApiKey,
   encryptApiKey,
+  migrateLegacyUserAiConfig,
   requireConfiguredAiConfigEncryptionKey,
   updateUserAiConfig,
 } = await import("@/lib/ai-config-secrets");
@@ -90,6 +94,7 @@ const { resolveUserModel } = await import("@/lib/ai-model");
 describe("AI config server-only secrets", () => {
   beforeEach(() => {
     collections.clear();
+    transactionCount = 0;
     vi.unstubAllEnvs();
     collectionStore("users").set("user-a", {
       exists: true,
@@ -201,6 +206,42 @@ describe("AI config server-only secrets", () => {
     await updateUserAiConfig("user-a", null);
 
     expect(collectionStore("users").get("user-a")?.data.aiConfig).toBeNull();
+    expect(collectionStore("ai_config_secrets").get("user-a")).toBeUndefined();
+  });
+
+  it("migrates a legacy custom key with one transaction and no plaintext in the user document", async () => {
+    await migrateLegacyUserAiConfig("user-a", {
+      provider: "custom",
+      model: "custom-model",
+      baseUrl: "https://llm.example.test/v1",
+      apiKeyConfigured: true,
+    }, "sk-legacy");
+
+    const userDoc = collectionStore("users").get("user-a")?.data;
+    const secretDoc = collectionStore("ai_config_secrets").get("user-a")?.data;
+
+    expect(transactionCount).toBe(1);
+    expect(userDoc?.aiConfig).toEqual({
+      provider: "custom",
+      model: "custom-model",
+      baseUrl: "https://llm.example.test/v1",
+      apiKeyConfigured: true,
+    });
+    expect(JSON.stringify(userDoc)).not.toContain("sk-legacy");
+    expect(secretDoc?.apiKeyEnc).toEqual(expect.any(String));
+  });
+
+  it("scrubs built-in provider legacy keys instead of creating orphan secrets", async () => {
+    await migrateLegacyUserAiConfig("user-a", {
+      provider: "anthropic",
+      model: "claude-sonnet-4-20250514",
+      apiKeyConfigured: true,
+    }, null);
+
+    expect(collectionStore("users").get("user-a")?.data.aiConfig).toEqual({
+      provider: "anthropic",
+      model: "claude-sonnet-4-20250514",
+    });
     expect(collectionStore("ai_config_secrets").get("user-a")).toBeUndefined();
   });
 
