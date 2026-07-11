@@ -19,7 +19,29 @@ read_single_digest() {
 verify_digest() {
   image=$1
   pinned=$2
-  current=$(docker buildx imagetools inspect "docker.io/library/$image" --format '{{json .Manifest.Digest}}' | tr -d '"')
+  tag=${image#postgres:}
+
+  if ! response=$(curl --fail --silent --show-error \
+    --retry 4 --retry-delay 2 --retry-all-errors \
+    --connect-timeout 10 --max-time 60 \
+    "https://hub.docker.com/v2/namespaces/library/repositories/postgres/tags/$tag"); then
+    echo "::error title=Container registry unavailable::Could not resolve the official $image tag after retries"
+    exit 1
+  fi
+
+  if ! current=$(printf '%s' "$response" | python3 -c '
+import json
+import re
+import sys
+
+digest = json.load(sys.stdin).get("digest", "")
+if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+    raise SystemExit("Docker Hub response did not contain a valid manifest digest")
+print(digest)
+'); then
+    echo "::error title=Invalid registry response::Could not read the official $image manifest digest"
+    exit 1
+  fi
 
   if [ "$current" != "$pinned" ]; then
     echo "::error title=Container image pin is stale::$image resolves to $current but the repository pins $pinned"
