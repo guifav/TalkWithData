@@ -61,6 +61,9 @@ docker-compose up --build
 
 - Keep `app/.env` out of the image. Inject variables through the platform.
 - Use platform secrets for API keys and service account data.
+- Public Firebase and authentication values are read at server runtime and
+  bootstrapped through an exact allowlist. One image can be reused across
+  environments without placing secrets in the client payload or image layers.
 - Set `PORT=8080` unless your platform overrides it.
 - Ensure `DATABASE_URL` points to a persistent database.
 - Ensure `STORAGE_BUCKET_NAME` points to a persistent bucket.
@@ -121,13 +124,13 @@ Use `app/.env.example` as the source template. The table below describes deploym
 | Variable | Required | Example | Notes |
 | --- | --- | --- | --- |
 | `ALLOWED_AUTH_DOMAIN` | Yes | `example.com` | Only users with this email domain can authenticate. |
-| `NEXT_PUBLIC_ALLOWED_AUTH_DOMAIN` | Yes | `example.com` | Browser-side copy of `ALLOWED_AUTH_DOMAIN`, set to the same value. Required at build time because client code cannot read the non-public variable. |
-| `NEXT_PUBLIC_FIREBASE_API_KEY` | Yes | `AIza...` | Public Firebase client config. |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Yes | `project.firebaseapp.com` | Public Firebase client config. |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Yes | `project` | Public Firebase client config. |
-| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Yes | `project.appspot.com` | Public Firebase client config. |
-| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Yes | `123456789012` | Public Firebase client config. |
-| `NEXT_PUBLIC_FIREBASE_APP_ID` | Yes | `1:123:web:abc` | Public Firebase client config. |
+| `NEXT_PUBLIC_ALLOWED_AUTH_DOMAIN` | Yes | `example.com` | Browser-side copy of `ALLOWED_AUTH_DOMAIN`, set to the same value. Read by the server at runtime and included in the public bootstrap. |
+| `NEXT_PUBLIC_FIREBASE_API_KEY` | Yes | `AIza...` | Public Firebase client config, read at server runtime. |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Yes | `project.firebaseapp.com` | Public Firebase client config, read at server runtime. |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Yes | `project` | Public Firebase client config, read at server runtime. |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Yes | `project.appspot.com` | Public Firebase client config, read at server runtime. |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Yes | `123456789012` | Public Firebase client config, read at server runtime. |
+| `NEXT_PUBLIC_FIREBASE_APP_ID` | Yes | `1:123:web:abc` | Public Firebase client config, read at server runtime. |
 | `FIREBASE_PROJECT_ID` | Yes | `project` | Firebase Admin project ID. |
 | `SA_KEY_JSON` | Local or non-GCP | JSON string | Optional on GCP when the runtime service account has access. |
 | `STORAGE_BUCKET_NAME` | Yes | `project-uploads` | Bucket used for dashboard files. |
