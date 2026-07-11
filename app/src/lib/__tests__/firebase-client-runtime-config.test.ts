@@ -41,8 +41,14 @@ describe("Firebase client runtime configuration", () => {
 
     await import("@/lib/firebase/client");
 
-    const { allowedAuthDomain: _allowedAuthDomain, ...firebaseOptions } = runtimeConfig;
-    expect(firebaseMocks.initializeApp).toHaveBeenCalledWith(firebaseOptions);
+    expect(firebaseMocks.initializeApp).toHaveBeenCalledWith({
+      apiKey: runtimeConfig.apiKey,
+      authDomain: runtimeConfig.authDomain,
+      projectId: runtimeConfig.projectId,
+      storageBucket: runtimeConfig.storageBucket,
+      messagingSenderId: runtimeConfig.messagingSenderId,
+      appId: runtimeConfig.appId,
+    });
     expect(firebaseMocks.getAuth).toHaveBeenCalledWith({ name: "runtime-app" });
     expect(firebaseMocks.getFirestore).toHaveBeenCalledWith({ name: "runtime-app" });
   });

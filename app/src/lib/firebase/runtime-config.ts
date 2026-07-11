@@ -8,6 +8,11 @@ export interface FirebasePublicConfig {
   appId: string;
 }
 
+export type FirebaseClientOptions = Omit<
+  FirebasePublicConfig,
+  "allowedAuthDomain"
+>;
+
 export const FIREBASE_PUBLIC_ENV_KEYS = {
   allowedAuthDomain: "NEXT_PUBLIC_ALLOWED_AUTH_DOMAIN",
   apiKey: "NEXT_PUBLIC_FIREBASE_API_KEY",
@@ -80,4 +85,17 @@ export function getFirebasePublicConfig(): FirebasePublicConfig {
     ]),
   );
   return parseFirebasePublicConfig(serverInput);
+}
+
+export function toFirebaseClientOptions(
+  config: FirebasePublicConfig,
+): FirebaseClientOptions {
+  return {
+    apiKey: config.apiKey,
+    authDomain: config.authDomain,
+    projectId: config.projectId,
+    storageBucket: config.storageBucket,
+    messagingSenderId: config.messagingSenderId,
+    appId: config.appId,
+  };
 }
