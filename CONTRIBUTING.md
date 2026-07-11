@@ -166,6 +166,18 @@ Run a production build:
 npm run build
 ```
 
+Run the production image smoke test from the repository root:
+
+```bash
+TWD_RUNTIME_CONFIG_NO_CACHE=1 ./scripts/test-runtime-firebase-container.sh
+```
+
+The smoke test builds the production Docker target without cache, starts the
+same image twice with distinct synthetic public Firebase configuration, waits
+for HTTP liveness with a bounded timeout, and verifies that no synthetic session
+or provider values reach the HTML response. The CI `docker-image-smoke` job uses
+the same command and non-secret test configuration.
+
 Run Prisma generation after schema changes:
 
 ```bash

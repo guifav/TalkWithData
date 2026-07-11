@@ -6,6 +6,11 @@ IMAGE="${TWD_RUNTIME_CONFIG_IMAGE:-talkwithdata-runtime-config-smoke}"
 RUN_ID="$$"
 TMP_DIR="$(mktemp -d)"
 CONTAINERS=()
+BUILD_ARGS=()
+
+if [[ "${TWD_RUNTIME_CONFIG_NO_CACHE:-0}" == "1" ]]; then
+  BUILD_ARGS+=(--no-cache)
+fi
 
 cleanup() {
   if [ "${#CONTAINERS[@]}" -gt 0 ]; then
@@ -57,7 +62,8 @@ wait_for_html() {
   return 1
 }
 
-docker build -t "$IMAGE" -f "$ROOT_DIR/app/Dockerfile" "$ROOT_DIR/app"
+docker build "${BUILD_ARGS[@]}" -t "$IMAGE" \
+  -f "$ROOT_DIR/app/Dockerfile" "$ROOT_DIR/app"
 
 for suffix in one two; do
   env_file="$TMP_DIR/${suffix}.env"
