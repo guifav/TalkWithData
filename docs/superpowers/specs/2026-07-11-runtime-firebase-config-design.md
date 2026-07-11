@@ -24,7 +24,8 @@ by issue #38 unless runtime injection proves impossible.
 
 ### Shared public contract
 
-A small isomorphic module defines the six Firebase public fields, their runtime
+A small isomorphic module defines the Firebase public fields plus the public
+allowed authentication domain, their runtime
 shape, and strict parsing. It accepts only non-empty strings and returns a new
 allowlisted object. Unknown input fields are discarded.
 
@@ -50,7 +51,7 @@ consumers.
 
 1. The container starts with `app/.env` or platform environment variables.
 2. A request reaches the root server layout.
-3. The server reads only the six allowlisted public Firebase variables.
+3. The server reads only the allowlisted public Firebase and authentication variables.
 4. The server validates and emits the escaped bootstrap object in `<head>`.
 5. The browser executes the bootstrap before loading hydrated client modules.
 6. `firebase/client.ts` validates the global and initializes the Firebase SDK.
@@ -59,7 +60,7 @@ consumers.
 
 - Missing fields produce a deterministic error listing variable names only.
 - Non-string values are rejected by the shared parser.
-- The payload includes only the six public Firebase values.
+- The payload includes only the public Firebase values and allowed domain.
 - Serialization escapes `<`, `>`, `&`, and Unicode line separators.
 - No server secret, full environment object, or configuration value is logged.
 - Local development and containers use the same `app/.env` contract.

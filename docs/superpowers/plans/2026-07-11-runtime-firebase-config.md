@@ -11,7 +11,8 @@
 ## Global Constraints
 
 - Continue using `app/.env` and `app/.env.example` as the only local environment contract.
-- Expose only the six existing `NEXT_PUBLIC_FIREBASE_*` values.
+- Expose only the existing `NEXT_PUBLIC_FIREBASE_*` values and
+  `NEXT_PUBLIC_ALLOWED_AUTH_DOMAIN`.
 - Never serialize, log, or copy the full process environment.
 - Read runtime values through dynamic key lookup so Next.js cannot inline build-time values.
 - Preserve synchronous `auth`, `db`, and default Firebase app exports.
@@ -44,6 +45,7 @@ Define this exact shape:
 
 ```ts
 export interface FirebasePublicConfig {
+  allowedAuthDomain: string;
   apiKey: string;
   authDomain: string;
   projectId: string;
@@ -53,6 +55,7 @@ export interface FirebasePublicConfig {
 }
 
 export const FIREBASE_PUBLIC_ENV_KEYS = {
+  allowedAuthDomain: "NEXT_PUBLIC_ALLOWED_AUTH_DOMAIN",
   apiKey: "NEXT_PUBLIC_FIREBASE_API_KEY",
   authDomain: "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
   projectId: "NEXT_PUBLIC_FIREBASE_PROJECT_ID",

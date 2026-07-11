@@ -35,7 +35,7 @@ docker run --rm --env-file app/.env -p 3000:8080 talk-with-data
 
 The container listens on port `8080`. The `-p 3000:8080` flag maps it to port 3000 on your machine. Open http://localhost:3000.
 
-The copied `app/.env` file contains placeholders. A running instance still needs a Firebase project, a Google Cloud Storage bucket, a reachable PostgreSQL database, and at least one AI provider. Note that `NEXT_PUBLIC_*` values are inlined at build time, so a prebuilt image does not pick them up from `--env-file` at runtime (see [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
+The copied `app/.env` file contains placeholders. A running instance still needs a Firebase project, a Google Cloud Storage bucket, a reachable PostgreSQL database, and at least one AI provider. The server reads the allowlisted `NEXT_PUBLIC_*` Firebase and authentication values at runtime and bootstraps them to the browser, so one prebuilt image can run with different public configuration (see [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 
 ## Features
 
@@ -69,7 +69,7 @@ Copy `app/.env.example` to `app/.env`, then replace placeholders with project va
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `ALLOWED_AUTH_DOMAIN` | Yes | Restricts Google sign-in to a single email domain. Also required in `firestore.rules` before deploying rules. |
-| `NEXT_PUBLIC_ALLOWED_AUTH_DOMAIN` | Yes | Browser-side copy of `ALLOWED_AUTH_DOMAIN`. Client code cannot read `ALLOWED_AUTH_DOMAIN`, so set both to the same value at build time. |
+| `NEXT_PUBLIC_ALLOWED_AUTH_DOMAIN` | Yes | Browser-side copy of `ALLOWED_AUTH_DOMAIN`. Set both to the same value; the server includes this value in the runtime public bootstrap. |
 | `NEXT_PUBLIC_FIREBASE_API_KEY` | Yes | Firebase client API key. |
 | `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Yes | Firebase client auth domain. |
 | `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Yes | Firebase client project ID. |

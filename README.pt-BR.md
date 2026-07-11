@@ -31,7 +31,7 @@ docker run --rm --env-file app/.env -p 3000:8080 talk-with-data
 
 O container escuta na porta `8080`. O parametro `-p 3000:8080` mapeia a porta para 3000 na sua maquina. Abra http://localhost:3000.
 
-O arquivo `app/.env` copiado tem placeholders. Uma instancia em execucao ainda precisa de um projeto Firebase, um bucket no Google Cloud Storage, um banco PostgreSQL acessivel e pelo menos um provedor de IA. As variaveis `NEXT_PUBLIC_*` sao embutidas em tempo de build, entao uma imagem ja construida nao le esses valores do `--env-file` em runtime (veja [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
+O arquivo `app/.env` copiado tem placeholders. Uma instancia em execucao ainda precisa de um projeto Firebase, um bucket no Google Cloud Storage, um banco PostgreSQL acessivel e pelo menos um provedor de IA. O servidor le em runtime apenas as variaveis `NEXT_PUBLIC_*` permitidas de Firebase e autenticacao e as entrega ao navegador, portanto uma unica imagem pode usar configuracoes publicas diferentes (veja [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 
 ## Recursos
 
