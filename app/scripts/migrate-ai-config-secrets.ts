@@ -1,6 +1,7 @@
 import { adminDb } from "@/lib/firebase/admin";
 import {
   isValidStoredConfig,
+  requireConfiguredAiConfigEncryptionKey,
   setUserAiConfigApiKey,
   toStoredAiConfig,
   type StoredAiConfig,
@@ -22,6 +23,8 @@ async function main() {
     skippedNoLegacyKey: 0,
     skippedInvalidConfig: 0,
   };
+
+  requireConfiguredAiConfigEncryptionKey();
 
   const snap = await adminDb.collection("users").get();
 

@@ -65,7 +65,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
 
-    console.error("Admin role change failed:", error);
+    console.error("Admin users update failed:", error);
     return NextResponse.json(
       { error: "Failed to update role" },
       { status: 500 }

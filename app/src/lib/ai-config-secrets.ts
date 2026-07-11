@@ -62,48 +62,57 @@ export async function updateUserAiConfig(
   }
 
   const userRef = adminDb.collection("users").doc(normalizedUid);
-  const userDoc = await userRef.get();
-  if (!userDoc.exists) {
-    throw new AiConfigUserNotFoundError();
-  }
+  const secretRef = adminDb.collection(COLLECTION).doc(normalizedUid);
 
-  if (aiConfig === null) {
-    await userRef.update({ aiConfig: null });
-    await deleteUserAiConfigApiKey(normalizedUid);
-    return null;
-  }
-
-  const existingConfig = userDoc.data()?.aiConfig as AiModelConfig | undefined;
-  const incomingApiKey = aiConfig.apiKey?.trim();
-  const existingLegacyApiKey = existingConfig?.apiKey?.trim();
-  const configToStore = toStoredAiConfig(aiConfig);
-
-  if (!isValidStoredConfig(configToStore)) {
-    throw new AiConfigValidationError(
-      "Invalid AI config. Select a supported provider/model. Custom requires baseUrl and model.",
-    );
-  }
-
-  if (configToStore.provider === "custom") {
-    if (incomingApiKey) {
-      await setUserAiConfigApiKey(normalizedUid, incomingApiKey);
-    } else if (options.keepExistingApiKey && await hasUserAiConfigApiKey(normalizedUid)) {
-      // Existing encrypted key stays in place.
-    } else if (options.keepExistingApiKey && existingConfig?.provider === "custom" && existingLegacyApiKey) {
-      await setUserAiConfigApiKey(normalizedUid, existingLegacyApiKey);
-    } else {
-      throw new AiConfigValidationError("Custom AI provider requires an apiKey.");
+  return adminDb.runTransaction(async (tx) => {
+    const userDoc = await tx.get(userRef);
+    if (!userDoc.exists) {
+      throw new AiConfigUserNotFoundError();
     }
 
-    configToStore.apiKeyConfigured = true;
-  } else {
-    await deleteUserAiConfigApiKey(normalizedUid);
-    delete configToStore.apiKeyConfigured;
-    delete configToStore.baseUrl;
-  }
+    if (aiConfig === null) {
+      tx.update(userRef, { aiConfig: null });
+      tx.delete(secretRef);
+      return null;
+    }
 
-  await userRef.update({ aiConfig: configToStore });
-  return configToStore;
+    const existingConfig = userDoc.data()?.aiConfig as AiModelConfig | undefined;
+    const incomingApiKey = aiConfig.apiKey?.trim();
+    const existingLegacyApiKey = existingConfig?.apiKey?.trim();
+    const configToStore = toStoredAiConfig(aiConfig);
+
+    if (!isValidStoredConfig(configToStore)) {
+      throw new AiConfigValidationError(
+        "Invalid AI config. Select a supported provider/model. Custom requires baseUrl and model.",
+      );
+    }
+
+    if (configToStore.provider === "custom") {
+      const secretDoc = await tx.get(secretRef);
+      const hasEncryptedKey = secretDoc.exists &&
+        typeof secretDoc.data()?.apiKeyEnc === "string" &&
+        Boolean(secretDoc.data()?.apiKeyEnc?.trim());
+
+      if (incomingApiKey) {
+        tx.set(secretRef, encryptedSecretPayload(incomingApiKey), { merge: true });
+      } else if (options.keepExistingApiKey && hasEncryptedKey) {
+        // Existing encrypted key stays in place.
+      } else if (options.keepExistingApiKey && existingConfig?.provider === "custom" && existingLegacyApiKey) {
+        tx.set(secretRef, encryptedSecretPayload(existingLegacyApiKey), { merge: true });
+      } else {
+        throw new AiConfigValidationError("Custom AI provider requires an apiKey.");
+      }
+
+      configToStore.apiKeyConfigured = true;
+    } else {
+      tx.delete(secretRef);
+      delete configToStore.apiKeyConfigured;
+      delete configToStore.baseUrl;
+    }
+
+    tx.update(userRef, { aiConfig: configToStore });
+    return configToStore;
+  });
 }
 
 export async function getUserAiConfigApiKey(uid: string): Promise<string | null> {
@@ -122,15 +131,7 @@ export async function hasUserAiConfigApiKey(uid: string): Promise<boolean> {
 }
 
 export async function setUserAiConfigApiKey(uid: string, apiKey: string): Promise<void> {
-  const trimmed = apiKey.trim();
-  if (!trimmed) {
-    throw new AiConfigValidationError("Custom AI provider requires an apiKey.");
-  }
-
-  await adminDb.collection(COLLECTION).doc(uid).set({
-    apiKeyEnc: encryptApiKey(trimmed),
-    updatedAt: new Date().toISOString(),
-  }, { merge: true });
+  await adminDb.collection(COLLECTION).doc(uid).set(encryptedSecretPayload(apiKey), { merge: true });
 }
 
 export async function deleteUserAiConfigApiKey(uid: string): Promise<void> {
@@ -148,6 +149,10 @@ export function encryptApiKey(apiKey: string, encryptionKeyBase64?: string): str
   const authTag = cipher.getAuthTag();
 
   return Buffer.concat([iv, authTag, ciphertext]).toString("base64");
+}
+
+export function requireConfiguredAiConfigEncryptionKey(): void {
+  getEncryptionKey(process.env[KEY_ENV], { allowDevFallback: false });
 }
 
 export function decryptApiKey(apiKeyEnc: string, encryptionKeyBase64?: string): string {
@@ -170,11 +175,26 @@ export function decryptApiKey(apiKeyEnc: string, encryptionKeyBase64?: string): 
   }
 }
 
-function getEncryptionKey(explicitKeyBase64: string | undefined): Buffer {
+function encryptedSecretPayload(apiKey: string): { apiKeyEnc: string; updatedAt: string } {
+  const trimmed = apiKey.trim();
+  if (!trimmed) {
+    throw new AiConfigValidationError("Custom AI provider requires an apiKey.");
+  }
+
+  return {
+    apiKeyEnc: encryptApiKey(trimmed),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function getEncryptionKey(
+  explicitKeyBase64: string | undefined,
+  options: { allowDevFallback?: boolean } = {},
+): Buffer {
   const keyBase64 = explicitKeyBase64 ?? process.env[KEY_ENV];
 
   if (!keyBase64) {
-    if (process.env.NODE_ENV === "production") {
+    if (process.env.NODE_ENV === "production" || options.allowDevFallback === false) {
       throw new AiConfigSecretError(`${KEY_ENV} is required in production`);
     }
 

@@ -192,7 +192,7 @@ npm run migrate:ai-config-secrets
 
 The migration is idempotent and reports counts only. It does not print plaintext keys or ciphertext values. After migration, deploy `firestore.rules`; legacy user documents that still contain `aiConfig.apiKey`, `aiConfig.apiKeyEnc`, or `aiConfig.credentialEnc` are not client-readable.
 
-If you must keep a short compatibility window before migration, set `TWD_AI_CONFIG_LEGACY_READ=1` temporarily so server-side model resolution can read the old field. Remove it immediately after migration. Rollback should restore the previous application version while keeping `TWD_AI_CONFIG_ENC_KEY` available; do not reintroduce plaintext keys into `users/{uid}`. Rotate any key that was previously stored in the client-readable document at the provider, update it through the admin UI, and then revoke the old provider key.
+If you must keep a short compatibility window before migration, set `TWD_AI_CONFIG_LEGACY_READ=1` temporarily so server-side model resolution can read the old field. Remove it immediately after migration. Rollback should restore the previous application version while keeping `TWD_AI_CONFIG_ENC_KEY` available; do not reintroduce plaintext keys into `users/{uid}`. Losing `TWD_AI_CONFIG_ENC_KEY` makes stored custom provider keys unrecoverable. There is no automatic encryption-key rewrap workflow yet, so rotate previously exposed provider keys at the provider, update them through the admin UI, and then revoke the old provider keys.
 
 ### 3. Enable Firestore
 

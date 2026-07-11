@@ -47,6 +47,31 @@ function docRef(collectionName: string, id: string) {
 
 vi.mock("@/lib/firebase/admin", () => ({
   adminDb: {
+    runTransaction: async (fn: (tx: {
+      get: (ref: { get: () => Promise<unknown> }) => Promise<unknown>;
+      set: (
+        ref: { set: (data: Record<string, unknown>, opts?: { merge?: boolean }) => Promise<void> },
+        data: Record<string, unknown>,
+        opts?: { merge?: boolean },
+      ) => void;
+      update: (
+        ref: { update: (data: Record<string, unknown>) => Promise<void> },
+        data: Record<string, unknown>,
+      ) => void;
+      delete: (ref: { delete: () => Promise<void> }) => void;
+    }) => Promise<unknown>) =>
+      fn({
+        get: (ref) => ref.get(),
+        set: (ref, data, opts) => {
+          void ref.set(data, opts);
+        },
+        update: (ref, data) => {
+          void ref.update(data);
+        },
+        delete: (ref) => {
+          void ref.delete();
+        },
+      }),
     collection: (name: string) => ({
       doc: (id: string) => docRef(name, id),
     }),
@@ -57,6 +82,7 @@ const {
   DEV_AI_CONFIG_ENC_KEY,
   decryptApiKey,
   encryptApiKey,
+  requireConfiguredAiConfigEncryptionKey,
   updateUserAiConfig,
 } = await import("@/lib/ai-config-secrets");
 const { resolveUserModel } = await import("@/lib/ai-model");
@@ -76,6 +102,14 @@ describe("AI config server-only secrets", () => {
 
     expect(encrypted).not.toContain("sk-custom");
     expect(decryptApiKey(encrypted, DEV_AI_CONFIG_ENC_KEY)).toBe("sk-custom");
+  });
+
+  it("requires an explicit configured key for migration use", () => {
+    expect(() => requireConfiguredAiConfigEncryptionKey()).toThrow("TWD_AI_CONFIG_ENC_KEY");
+
+    vi.stubEnv("TWD_AI_CONFIG_ENC_KEY", DEV_AI_CONFIG_ENC_KEY);
+
+    expect(() => requireConfiguredAiConfigEncryptionKey()).not.toThrow();
   });
 
   it("stores custom provider keys outside the user document", async () => {

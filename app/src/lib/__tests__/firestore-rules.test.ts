@@ -89,4 +89,51 @@ describeWithEmulator("Firestore rules for AI config secrets", () => {
 
     await assertFails(getDoc(doc(db, "ai_config_secrets", "uid-a")));
   });
+
+  it("denies client create and update writes containing AI config", async () => {
+    const db = testEnv.authenticatedContext("uid-a", { email: "user@example.com" }).firestore();
+
+    await assertFails(setDoc(doc(db, "users", "uid-a"), {
+      email: "user@example.com",
+      aiConfig: {
+        provider: "custom",
+        model: "custom-model",
+        apiKey: "sk-client",
+      },
+    }));
+
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "users", "uid-a"), {
+        email: "user@example.com",
+        displayName: "User A",
+      });
+    });
+
+    await assertFails(setDoc(doc(db, "users", "uid-a"), {
+      aiConfig: {
+        provider: "custom",
+        model: "custom-model",
+        baseUrl: "https://llm.example.test/v1",
+        apiKeyConfigured: true,
+      },
+    }, { merge: true }));
+  });
+
+  it("denies cross-user reads even when metadata is sanitized", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "users", "uid-b"), {
+        email: "other@example.com",
+        aiConfig: {
+          provider: "custom",
+          model: "custom-model",
+          baseUrl: "https://llm.example.test/v1",
+          apiKeyConfigured: true,
+        },
+      });
+    });
+
+    const db = testEnv.authenticatedContext("uid-a", { email: "user@example.com" }).firestore();
+
+    await assertFails(getDoc(doc(db, "users", "uid-b")));
+  });
 });
