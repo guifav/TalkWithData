@@ -16,6 +16,12 @@ export const FIREBASE_PUBLIC_ENV_KEYS = {
   appId: "NEXT_PUBLIC_FIREBASE_APP_ID",
 } as const satisfies Record<keyof FirebasePublicConfig, string>;
 
+declare global {
+  interface Window {
+    __TWD_FIREBASE_CONFIG__?: unknown;
+  }
+}
+
 const FIREBASE_PUBLIC_FIELDS = Object.keys(
   FIREBASE_PUBLIC_ENV_KEYS,
 ) as Array<keyof FirebasePublicConfig>;
@@ -43,4 +49,21 @@ export function parseFirebasePublicConfig(input: unknown): FirebasePublicConfig 
   }
 
   return config;
+}
+
+export function getFirebasePublicConfig(): FirebasePublicConfig {
+  if (typeof window !== "undefined") {
+    if (!window.__TWD_FIREBASE_CONFIG__) {
+      throw new Error("Firebase runtime configuration is missing");
+    }
+    return parseFirebasePublicConfig(window.__TWD_FIREBASE_CONFIG__);
+  }
+
+  const serverInput = Object.fromEntries(
+    Object.entries(FIREBASE_PUBLIC_ENV_KEYS).map(([field, envName]) => [
+      field,
+      process.env[envName],
+    ]),
+  );
+  return parseFirebasePublicConfig(serverInput);
 }
