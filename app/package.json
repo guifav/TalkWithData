@@ -23,6 +23,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:migrations": "../scripts/test-migrations.sh",
     "test:firestore-rules": "REQUIRE_FIRESTORE_EMULATOR=1 vitest run src/lib/__tests__/firestore-rules.test.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
