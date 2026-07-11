@@ -3,17 +3,21 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$ROOT_DIR/app"
+ENV_EXAMPLE="$APP_DIR/.env.example"
+ENV_FILE="$APP_DIR/.env"
 
-if [ ! -f "$ROOT_DIR/.env" ]; then
-  cp "$ROOT_DIR/.env.example" "$ROOT_DIR/.env"
-  echo "Created .env from .env.example. Update it with your Firebase, database, and AI settings."
+if [ ! -f "$ENV_FILE" ]; then
+  cp "$ENV_EXAMPLE" "$ENV_FILE"
+  echo "Created app/.env from app/.env.example. Replace the placeholders before running the application."
 else
-  echo ".env already exists. Leaving it unchanged."
+  echo "app/.env already exists. Leaving it unchanged."
 fi
 
+node "$ROOT_DIR/scripts/check-env.mjs" "$ENV_FILE"
+
 cd "$APP_DIR"
-npm install
-npx prisma generate
+npm ci
+npm run db:generate
 
 echo "Setup complete. For Docker, run: docker compose up --build"
 echo "For local dev, run: cd app && npm run dev"

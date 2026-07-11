@@ -28,14 +28,14 @@ Talk With Data helps teams publish dashboard HTML packages, search across conten
 Run the app locally with Docker in three commands:
 
 ```bash
-cp .env.example .env
+cp app/.env.example app/.env
 docker build -t talk-with-data -f app/Dockerfile app
-docker run --rm --env-file .env -p 3000:8080 talk-with-data
+docker run --rm --env-file app/.env -p 3000:8080 talk-with-data
 ```
 
 The container listens on port `8080`. The `-p 3000:8080` flag maps it to port 3000 on your machine. Open http://localhost:3000.
 
-The copied `.env` file contains placeholders. A running instance still needs a Firebase project, a Google Cloud Storage bucket, a reachable PostgreSQL database, and at least one AI provider. Note that `NEXT_PUBLIC_*` values are inlined at build time, so a prebuilt image does not pick them up from `--env-file` at runtime (see [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
+The copied `app/.env` file contains placeholders. A running instance still needs a Firebase project, a Google Cloud Storage bucket, a reachable PostgreSQL database, and at least one AI provider. Note that `NEXT_PUBLIC_*` values are inlined at build time, so a prebuilt image does not pick them up from `--env-file` at runtime (see [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 
 ## Features
 
@@ -64,7 +64,7 @@ The copied `.env` file contains placeholders. A running instance still needs a F
 
 ## Configuration
 
-Copy `.env.example` to `.env`, then replace placeholders with project values.
+Copy `app/.env.example` to `app/.env`, then replace placeholders with project values. Next.js, Prisma, Docker Compose, and the setup script all use this location.
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
@@ -103,14 +103,14 @@ Copy `.env.example` to `.env`, then replace placeholders with project values.
 | `STORAGE_PROVIDER` | Optional | Storage adapter selector. The runtime upload and serve paths currently use Firebase Admin Storage (GCS); the `local` adapter exists but is not yet wired into those paths. |
 | `LOCAL_STORAGE_ROOT` | Optional | Directory used by the local storage adapter. Not yet wired into the upload and serve paths. |
 
-See [.env.example](.env.example) for the current template.
+See [app/.env.example](app/.env.example) for the current template.
 
 ## Development
 
 ```bash
+./setup.sh
+# Replace the placeholders in app/.env, then:
 cd app
-npm install
-npm run db:generate
 npm run dev
 ```
 
@@ -124,7 +124,7 @@ npm run build
 
 ## Deployment
 
-Docker is the recommended portable runtime. Build from `app/Dockerfile`, provide the same variables from `.env.example`, and expose container port `8080` through your platform.
+Docker is the recommended portable runtime. Build from `app/Dockerfile`, provide the same variables from `app/.env.example`, and expose container port `8080` through your platform.
 
 See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for Docker, Google Cloud Run, Firebase setup, storage, AI providers, and optional MCP setup.
 

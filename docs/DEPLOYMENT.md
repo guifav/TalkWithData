@@ -19,14 +19,14 @@ The production container is built from `app/Dockerfile`. It exposes port `8080` 
 ### Build and run with Docker
 
 ```bash
-cp .env.example .env
+cp app/.env.example app/.env
 docker build -t talk-with-data -f app/Dockerfile app
-docker run --rm --env-file .env -p 3000:8080 talk-with-data
+docker run --rm --env-file app/.env -p 3000:8080 talk-with-data
 ```
 
 Open http://localhost:3000.
 
-Edit `.env` before using real auth, storage, and AI features.
+Edit `app/.env` before using real auth, storage, and AI features.
 
 ### Docker Compose
 
@@ -39,7 +39,7 @@ services:
       context: ./app
       dockerfile: Dockerfile
     env_file:
-      - .env
+      - ./app/.env
     ports:
       - "3000:8080"
     restart: unless-stopped
@@ -59,7 +59,7 @@ docker-compose up --build
 
 ### Production container notes
 
-- Keep `.env` out of the image. Inject variables through the platform.
+- Keep `app/.env` out of the image. Inject variables through the platform.
 - Use platform secrets for API keys and service account data.
 - Set `PORT=8080` unless your platform overrides it.
 - Ensure `DATABASE_URL` points to a persistent database.
@@ -116,7 +116,7 @@ Minimum recommended permissions:
 
 ## Environment variables
 
-Use `.env.example` as the source template. The table below describes deployment behavior.
+Use `app/.env.example` as the source template. The table below describes deployment behavior.
 
 | Variable | Required | Example | Notes |
 | --- | --- | --- | --- |
@@ -273,7 +273,7 @@ Once the adapter is wired in, a local adapter must persist files outside the eph
 
 The Prisma schema targets PostgreSQL. PostgreSQL is required in every environment, including local development. The database provider is not switchable: the schema sets `provider = "postgresql"` and uses PostgreSQL-only `String[]` scalar list fields. SQLite URLs such as `file:./dev.db` do not work and fail during `prisma generate` and `prisma db push`.
 
-`.env.example` ships with a local PostgreSQL example:
+`app/.env.example` ships with a local PostgreSQL example:
 
 ```bash
 DATABASE_URL=postgresql://user:password@localhost:5432/talkwithdata

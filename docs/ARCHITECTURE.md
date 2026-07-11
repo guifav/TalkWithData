@@ -229,7 +229,7 @@ To add a provider:
 - Map the provider to its API key environment variable.
 - Implement provider-specific headers, request body, response parsing, errors, and tool call support.
 - Keep all provider calls server-side.
-- Update route tests, deployment docs, and `.env.example`.
+- Update route tests, deployment docs, and `app/.env.example`.
 
 The app should keep prompts provider-neutral where possible. Provider-specific behavior belongs in adapters, not UI components.
 

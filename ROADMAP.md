@@ -18,7 +18,7 @@ These items are required before the first tagged public release:
 - Provenance and third-party notice review, with owner confirmation for the
   chosen license.
 - Data inventory, privacy, retention, and storage documentation.
-- Environment contract reconciled across README, `.env.example`, Docker, and
+- Environment contract reconciled across README, `app/.env.example`, Docker, and
   deployment docs.
 - Reproducible setup checks for PostgreSQL, Firebase, migrations, and Docker.
 

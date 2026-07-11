@@ -63,6 +63,9 @@ jobs:
           distribution: temurin
           java-version: 21
 
+      - name: Test environment setup contract
+        run: node --test ../scripts/check-env.test.mjs
+
       - name: Install dependencies
         run: npm ci
 
