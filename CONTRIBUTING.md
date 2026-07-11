@@ -9,7 +9,7 @@ Thank you for helping improve Talk With Data. This guide explains how to set up 
 - Node.js 22 or newer.
 - npm.
 - Docker, optional but recommended for production parity.
-- A Firebase project with Authentication, Firestore, and Storage enabled.
+- A Firebase project with Authentication and Firestore enabled. Firebase Storage is required only when dashboard storage uses GCS.
 - A PostgreSQL database. PostgreSQL is required, including for local development. The Prisma schema targets PostgreSQL and does not work with SQLite.
 - At least one AI provider API key for AI features.
 

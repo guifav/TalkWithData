@@ -40,7 +40,7 @@ AGENTS.md is the operational wrapper; this file defines the design system and co
 - Auth domain lock via `ALLOWED_AUTH_DOMAIN` env var (fail-closed if not set)
 
 ### Storage
-- Bucket name via `STORAGE_BUCKET_NAME` env var
+- Dashboard storage is selected by `STORAGE_PROVIDER`: GCS uses `STORAGE_BUCKET_NAME`, while local storage uses persistent `LOCAL_STORAGE_ROOT`
 - HTML files stored with version prefixes
 - Max 10 versions per dashboard (FIFO cleanup)
 
