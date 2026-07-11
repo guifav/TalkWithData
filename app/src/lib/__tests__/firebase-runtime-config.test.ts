@@ -4,6 +4,10 @@ import {
   FIREBASE_PUBLIC_ENV_KEYS,
   parseFirebasePublicConfig,
 } from "@/lib/firebase/runtime-config";
+import {
+  readFirebasePublicConfig,
+  serializeFirebaseRuntimeConfig,
+} from "@/lib/firebase/runtime-config.server";
 
 const completeConfig = {
   apiKey: "public-api-key",
@@ -23,6 +27,35 @@ describe("Firebase runtime configuration", () => {
       }),
     ).toEqual(completeConfig);
     expect(Object.keys(FIREBASE_PUBLIC_ENV_KEYS)).toEqual(Object.keys(completeConfig));
+  });
+
+  it("maps only allowlisted environment variables to the public contract", () => {
+    const env = Object.fromEntries(
+      Object.entries(FIREBASE_PUBLIC_ENV_KEYS).map(([field, envName]) => [
+        envName,
+        completeConfig[field as keyof typeof completeConfig],
+      ]),
+    );
+
+    expect(
+      readFirebasePublicConfig({
+        ...env,
+        DASHBOARD_SESSION_SECRET: "must-not-cross-the-boundary",
+      }),
+    ).toEqual(completeConfig);
+  });
+
+  it("escapes characters that could break out of the bootstrap script", () => {
+    const serialized = serializeFirebaseRuntimeConfig({
+      ...completeConfig,
+      apiKey: "</script><script>&\u2028\u2029",
+    });
+
+    expect(serialized).not.toMatch(/[<>&\u2028\u2029]/u);
+    expect(JSON.parse(serialized)).toEqual({
+      ...completeConfig,
+      apiKey: "</script><script>&\u2028\u2029",
+    });
   });
 
   it.each([
