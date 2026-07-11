@@ -65,10 +65,8 @@ export async function updateUserAiConfig(
   aiConfig: AiModelConfig | null,
   options: { keepExistingApiKey?: boolean } = {},
 ): Promise<StoredAiConfig | null> {
-  const normalizedUid = uid.trim();
-  if (!normalizedUid) {
-    throw new AiConfigValidationError("uid is required");
-  }
+  const normalizedUid = normalizeUid(uid);
+  const keepExistingApiKey = normalizeKeepExistingApiKey(options.keepExistingApiKey);
 
   const userRef = adminDb.collection("users").doc(normalizedUid);
   const secretRef = adminDb.collection(COLLECTION).doc(normalizedUid);
@@ -104,9 +102,9 @@ export async function updateUserAiConfig(
 
       if (incomingApiKey) {
         tx.set(secretRef, encryptedSecretPayload(incomingApiKey), { merge: true });
-      } else if (options.keepExistingApiKey && hasEncryptedKey) {
+      } else if (keepExistingApiKey && hasEncryptedKey) {
         // Existing encrypted key stays in place.
-      } else if (options.keepExistingApiKey && existingConfig?.provider === "custom" && existingLegacyApiKey) {
+      } else if (keepExistingApiKey && existingConfig?.provider === "custom" && existingLegacyApiKey) {
         tx.set(secretRef, encryptedSecretPayload(existingLegacyApiKey), { merge: true });
       } else {
         throw new AiConfigValidationError("Custom AI provider requires an apiKey.");
@@ -127,10 +125,7 @@ export async function updateUserAiConfig(
 export async function migrateLegacyUserAiConfig(
   uid: string,
 ): Promise<LegacyAiConfigMigrationStatus> {
-  const normalizedUid = uid.trim();
-  if (!normalizedUid) {
-    throw new AiConfigValidationError("uid is required");
-  }
+  const normalizedUid = normalizeUid(uid);
 
   const userRef = adminDb.collection("users").doc(normalizedUid);
   const secretRef = adminDb.collection(COLLECTION).doc(normalizedUid);
@@ -323,6 +318,28 @@ function trimmedOptionalString(value: unknown, fieldName: string): string | unde
   }
 
   return value.trim() || undefined;
+}
+
+function normalizeUid(uid: unknown): string {
+  if (typeof uid !== "string") {
+    throw new AiConfigValidationError("uid must be a string");
+  }
+
+  const normalizedUid = uid.trim();
+  if (!normalizedUid) {
+    throw new AiConfigValidationError("uid is required");
+  }
+
+  return normalizedUid;
+}
+
+function normalizeKeepExistingApiKey(value: unknown): boolean {
+  if (value === undefined) return false;
+  if (typeof value !== "boolean") {
+    throw new AiConfigValidationError("keepExistingApiKey must be a boolean");
+  }
+
+  return value;
 }
 
 function getEncryptionKey(

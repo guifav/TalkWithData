@@ -172,6 +172,22 @@ describe("AI config server-only secrets", () => {
     });
   });
 
+  it("rejects malformed uid and keepExistingApiKey field types as validation errors", async () => {
+    await expect(updateUserAiConfig(123 as unknown as string, null)).rejects.toMatchObject({
+      status: 400,
+      message: "uid must be a string",
+    });
+
+    await expect(updateUserAiConfig("user-a", {
+      provider: "custom",
+      model: "custom-model",
+      baseUrl: "https://llm.example.test/v1",
+    }, { keepExistingApiKey: "false" as unknown as boolean })).rejects.toMatchObject({
+      status: 400,
+      message: "keepExistingApiKey must be a boolean",
+    });
+  });
+
   it("migrates a legacy key during keep-existing update and removes plaintext", async () => {
     collectionStore("users").set("user-a", {
       exists: true,
