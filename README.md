@@ -91,6 +91,8 @@ Copy `.env.example` to `.env`, then replace placeholders with project values.
 | `GOOGLE_AI_API_KEY` | Optional | API key for the Google AI provider. |
 | `KIMI_API_KEY` | Optional | API key for the Kimi provider (OpenAI-compatible). |
 | `GLM_API_KEY` | Optional | API key for the GLM provider (OpenAI-compatible). |
+| `TWD_AI_CONFIG_ENC_KEY` | Custom AI providers | 32-byte base64 AES-256-GCM key for custom provider keys configured in the admin UI. Required in production before saving custom provider keys. |
+| `TWD_AI_CONFIG_LEGACY_READ` | Migration only | Temporary opt-in fallback for reading legacy `users/{uid}.aiConfig.apiKey`. Leave unset after migrating. |
 | `AI_DEFAULT_PROVIDER` | Optional | Default AI provider when supported by the runtime. |
 | `AI_DEFAULT_MODEL` | Optional | Default AI model when supported by the runtime. |
 | `MCP_ALLOWED_HOSTS` | Optional | Comma-separated allowlist of MCP hosts. Empty disables MCP calls. |

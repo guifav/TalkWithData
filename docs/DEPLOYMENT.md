@@ -139,6 +139,8 @@ Use `.env.example` as the source template. The table below describes deployment 
 | `GOOGLE_AI_API_KEY` | Optional | secret | API key for the Google AI provider. |
 | `KIMI_API_KEY` | Optional | secret | API key for the Kimi provider (OpenAI-compatible). |
 | `GLM_API_KEY` | Optional | secret | API key for the GLM provider (OpenAI-compatible). |
+| `TWD_AI_CONFIG_ENC_KEY` | Custom AI providers | 32-byte base64 | AES-256-GCM key for custom provider keys configured in the admin UI. Required in production before saving custom provider keys. |
+| `TWD_AI_CONFIG_LEGACY_READ` | Migration only | `1` | Temporary opt-in fallback for reading legacy `users/{uid}.aiConfig.apiKey`. Leave unset after migration. |
 | `AI_DEFAULT_PROVIDER` | Optional | `anthropic` | Default provider where supported. |
 | `AI_DEFAULT_MODEL` | Optional | model ID | Default model where supported. |
 | `MCP_ALLOWED_HOSTS` | Optional | `mcp.example.com` | Comma-separated HTTPS host allowlist. Empty disables MCP calls. |
@@ -170,6 +172,27 @@ Use `.env.example` as the source template. The table below describes deployment 
 4. Set `ALLOWED_AUTH_DOMAIN` to the organization email domain you want to allow.
 
 The application also validates the domain server-side. Do not rely only on Firebase console settings.
+
+### Custom AI provider key migration and rotation
+
+Custom provider API keys configured in the admin UI are stored in the server-only `ai_config_secrets` collection and encrypted with `TWD_AI_CONFIG_ENC_KEY`. The browser-visible `users/{uid}.aiConfig` document stores only provider metadata and `apiKeyConfigured`.
+
+Before upgrading an instance that previously stored custom keys in `users/{uid}.aiConfig.apiKey`, generate `TWD_AI_CONFIG_ENC_KEY` and store it in your platform secret store:
+
+```bash
+openssl rand -base64 32
+```
+
+Run the migration from `app/` with application credentials that can use the Firebase Admin SDK:
+
+```bash
+npm run migrate:ai-config-secrets -- --dry-run
+npm run migrate:ai-config-secrets
+```
+
+The migration is idempotent and reports counts only. It does not print plaintext keys or ciphertext values. After migration, deploy `firestore.rules`; legacy user documents that still contain `aiConfig.apiKey`, `aiConfig.apiKeyEnc`, or `aiConfig.credentialEnc` are not client-readable.
+
+If you must keep a short compatibility window before migration, set `TWD_AI_CONFIG_LEGACY_READ=1` temporarily so server-side model resolution can read the old field. Remove it immediately after migration. Rollback should restore the previous application version while keeping `TWD_AI_CONFIG_ENC_KEY` available; do not reintroduce plaintext keys into `users/{uid}`. Rotate any key that was previously stored in the client-readable document at the provider, update it through the admin UI, and then revoke the old provider key.
 
 ### 3. Enable Firestore
 

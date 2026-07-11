@@ -1,0 +1,208 @@
+import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
+import { adminDb } from "@/lib/firebase/admin";
+import {
+  SUPPORTED_MODELS,
+  isAiProvider,
+  type AiProvider,
+} from "@/lib/ai-provider-metadata";
+import type { AiModelConfig } from "@/lib/ai-model";
+
+const COLLECTION = "ai_config_secrets";
+const IV_BYTES = 12;
+const AUTH_TAG_BYTES = 16;
+const KEY_ENV = "TWD_AI_CONFIG_ENC_KEY";
+
+export const DEV_AI_CONFIG_ENC_KEY = "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=";
+
+export type StoredAiConfig = Omit<AiModelConfig, "apiKey"> & {
+  apiKeyConfigured?: boolean;
+};
+
+export class AiConfigSecretError extends Error {
+  constructor(message: string, readonly status = 500) {
+    super(message);
+    this.name = "AiConfigSecretError";
+    Object.setPrototypeOf(this, AiConfigSecretError.prototype);
+  }
+}
+
+export class AiConfigValidationError extends AiConfigSecretError {
+  constructor(message: string) {
+    super(message, 400);
+    this.name = "AiConfigValidationError";
+    Object.setPrototypeOf(this, AiConfigValidationError.prototype);
+  }
+}
+
+export class AiConfigUserNotFoundError extends AiConfigSecretError {
+  constructor() {
+    super("User not found", 404);
+    this.name = "AiConfigUserNotFoundError";
+    Object.setPrototypeOf(this, AiConfigUserNotFoundError.prototype);
+  }
+}
+
+export function toStoredAiConfig(config: AiModelConfig, apiKeyConfigured = false): StoredAiConfig {
+  return {
+    provider: config.provider,
+    model: config.model.trim(),
+    baseUrl: config.baseUrl?.trim() || undefined,
+    ...(apiKeyConfigured ? { apiKeyConfigured: true } : {}),
+  };
+}
+
+export async function updateUserAiConfig(
+  uid: string,
+  aiConfig: AiModelConfig | null,
+  options: { keepExistingApiKey?: boolean } = {},
+): Promise<StoredAiConfig | null> {
+  const normalizedUid = uid.trim();
+  if (!normalizedUid) {
+    throw new AiConfigValidationError("uid is required");
+  }
+
+  const userRef = adminDb.collection("users").doc(normalizedUid);
+  const userDoc = await userRef.get();
+  if (!userDoc.exists) {
+    throw new AiConfigUserNotFoundError();
+  }
+
+  if (aiConfig === null) {
+    await userRef.update({ aiConfig: null });
+    await deleteUserAiConfigApiKey(normalizedUid);
+    return null;
+  }
+
+  const existingConfig = userDoc.data()?.aiConfig as AiModelConfig | undefined;
+  const incomingApiKey = aiConfig.apiKey?.trim();
+  const existingLegacyApiKey = existingConfig?.apiKey?.trim();
+  const configToStore = toStoredAiConfig(aiConfig);
+
+  if (!isValidStoredConfig(configToStore)) {
+    throw new AiConfigValidationError(
+      "Invalid AI config. Select a supported provider/model. Custom requires baseUrl and model.",
+    );
+  }
+
+  if (configToStore.provider === "custom") {
+    if (incomingApiKey) {
+      await setUserAiConfigApiKey(normalizedUid, incomingApiKey);
+    } else if (options.keepExistingApiKey && await hasUserAiConfigApiKey(normalizedUid)) {
+      // Existing encrypted key stays in place.
+    } else if (options.keepExistingApiKey && existingConfig?.provider === "custom" && existingLegacyApiKey) {
+      await setUserAiConfigApiKey(normalizedUid, existingLegacyApiKey);
+    } else {
+      throw new AiConfigValidationError("Custom AI provider requires an apiKey.");
+    }
+
+    configToStore.apiKeyConfigured = true;
+  } else {
+    await deleteUserAiConfigApiKey(normalizedUid);
+    delete configToStore.apiKeyConfigured;
+    delete configToStore.baseUrl;
+  }
+
+  await userRef.update({ aiConfig: configToStore });
+  return configToStore;
+}
+
+export async function getUserAiConfigApiKey(uid: string): Promise<string | null> {
+  const doc = await adminDb.collection(COLLECTION).doc(uid).get();
+  if (!doc.exists) return null;
+
+  const apiKeyEnc = doc.data()?.apiKeyEnc;
+  if (typeof apiKeyEnc !== "string" || !apiKeyEnc.trim()) return null;
+
+  return decryptApiKey(apiKeyEnc);
+}
+
+export async function hasUserAiConfigApiKey(uid: string): Promise<boolean> {
+  const doc = await adminDb.collection(COLLECTION).doc(uid).get();
+  return doc.exists && typeof doc.data()?.apiKeyEnc === "string";
+}
+
+export async function setUserAiConfigApiKey(uid: string, apiKey: string): Promise<void> {
+  const trimmed = apiKey.trim();
+  if (!trimmed) {
+    throw new AiConfigValidationError("Custom AI provider requires an apiKey.");
+  }
+
+  await adminDb.collection(COLLECTION).doc(uid).set({
+    apiKeyEnc: encryptApiKey(trimmed),
+    updatedAt: new Date().toISOString(),
+  }, { merge: true });
+}
+
+export async function deleteUserAiConfigApiKey(uid: string): Promise<void> {
+  await adminDb.collection(COLLECTION).doc(uid).delete();
+}
+
+export function encryptApiKey(apiKey: string, encryptionKeyBase64?: string): string {
+  const key = getEncryptionKey(encryptionKeyBase64);
+  const iv = randomBytes(IV_BYTES);
+  const cipher = createCipheriv("aes-256-gcm", key, iv);
+  const ciphertext = Buffer.concat([
+    cipher.update(apiKey, "utf8"),
+    cipher.final(),
+  ]);
+  const authTag = cipher.getAuthTag();
+
+  return Buffer.concat([iv, authTag, ciphertext]).toString("base64");
+}
+
+export function decryptApiKey(apiKeyEnc: string, encryptionKeyBase64?: string): string {
+  const blob = Buffer.from(apiKeyEnc, "base64");
+  if (blob.length <= IV_BYTES + AUTH_TAG_BYTES) {
+    throw new AiConfigSecretError("Invalid AI config secret");
+  }
+
+  const key = getEncryptionKey(encryptionKeyBase64);
+  const iv = blob.subarray(0, IV_BYTES);
+  const authTag = blob.subarray(IV_BYTES, IV_BYTES + AUTH_TAG_BYTES);
+  const ciphertext = blob.subarray(IV_BYTES + AUTH_TAG_BYTES);
+
+  try {
+    const decipher = createDecipheriv("aes-256-gcm", key, iv);
+    decipher.setAuthTag(authTag);
+    return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
+  } catch {
+    throw new AiConfigSecretError("Failed to decrypt AI config secret");
+  }
+}
+
+function getEncryptionKey(explicitKeyBase64: string | undefined): Buffer {
+  const keyBase64 = explicitKeyBase64 ?? process.env[KEY_ENV];
+
+  if (!keyBase64) {
+    if (process.env.NODE_ENV === "production") {
+      throw new AiConfigSecretError(`${KEY_ENV} is required in production`);
+    }
+
+    return Buffer.from(DEV_AI_CONFIG_ENC_KEY, "base64");
+  }
+
+  const key = Buffer.from(keyBase64, "base64");
+  if (key.length !== 32) {
+    throw new AiConfigSecretError(`${KEY_ENV} must be 32 bytes in base64`);
+  }
+
+  return key;
+}
+
+export function isValidStoredConfig(config: unknown): config is StoredAiConfig {
+  if (!config || typeof config !== "object") return false;
+  const c = config as Record<string, unknown>;
+  if (!isAiProvider(c.provider)) return false;
+  if (typeof c.model !== "string" || !c.model.trim()) return false;
+
+  const provider = c.provider as AiProvider;
+  if (provider !== "custom" && !SUPPORTED_MODELS[provider].includes(c.model)) {
+    return false;
+  }
+
+  if (c.apiKeyConfigured !== undefined && typeof c.apiKeyConfigured !== "boolean") return false;
+  if (c.baseUrl !== undefined && typeof c.baseUrl !== "string") return false;
+  if (provider === "custom" && !c.baseUrl?.toString().trim()) return false;
+
+  return true;
+}
