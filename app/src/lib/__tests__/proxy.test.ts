@@ -20,7 +20,7 @@ describe("proxy", () => {
     expect(config.matcher).toEqual(["/((?!_next/static|_next/image|favicon.ico).*)"]);
   });
 
-  it.each(["/login", "/api/auth/session", "/api/health"])(
+  it.each(["/login", "/api/auth/session", "/api/health", "/api/ready"])(
     "allows public path %s",
     (pathname) => {
       const response = proxy(makeRequest(pathname));

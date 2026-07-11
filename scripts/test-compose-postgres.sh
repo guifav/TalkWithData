@@ -1,5 +1,5 @@
 #!/bin/sh
-# Verify PostgreSQL startup, one-shot migrations, persistence, and failure gating.
+# Verify PostgreSQL readiness, one-shot migrations, persistence, and failure gating.
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
@@ -79,6 +79,42 @@ compose up --build --wait --wait-timeout 240
 
 app_address=$(compose port app 8080 | tail -n 1)
 curl --fail --silent --show-error "http://$app_address/api/health" >/dev/null
+curl --fail --silent --show-error "http://$app_address/api/ready" >/dev/null
+
+echo "Verifying readiness loss and recovery without changing liveness"
+compose stop db >/dev/null
+curl --fail --silent --show-error "http://$app_address/api/health" >/dev/null
+readiness_status=$(curl --max-time 5 --silent --show-error \
+  --output "$TMP_DIR/readiness-unavailable.json" --write-out '%{http_code}' \
+  "http://$app_address/api/ready")
+if [ "$readiness_status" != "503" ]; then
+  echo "Expected readiness status 503 without PostgreSQL, found $readiness_status" >&2
+  exit 1
+fi
+if ! grep -q '"postgresql":"unavailable"' "$TMP_DIR/readiness-unavailable.json"; then
+  echo "Readiness failure response was not sanitized" >&2
+  exit 1
+fi
+if grep -Eiq 'password|postgresql://|host=' "$TMP_DIR/readiness-unavailable.json"; then
+  echo "Readiness failure response exposed database details" >&2
+  exit 1
+fi
+
+compose start db >/dev/null
+readiness_status=000
+for _ in $(seq 1 30); do
+  readiness_status=$(curl --max-time 5 --silent --show-error \
+    --output "$TMP_DIR/readiness-recovered.json" --write-out '%{http_code}' \
+    "http://$app_address/api/ready" || true)
+  if [ "$readiness_status" = "200" ]; then
+    break
+  fi
+  sleep 1
+done
+if [ "$readiness_status" != "200" ]; then
+  echo "Readiness did not recover after PostgreSQL restarted" >&2
+  exit 1
+fi
 
 migrations_before=$(compose exec -T db \
   psql -U "$DB_USER" -d "$DB_NAME" --tuples-only --no-align \
@@ -145,4 +181,4 @@ if [ "$(docker inspect --format '{{.State.ExitCode}}' "$migrate_container")" != 
   exit 1
 fi
 
-echo "Compose PostgreSQL startup, idempotency, persistence, and failure gating passed"
+echo "Compose PostgreSQL readiness, idempotency, persistence, and failure gating passed"
