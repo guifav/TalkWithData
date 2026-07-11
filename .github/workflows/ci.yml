@@ -66,6 +66,9 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
+      - name: Test Prisma migrations
+        run: npm run db:migrate
+
       - name: Lint
         run: npm run lint -- --max-warnings=0
 
