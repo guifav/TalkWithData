@@ -72,8 +72,12 @@ done
 
 grep -Fq "runtime-project-one" "$TMP_DIR/one.html"
 ! grep -Fq "runtime-project-two" "$TMP_DIR/one.html"
+grep -Fq "one.example.com" "$TMP_DIR/one.html"
+! grep -Fq "two.example.com" "$TMP_DIR/one.html"
 grep -Fq "runtime-project-two" "$TMP_DIR/two.html"
 ! grep -Fq "runtime-project-one" "$TMP_DIR/two.html"
+grep -Fq "two.example.com" "$TMP_DIR/two.html"
+! grep -Fq "one.example.com" "$TMP_DIR/two.html"
 ! grep -Fq "runtime-smoke-secret" "$TMP_DIR/one.html"
 ! grep -Fq "runtime-smoke-secret" "$TMP_DIR/two.html"
 ! grep -Fq "runtime-smoke-provider" "$TMP_DIR/one.html"
