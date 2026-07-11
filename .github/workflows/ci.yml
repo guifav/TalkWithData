@@ -76,7 +76,7 @@ jobs:
         run: npm run test:coverage
 
       - name: Test Firestore security rules
-        run: npx -y firebase-tools@15.23.0 emulators:exec --project test-project --only firestore "npm run test:firestore-rules"
+        run: npx -y firebase-tools@15.23.0 emulators:exec --config ../firebase.json --project test-project --only firestore "npm run test:firestore-rules"
 
       - name: Build
         run: npm run build
