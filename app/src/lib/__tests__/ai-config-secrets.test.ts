@@ -86,6 +86,7 @@ const {
   decryptApiKey,
   encryptApiKey,
   migrateLegacyUserAiConfig,
+  planLegacyAiConfigMigration,
   requireConfiguredAiConfigEncryptionKey,
   updateUserAiConfig,
 } = await import("@/lib/ai-config-secrets");
@@ -159,6 +160,18 @@ describe("AI config server-only secrets", () => {
     expect(collectionStore("ai_config_secrets").get("user-a")?.data.apiKeyEnc).toBe(originalSecret);
   });
 
+  it("rejects malformed API config field types as validation errors", async () => {
+    await expect(updateUserAiConfig("user-a", {
+      provider: "custom",
+      model: 123,
+      baseUrl: "https://llm.example.test/v1",
+      apiKey: "sk-custom",
+    } as unknown as Parameters<typeof updateUserAiConfig>[1])).rejects.toMatchObject({
+      status: 400,
+      message: "model must be a string",
+    });
+  });
+
   it("migrates a legacy key during keep-existing update and removes plaintext", async () => {
     collectionStore("users").set("user-a", {
       exists: true,
@@ -210,16 +223,24 @@ describe("AI config server-only secrets", () => {
   });
 
   it("migrates a legacy custom key with one transaction and no plaintext in the user document", async () => {
-    await migrateLegacyUserAiConfig("user-a", {
-      provider: "custom",
-      model: "custom-model",
-      baseUrl: "https://llm.example.test/v1",
-      apiKeyConfigured: true,
-    }, "sk-legacy");
+    collectionStore("users").set("user-a", {
+      exists: true,
+      data: {
+        aiConfig: {
+          provider: "custom",
+          model: "custom-model",
+          baseUrl: "https://llm.example.test/v1",
+          apiKey: "sk-legacy",
+        },
+      },
+    });
+
+    const status = await migrateLegacyUserAiConfig("user-a");
 
     const userDoc = collectionStore("users").get("user-a")?.data;
     const secretDoc = collectionStore("ai_config_secrets").get("user-a")?.data;
 
+    expect(status).toBe("migrated");
     expect(transactionCount).toBe(1);
     expect(userDoc?.aiConfig).toEqual({
       provider: "custom",
@@ -232,17 +253,36 @@ describe("AI config server-only secrets", () => {
   });
 
   it("scrubs built-in provider legacy keys instead of creating orphan secrets", async () => {
-    await migrateLegacyUserAiConfig("user-a", {
-      provider: "anthropic",
-      model: "claude-sonnet-4-20250514",
-      apiKeyConfigured: true,
-    }, null);
+    collectionStore("users").set("user-a", {
+      exists: true,
+      data: {
+        aiConfig: {
+          provider: "anthropic",
+          model: "claude-sonnet-4-20250514",
+          apiKey: "sk-built-in-legacy",
+        },
+      },
+    });
 
+    const status = await migrateLegacyUserAiConfig("user-a");
+
+    expect(status).toBe("scrubbedSecretMaterial");
     expect(collectionStore("users").get("user-a")?.data.aiConfig).toEqual({
       provider: "anthropic",
       model: "claude-sonnet-4-20250514",
     });
     expect(collectionStore("ai_config_secrets").get("user-a")).toBeUndefined();
+  });
+
+  it("plans non-string legacy apiKey values as scrubbed material without throwing", () => {
+    const plan = planLegacyAiConfigMigration({
+      provider: "custom",
+      model: "custom-model",
+      baseUrl: "https://llm.example.test/v1",
+      apiKey: 123,
+    });
+
+    expect(plan.status).toBe("scrubbedSecretMaterial");
   });
 
   it("resolves custom provider credentials from the server-only collection", async () => {

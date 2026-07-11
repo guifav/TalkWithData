@@ -18,6 +18,12 @@ export type StoredAiConfig = Omit<AiModelConfig, "apiKey"> & {
   apiKeyConfigured?: boolean;
 };
 
+export type LegacyAiConfigMigrationStatus =
+  | "skippedNoLegacyKey"
+  | "migrated"
+  | "scrubbedSecretMaterial"
+  | "clearedInvalidConfig";
+
 export class AiConfigSecretError extends Error {
   constructor(message: string, readonly status = 500) {
     super(message);
@@ -43,10 +49,13 @@ export class AiConfigUserNotFoundError extends AiConfigSecretError {
 }
 
 export function toStoredAiConfig(config: AiModelConfig, apiKeyConfigured = false): StoredAiConfig {
+  const model = trimmedRequiredString(config.model, "model");
+  const baseUrl = trimmedOptionalString(config.baseUrl, "baseUrl");
+
   return {
     provider: config.provider,
-    model: config.model.trim(),
-    baseUrl: config.baseUrl?.trim() || undefined,
+    model,
+    baseUrl,
     ...(apiKeyConfigured ? { apiKeyConfigured: true } : {}),
   };
 }
@@ -77,8 +86,8 @@ export async function updateUserAiConfig(
     }
 
     const existingConfig = userDoc.data()?.aiConfig as AiModelConfig | undefined;
-    const incomingApiKey = aiConfig.apiKey?.trim();
-    const existingLegacyApiKey = existingConfig?.apiKey?.trim();
+    const incomingApiKey = trimmedOptionalString(aiConfig.apiKey, "apiKey");
+    const existingLegacyApiKey = legacyApiKeyFrom(existingConfig);
     const configToStore = toStoredAiConfig(aiConfig);
 
     if (!isValidStoredConfig(configToStore)) {
@@ -117,9 +126,7 @@ export async function updateUserAiConfig(
 
 export async function migrateLegacyUserAiConfig(
   uid: string,
-  storedConfig: StoredAiConfig | null,
-  legacyCustomApiKey: string | null,
-): Promise<void> {
+): Promise<LegacyAiConfigMigrationStatus> {
   const normalizedUid = uid.trim();
   if (!normalizedUid) {
     throw new AiConfigValidationError("uid is required");
@@ -128,18 +135,24 @@ export async function migrateLegacyUserAiConfig(
   const userRef = adminDb.collection("users").doc(normalizedUid);
   const secretRef = adminDb.collection(COLLECTION).doc(normalizedUid);
 
-  await adminDb.runTransaction(async (tx) => {
+  return adminDb.runTransaction(async (tx) => {
     const userDoc = await tx.get(userRef);
     if (!userDoc.exists) {
       throw new AiConfigUserNotFoundError();
     }
 
-    if (storedConfig === null) {
-      tx.update(userRef, { aiConfig: null });
-      tx.delete(secretRef);
-      return;
+    const plan = planLegacyAiConfigMigration(userDoc.data()?.aiConfig);
+    if (plan.status === "skippedNoLegacyKey") {
+      return plan.status;
     }
 
+    if (plan.status === "clearedInvalidConfig") {
+      tx.update(userRef, { aiConfig: null });
+      tx.delete(secretRef);
+      return plan.status;
+    }
+
+    const { storedConfig, legacyCustomApiKey } = plan;
     if (!isValidStoredConfig(storedConfig)) {
       throw new AiConfigValidationError(
         "Invalid AI config. Select a supported provider/model. Custom requires baseUrl and model.",
@@ -162,6 +175,7 @@ export async function migrateLegacyUserAiConfig(
     }
 
     tx.update(userRef, { aiConfig: configToStore });
+    return plan.status;
   });
 }
 
@@ -235,6 +249,80 @@ function encryptedSecretPayload(apiKey: string): { apiKeyEnc: string; updatedAt:
     apiKeyEnc: encryptApiKey(trimmed),
     updatedAt: new Date().toISOString(),
   };
+}
+
+export function planLegacyAiConfigMigration(config: unknown): {
+  status: LegacyAiConfigMigrationStatus;
+  storedConfig?: StoredAiConfig;
+  legacyCustomApiKey?: string | null;
+} {
+  if (!hasLegacyAiConfigSecretMaterial(config)) {
+    return { status: "skippedNoLegacyKey" };
+  }
+
+  const aiConfig = config as AiModelConfig;
+  const legacyApiKey = legacyApiKeyFrom(aiConfig);
+  const legacyCustomApiKey = aiConfig.provider === "custom" ? legacyApiKey : null;
+  const storedConfig = safeStoredConfig(aiConfig, Boolean(legacyCustomApiKey));
+
+  if (!storedConfig || !isValidStoredConfig(storedConfig)) {
+    return { status: "clearedInvalidConfig" };
+  }
+
+  return {
+    status: legacyCustomApiKey ? "migrated" : "scrubbedSecretMaterial",
+    storedConfig,
+    legacyCustomApiKey,
+  };
+}
+
+function hasLegacyAiConfigSecretMaterial(config: unknown): boolean {
+  if (!config || typeof config !== "object") return false;
+
+  return (
+    "apiKey" in config ||
+    "apiKeyEnc" in config ||
+    "credentialEnc" in config
+  );
+}
+
+function legacyApiKeyFrom(config: AiModelConfig | undefined): string | null {
+  if (typeof config?.apiKey !== "string") return null;
+
+  return config.apiKey.trim() || null;
+}
+
+function safeStoredConfig(
+  config: AiModelConfig,
+  apiKeyConfigured: boolean,
+): StoredAiConfig | null {
+  try {
+    return toStoredAiConfig(config, apiKeyConfigured);
+  } catch {
+    return null;
+  }
+}
+
+function trimmedRequiredString(value: unknown, fieldName: string): string {
+  if (typeof value !== "string") {
+    throw new AiConfigValidationError(`${fieldName} must be a string`);
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    throw new AiConfigValidationError(`${fieldName} is required`);
+  }
+
+  return trimmed;
+}
+
+function trimmedOptionalString(value: unknown, fieldName: string): string | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== "string") {
+    throw new AiConfigValidationError(`${fieldName} must be a string`);
+  }
+
+  return value.trim() || undefined;
 }
 
 function getEncryptionKey(

@@ -1,12 +1,9 @@
 import { adminDb } from "@/lib/firebase/admin";
 import {
-  isValidStoredConfig,
   migrateLegacyUserAiConfig,
+  planLegacyAiConfigMigration,
   requireConfiguredAiConfigEncryptionKey,
-  toStoredAiConfig,
-  type StoredAiConfig,
 } from "@/lib/ai-config-secrets";
-import type { AiModelConfig } from "@/lib/ai-model";
 
 interface MigrationCounts {
   examined: number;
@@ -34,30 +31,22 @@ async function main() {
 
   for (const doc of snap.docs) {
     counts.examined += 1;
-    const aiConfig = doc.data().aiConfig as AiModelConfig | undefined;
+    const status = dryRun
+      ? planLegacyAiConfigMigration(doc.data().aiConfig).status
+      : await migrateLegacyUserAiConfig(doc.id);
 
-    if (!hasLegacySecretMaterial(aiConfig)) {
+    if (status === "skippedNoLegacyKey") {
       counts.skippedNoLegacyKey += 1;
       continue;
     }
 
-    const legacyApiKey = legacyApiKeyFrom(aiConfig);
-    const legacyCustomApiKey = aiConfig?.provider === "custom" ? legacyApiKey : null;
-    const storedConfig = safeStoredConfig(aiConfig, Boolean(legacyCustomApiKey));
-    if (!storedConfig || !isValidStoredConfig(storedConfig)) {
-      if (!dryRun) {
-        await migrateLegacyUserAiConfig(doc.id, null, null);
-      }
+    if (status === "clearedInvalidConfig") {
       counts.clearedInvalidConfig += 1;
       counts.skippedInvalidConfig += 1;
       continue;
     }
 
-    if (!dryRun) {
-      await migrateLegacyUserAiConfig(doc.id, storedConfig, legacyCustomApiKey);
-    }
-
-    if (legacyCustomApiKey) {
+    if (status === "migrated") {
       counts.migrated += 1;
     } else {
       counts.scrubbedSecretMaterial += 1;
@@ -71,29 +60,3 @@ main().catch((error) => {
   console.error("AI config secret migration failed:", error instanceof Error ? error.message : "unknown error");
   process.exit(1);
 });
-
-function hasLegacySecretMaterial(config: unknown): config is AiModelConfig {
-  if (!config || typeof config !== "object") return false;
-  return (
-    "apiKey" in config ||
-    "apiKeyEnc" in config ||
-    "credentialEnc" in config
-  );
-}
-
-function legacyApiKeyFrom(config: AiModelConfig | undefined): string | null {
-  if (typeof config?.apiKey !== "string") return null;
-
-  return config.apiKey.trim() || null;
-}
-
-function safeStoredConfig(
-  config: AiModelConfig,
-  apiKeyConfigured: boolean,
-): StoredAiConfig | null {
-  try {
-    return toStoredAiConfig(config, apiKeyConfigured);
-  } catch {
-    return null;
-  }
-}
