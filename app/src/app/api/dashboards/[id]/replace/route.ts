@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyRequest } from "@/lib/api-auth";
 import { adminDb } from "@/lib/firebase/admin";
 import {
+  deleteDashboardFiles,
   deleteHtmlFile,
-  uploadHtmlFile,
-  uploadZipDashboard,
+  uploadHtmlRevision,
+  uploadZipDashboardRevision,
 } from "@/lib/storage";
 import { FieldValue } from "firebase-admin/firestore";
 import { extractTextFromHtml, MAX_SEARCHABLE_TEXT } from "@/lib/html-text";
@@ -93,7 +94,7 @@ export async function POST(
     const oldStoragePath = data?.storagePath;
 
     // Upload new file FIRST — old files stay intact until upload succeeds
-    const storagePath = await uploadHtmlFile(auth.uid, id, file.name, buffer);
+    const storagePath = await uploadHtmlRevision(auth.uid, id, file.name, buffer);
 
     // Re-extract searchable text
     const htmlContent = buffer.toString("utf-8");
@@ -103,32 +104,32 @@ export async function POST(
     );
 
     // Update Firestore — clear multi-page fields if replacing ZIP with HTML
-    await adminDb
-      .collection("dashboards")
-      .doc(id)
-      .update({
-        fileName: file.name,
-        fileSizeBytes: file.size,
-        storagePath,
-        searchableText,
-        updatedAt: FieldValue.serverTimestamp(),
-        // Clear multi-page fields when replacing with single HTML
-        ...(wasMultiPage && {
-          isMultiPage: FieldValue.delete(),
-          entrypoint: FieldValue.delete(),
-          files: FieldValue.delete(),
-        }),
-      });
+    try {
+      await adminDb
+        .collection("dashboards")
+        .doc(id)
+        .update({
+          fileName: file.name,
+          fileSizeBytes: file.size,
+          storagePath,
+          searchableText,
+          updatedAt: FieldValue.serverTimestamp(),
+          // Clear multi-page fields when replacing with single HTML
+          ...(wasMultiPage && {
+            isMultiPage: FieldValue.delete(),
+            storagePrefix: FieldValue.delete(),
+            entrypoint: FieldValue.delete(),
+            files: FieldValue.delete(),
+          }),
+        });
+    } catch (error) {
+      await deleteHtmlFile(storagePath).catch(() => {});
+      throw error;
+    }
 
     // Clean up old files AFTER Firestore update succeeds (safe ordering).
     if (wasMultiPage && Array.isArray(data!.files)) {
-      // Delete specific old ZIP files (not prefix-wide, to avoid deleting the new HTML)
-      const oldPrefix = `dashboards/${data!.createdBy}/${id}/`;
-      await Promise.all(
-        (data!.files as string[]).map((f) =>
-          deleteHtmlFile(`${oldPrefix}${f}`).catch(() => {})
-        )
-      );
+      await deleteOldPackage(data as Record<string, unknown>, auth.uid, id);
     } else if (oldStoragePath && oldStoragePath !== storagePath) {
       await deleteHtmlFile(oldStoragePath)
         .catch((err) => console.warn(`[Replace] Failed to delete old file:`, err));
@@ -166,12 +167,11 @@ async function handleZipReplace({
   entrypoint,
   wasMultiPage,
 }: ZipReplaceParams) {
-  // Upload new ZIP FIRST (providers overwrite existing files atomically per file).
-  // Only clean up stale files AFTER the new upload succeeds, so a failed
-  // upload never leaves the dashboard in a broken state.
+  // Upload into an immutable revision prefix. The new package is not visible
+  // until Firestore atomically points at it, and a failed upload is cleaned up.
   let zipResult;
   try {
-    zipResult = await uploadZipDashboard(auth.uid, id, buffer, entrypoint);
+    zipResult = await uploadZipDashboardRevision(auth.uid, id, buffer, entrypoint);
   } catch (err) {
     // Upload failed — old files are still intact, dashboard still works
     const message =
@@ -192,40 +192,31 @@ async function handleZipReplace({
   }
 
   // Update Firestore with multi-page fields.
-  // Note: no storage rollback attempted on failure. Firestore single-document
-  // updates are atomic and practically never fail. If they did, rollback
-  // would be incomplete anyway (overlapping files like index.html are already
-  // overwritten and unrecoverable without a staging prefix). Accepted risk:
-  // on the near-impossible Firestore failure, the dashboard serves new content
-  // under stale metadata until the next successful replace.
-  await adminDb
-    .collection("dashboards")
-    .doc(id)
-    .update({
-      fileName: zipResult.entrypoint,
-      fileSizeBytes: zipResult.totalSizeBytes,
-      storagePath: zipResult.storagePath,
-      searchableText,
-      updatedAt: FieldValue.serverTimestamp(),
-      isMultiPage: true,
-      entrypoint: zipResult.entrypoint,
-      files: zipResult.files,
-    });
+  try {
+    await adminDb
+      .collection("dashboards")
+      .doc(id)
+      .update({
+        fileName: zipResult.entrypoint,
+        fileSizeBytes: zipResult.totalSizeBytes,
+        storagePath: zipResult.storagePath,
+        storagePrefix: zipResult.storagePrefix,
+        searchableText,
+        updatedAt: FieldValue.serverTimestamp(),
+        isMultiPage: true,
+        entrypoint: zipResult.entrypoint,
+        files: zipResult.files,
+      });
+  } catch (error) {
+    await deleteDashboardFiles(zipResult.storagePrefix).catch(() => {});
+    throw error;
+  }
 
   // Clean up orphaned files AFTER Firestore update commits.
   // If this fails, we have stale files in storage (harmless) but the
   // dashboard is never left pointing at deleted content.
   if (wasMultiPage && Array.isArray(data.files)) {
-    const newFiles = new Set(zipResult.files);
-    const oldPrefix = `dashboards/${data.createdBy || auth.uid}/${id}/`;
-    const orphaned = (data.files as string[]).filter((f) => !newFiles.has(f));
-    if (orphaned.length > 0) {
-      await Promise.all(
-        orphaned.map((f) =>
-          deleteHtmlFile(`${oldPrefix}${f}`).catch(() => {})
-        )
-      );
-    }
+    await deleteOldPackage(data, auth.uid, id);
   } else if (!wasMultiPage && data.storagePath) {
     await deleteHtmlFile(data.storagePath as string).catch(() => {});
   }
@@ -239,4 +230,27 @@ async function handleZipReplace({
     entrypoint: zipResult.entrypoint,
     files: zipResult.files,
   });
+}
+
+async function deleteOldPackage(
+  data: Record<string, unknown>,
+  fallbackUserId: string,
+  dashboardId: string
+): Promise<void> {
+  const legacyPrefix = `dashboards/${data.createdBy || fallbackUserId}/${dashboardId}/`;
+  const oldPrefix =
+    typeof data.storagePrefix === "string" ? data.storagePrefix : legacyPrefix;
+
+  if (oldPrefix !== legacyPrefix) {
+    await deleteDashboardFiles(oldPrefix).catch(() => {});
+    return;
+  }
+
+  if (Array.isArray(data.files)) {
+    await Promise.all(
+      (data.files as string[]).map((file) =>
+        deleteHtmlFile(`${oldPrefix}${file}`).catch(() => {})
+      )
+    );
+  }
 }

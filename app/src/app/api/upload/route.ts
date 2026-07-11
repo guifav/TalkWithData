@@ -196,6 +196,7 @@ async function handleZipUpload({
       description: description?.trim() || null,
       fileName: zipResult.entrypoint,
       storagePath: zipResult.storagePath,
+      storagePrefix: zipResult.storagePrefix,
       fileSizeBytes: zipResult.totalSizeBytes,
       thumbnailUrl: null,
       thumbnailUpdatedAt: null,

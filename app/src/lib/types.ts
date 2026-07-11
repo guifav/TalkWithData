@@ -55,6 +55,8 @@ export interface Dashboard {
   aiRecipe?: AiRecipe;
   /** Multi-page dashboard fields (ZIP upload) */
   isMultiPage?: boolean;
+  /** Active package prefix. Legacy dashboards fall back to the stable dashboard prefix. */
+  storagePrefix?: string;
   /** Entry point file relative to the storage prefix (defaults to "index.html") */
   entrypoint?: string;
   /** List of all files in the package (relative paths) */

@@ -6,7 +6,7 @@
  * don't appear in search results. This script:
  * 1. Lists all dashboard docs in Firestore
  * 2. Finds those missing searchableText or category
- * 3. Downloads HTML from GCS
+ * 3. Downloads HTML from the configured dashboard storage provider
  * 4. Extracts text via the same logic used in the upload route
  * 5. Updates the Firestore doc
  *
@@ -18,12 +18,12 @@
 
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
-import { getStorage } from "firebase-admin/storage";
+import { getHtmlFile } from "../src/lib/storage";
+import { getStorageProvider } from "../src/lib/storage-provider";
 
 // ── Config ──────────────────────────────────────────────────────────────────
 
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || "";
-const BUCKET_NAME = process.env.STORAGE_BUCKET_NAME || "";
 const MAX_SEARCHABLE_TEXT = 100_000;
 const DEFAULT_CATEGORY = "Other";
 const DRY_RUN = process.argv.includes("--dry-run");
@@ -34,15 +34,14 @@ function initAdmin() {
   if (getApps().length > 0) return;
 
   const saJson = process.env.SA_KEY_JSON;
-  if (!saJson || !PROJECT_ID || !BUCKET_NAME) {
-    console.error("SA_KEY_JSON, FIREBASE_PROJECT_ID, and STORAGE_BUCKET_NAME env vars are required");
+  if (!saJson || !PROJECT_ID) {
+    console.error("SA_KEY_JSON and FIREBASE_PROJECT_ID env vars are required");
     process.exit(1);
   }
 
   initializeApp({
     credential: cert(JSON.parse(saJson)),
     projectId: PROJECT_ID,
-    storageBucket: BUCKET_NAME,
   });
 }
 
@@ -70,8 +69,7 @@ async function main() {
   initAdmin();
 
   const db = getFirestore();
-  const storage = getStorage();
-  const bucket = storage.bucket(BUCKET_NAME);
+  getStorageProvider();
 
   console.log(`Backfill searchableText + category${DRY_RUN ? " (DRY RUN)" : ""}`);
   console.log("─".repeat(60));
@@ -107,29 +105,22 @@ async function main() {
       updates.category = DEFAULT_CATEGORY;
     }
 
-    // Text backfill requires downloading HTML from GCS
+    // Text backfill requires downloading HTML from dashboard storage
     if (missingText) {
       if (!storagePath) {
-        console.log(`  ⚠ ${id} "${title}" — no storagePath, skipping text extraction`);
+        console.log(`  WARN ${id} "${title}": no storagePath, skipping text extraction`);
       } else {
         try {
-          const file = bucket.file(storagePath);
-          const [exists] = await file.exists();
-
-          if (!exists) {
-            console.log(`  ⚠ ${id} "${title}" — file not found in GCS: ${storagePath}`);
-          } else {
-            const [contents] = await file.download();
-            const html = contents.toString("utf-8");
-            const searchableText = extractTextFromHtml(html).slice(
-              0,
-              MAX_SEARCHABLE_TEXT
-            );
-            updates.searchableText = searchableText;
-          }
+          const contents = await getHtmlFile(storagePath);
+          const html = contents.toString("utf-8");
+          const searchableText = extractTextFromHtml(html).slice(
+            0,
+            MAX_SEARCHABLE_TEXT
+          );
+          updates.searchableText = searchableText;
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          console.warn(`  ⚠ ${id} "${title}" — text extraction failed: ${msg}`);
+          console.warn(`  WARN ${id} "${title}": text extraction failed: ${msg}`);
         }
       }
     }
@@ -145,20 +136,20 @@ async function main() {
         const textLen = updates.searchableText
           ? ` (${(updates.searchableText as string).length} chars)`
           : "";
-        console.log(`  🔍 ${id} "${title}" — would set: ${fields}${textLen}`);
+        console.log(`  DRY RUN ${id} "${title}": would set: ${fields}${textLen}`);
       } else {
         await doc.ref.update(updates);
         const fields = Object.keys(updates).join(", ");
         const textLen = updates.searchableText
           ? ` (${(updates.searchableText as string).length} chars)`
           : "";
-        console.log(`  ✓ ${id} "${title}" — updated: ${fields}${textLen}`);
+        console.log(`  OK ${id} "${title}": updated: ${fields}${textLen}`);
       }
 
       updated++;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.error(`  ✗ ${id} "${title}" — error: ${msg}`);
+      console.error(`  ERROR ${id} "${title}": ${msg}`);
       errors++;
     }
   }

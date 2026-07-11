@@ -575,7 +575,7 @@ After deployment, verify:
 - Google sign-in works for an allowed domain user.
 - A disallowed domain user is rejected.
 - The dashboard list loads for an allowed domain user, which confirms the deployed Firestore rules use the correct domain.
-- Dashboard upload stores files in the configured bucket.
+- Dashboard upload stores files in the configured storage provider.
 - Search can find uploaded dashboard text.
 - AI chat returns a provider response.
 - Embed token generation and viewing work.

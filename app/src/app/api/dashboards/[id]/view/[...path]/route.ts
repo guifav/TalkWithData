@@ -114,10 +114,12 @@ export async function GET(
       }
     }
 
-    // Storage prefix is always dashboards/{uid}/{id}/ regardless of entrypoint depth.
-    // Using createdBy + id avoids issues with nested entrypoints (e.g. pages/index.html)
-    // where stripping the filename from storagePath would give the wrong prefix.
-    const storagePrefix = `dashboards/${data.createdBy}/${id}/`;
+    // New packages persist their immutable revision prefix. Legacy dashboards
+    // keep using the original stable prefix for backward compatibility.
+    const storagePrefix =
+      typeof data.storagePrefix === "string"
+        ? data.storagePrefix
+        : `dashboards/${data.createdBy}/${id}/`;
 
     // ── Serve asset ────────────────────────────────────────────────────────
     const asset = await getDashboardAsset(storagePrefix, relativePath);

@@ -1,4 +1,5 @@
 import AdmZip from "adm-zip";
+import { randomUUID } from "node:crypto";
 import { getStorageProvider } from "@/lib/storage-provider";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB per single file
@@ -41,6 +42,32 @@ export async function uploadHtmlFile(
   fileName: string,
   buffer: Buffer
 ): Promise<string> {
+  return uploadHtmlFileToPrefix(
+    `dashboards/${userId}/${dashboardId}/`,
+    fileName,
+    buffer
+  );
+}
+
+/** Upload a replacement HTML file under an immutable revision prefix. */
+export async function uploadHtmlRevision(
+  userId: string,
+  dashboardId: string,
+  fileName: string,
+  buffer: Buffer
+): Promise<string> {
+  return uploadHtmlFileToPrefix(
+    createRevisionPrefix(userId, dashboardId),
+    fileName,
+    buffer
+  );
+}
+
+async function uploadHtmlFileToPrefix(
+  storagePrefix: string,
+  fileName: string,
+  buffer: Buffer
+): Promise<string> {
   if (!fileName.endsWith(".html")) {
     throw new Error("Only .html files are allowed");
   }
@@ -49,7 +76,7 @@ export async function uploadHtmlFile(
     throw new Error("File size exceeds 10MB limit");
   }
 
-  const storagePath = `dashboards/${userId}/${dashboardId}/${fileName}`;
+  const storagePath = `${storagePrefix}${fileName}`;
   await getStorageProvider().upload(storagePath, buffer, {
     contentType: "text/html",
     cacheControl: "public, max-age=3600",
@@ -71,6 +98,18 @@ export async function copyStorageFile(
   destinationPath: string
 ): Promise<void> {
   await getStorageProvider().copy(sourcePath, destinationPath);
+}
+
+/** Copy a version into an immutable dashboard revision and return its live path. */
+export async function copyStorageFileToRevision(
+  sourcePath: string,
+  userId: string,
+  dashboardId: string,
+  fileName: string
+): Promise<string> {
+  const destinationPath = `${createRevisionPrefix(userId, dashboardId)}${fileName}`;
+  await copyStorageFile(sourcePath, destinationPath);
+  return destinationPath;
 }
 
 // ── ZIP / multi-page upload ─────────────────────────────────────────────────
@@ -118,6 +157,32 @@ export async function uploadZipDashboard(
   dashboardId: string,
   zipBuffer: Buffer,
   entrypoint: string = "index.html"
+): Promise<ZipUploadResult> {
+  return uploadZipDashboardToPrefix(
+    zipBuffer,
+    entrypoint,
+    `dashboards/${userId}/${dashboardId}/`
+  );
+}
+
+/** Upload a replacement package under an immutable revision prefix. */
+export async function uploadZipDashboardRevision(
+  userId: string,
+  dashboardId: string,
+  zipBuffer: Buffer,
+  entrypoint: string = "index.html"
+): Promise<ZipUploadResult> {
+  return uploadZipDashboardToPrefix(
+    zipBuffer,
+    entrypoint,
+    createRevisionPrefix(userId, dashboardId)
+  );
+}
+
+async function uploadZipDashboardToPrefix(
+  zipBuffer: Buffer,
+  entrypoint: string,
+  storagePrefix: string
 ): Promise<ZipUploadResult> {
   if (zipBuffer.length > MAX_ZIP_SIZE) {
     throw new Error(`ZIP file exceeds ${MAX_ZIP_SIZE / 1024 / 1024}MB limit`);
@@ -184,28 +249,32 @@ export async function uploadZipDashboard(
   // Upload files with an uncompressed size guard.
   // Extract and upload sequentially to avoid materializing entire ZIP in memory.
   const storage = getStorageProvider();
-  const storagePrefix = `dashboards/${userId}/${dashboardId}/`;
   let totalSizeBytes = 0;
 
-  for (let i = 0; i < validEntries.length; i++) {
-    const entry = validEntries[i];
-    const relativePath = normalizedPaths[i];
-    const data = entry.getData();
-    totalSizeBytes += data.length;
+  try {
+    for (let i = 0; i < validEntries.length; i++) {
+      const entry = validEntries[i];
+      const relativePath = normalizedPaths[i];
+      const data = entry.getData();
+      totalSizeBytes += data.length;
 
-    if (totalSizeBytes > MAX_EXTRACTED_SIZE) {
-      throw new Error(
-        `Extracted content exceeds ${MAX_EXTRACTED_SIZE / 1024 / 1024}MB limit (zip bomb protection)`
-      );
+      if (totalSizeBytes > MAX_EXTRACTED_SIZE) {
+        throw new Error(
+          `Extracted content exceeds ${MAX_EXTRACTED_SIZE / 1024 / 1024}MB limit (zip bomb protection)`
+        );
+      }
+
+      const storagePath = `${storagePrefix}${relativePath}`;
+      const contentType = getContentType(relativePath);
+
+      await storage.upload(storagePath, data, {
+        contentType,
+        cacheControl: "public, max-age=3600",
+      });
     }
-
-    const storagePath = `${storagePrefix}${relativePath}`;
-    const contentType = getContentType(relativePath);
-
-    await storage.upload(storagePath, data, {
-      contentType,
-      cacheControl: "public, max-age=3600",
-    });
+  } catch (error) {
+    await storage.delete(storagePrefix).catch(() => {});
+    throw error;
   }
 
   return {
@@ -215,6 +284,10 @@ export async function uploadZipDashboard(
     files: normalizedPaths,
     totalSizeBytes,
   };
+}
+
+function createRevisionPrefix(userId: string, dashboardId: string): string {
+  return `dashboards/${userId}/${dashboardId}/revisions/${randomUUID()}/`;
 }
 
 /**

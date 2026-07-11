@@ -38,8 +38,9 @@ for its bounded healthcheck, applies the checked-in Prisma migrations once, and
 starts the app only after the migration job succeeds.
 
 The copied `app/.env` file contains placeholders. A running instance still
-needs a Firebase project, a Google Cloud Storage bucket, and at least one AI
-provider. Compose supplies the local PostgreSQL dependency and overrides the
+needs a Firebase project, persistent dashboard storage, and at least one AI
+provider. Compose supplies persistent local dashboard storage and the local
+PostgreSQL dependency, and overrides the
 host-oriented `DATABASE_URL` for its containers. The server reads the
 allowlisted `NEXT_PUBLIC_*` Firebase and authentication values at runtime and
 bootstraps them to the browser, so one prebuilt image can run with different
@@ -62,7 +63,7 @@ public configuration (see [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 
 - Next.js 16 with the App Router.
 - React 19.
-- Firebase Authentication, Firestore, and Firebase Storage on Google Cloud Storage.
+- Firebase Authentication and Firestore, plus GCS or persistent local dashboard storage.
 - Prisma for dashboard-specific structured databases.
 - DuckDB in-process engine for data-source queries.
 - shadcn/ui with the Neutral theme.

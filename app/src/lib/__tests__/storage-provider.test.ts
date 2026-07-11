@@ -1,5 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { mkdtemp, rm } from "node:fs/promises";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { promises as fs } from "node:fs";
+import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { getStorageProvider, LocalStorage } from "@/lib/storage-provider";
@@ -34,6 +35,42 @@ describe("LocalStorage", () => {
     await expect(provider.download("versions/dash/1/source.html")).resolves.toEqual(
       Buffer.from("source")
     );
+  });
+
+  it("preserves the current file when an atomic upload cannot be committed", async () => {
+    const provider = getStorageProvider();
+    const storagePath = "dashboards/user/index.html";
+    await provider.upload(storagePath, Buffer.from("current"));
+    const rename = vi.spyOn(fs, "rename").mockRejectedValueOnce(new Error("rename failed"));
+
+    await expect(provider.upload(storagePath, Buffer.from("replacement"))).rejects.toThrow(
+      "rename failed"
+    );
+
+    await expect(provider.download(storagePath)).resolves.toEqual(Buffer.from("current"));
+    await expect(readdir(path.join(storageRoot, "dashboards/user"))).resolves.toEqual([
+      "index.html",
+    ]);
+    rename.mockRestore();
+  });
+
+  it("preserves the destination when an atomic copy cannot be committed", async () => {
+    const provider = getStorageProvider();
+    await provider.upload("versions/dash/1/source.html", Buffer.from("source"));
+    await provider.upload("dashboards/user/index.html", Buffer.from("current"));
+    const rename = vi.spyOn(fs, "rename").mockRejectedValueOnce(new Error("rename failed"));
+
+    await expect(
+      provider.copy("versions/dash/1/source.html", "dashboards/user/index.html")
+    ).rejects.toThrow("rename failed");
+
+    await expect(provider.download("dashboards/user/index.html")).resolves.toEqual(
+      Buffer.from("current")
+    );
+    await expect(readdir(path.join(storageRoot, "dashboards/user"))).resolves.toEqual([
+      "index.html",
+    ]);
+    rename.mockRestore();
   });
 
   it("rejects traversal and absolute paths", async () => {

@@ -41,7 +41,7 @@ PostgreSQL. In that case, use one of these container-friendly options:
 
 Open http://localhost:3000.
 
-Before testing authenticated flows, edit `app/.env` and set the Firebase values, `ALLOWED_AUTH_DOMAIN` and its browser copy `NEXT_PUBLIC_ALLOWED_AUTH_DOMAIN` (same value), `STORAGE_BUCKET_NAME`, `DATABASE_URL`, `DASHBOARD_SESSION_SECRET`, and an AI provider key.
+Before testing authenticated flows, edit `app/.env` and set the Firebase values, `ALLOWED_AUTH_DOMAIN` and its browser copy `NEXT_PUBLIC_ALLOWED_AUTH_DOMAIN` (same value), `DATABASE_URL`, `DASHBOARD_SESSION_SECRET`, and an AI provider key. Configure either `STORAGE_PROVIDER=gcs` with `STORAGE_BUCKET_NAME`, or `STORAGE_PROVIDER=local` with a persistent `LOCAL_STORAGE_ROOT`.
 
 ### Docker setup
 

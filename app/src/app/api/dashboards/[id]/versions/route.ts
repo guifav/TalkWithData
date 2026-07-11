@@ -3,7 +3,11 @@ import { verifyRequest } from "@/lib/api-auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { archiveCurrentVersion } from "@/lib/versions";
 import { extractTextFromHtml, MAX_SEARCHABLE_TEXT } from "@/lib/html-text";
-import { copyStorageFile, getHtmlFile } from "@/lib/storage";
+import {
+  copyStorageFileToRevision,
+  deleteHtmlFile,
+  getHtmlFile,
+} from "@/lib/storage";
 
 
 export async function GET(
@@ -122,26 +126,40 @@ export async function POST(
     }
 
     // Copy version file to the primary dashboard path
-    const restoredPath = `dashboards/${data?.createdBy}/${id}/${vData.fileName}`;
-    await copyStorageFile(vData.storagePath, restoredPath);
-
-    // Re-extract searchable text from restored HTML
-    const restoredBuffer = await getHtmlFile(restoredPath);
-    const htmlContent = restoredBuffer.toString("utf-8");
-    const searchableText = extractTextFromHtml(htmlContent).slice(
-      0,
-      MAX_SEARCHABLE_TEXT
+    const previousPath = data?.storagePath as string | undefined;
+    const restoredPath = await copyStorageFileToRevision(
+      vData.storagePath,
+      data?.createdBy as string,
+      id,
+      vData.fileName
     );
 
-    // Update dashboard metadata
-    const { FieldValue } = await import("firebase-admin/firestore");
-    await adminDb.collection("dashboards").doc(id).update({
-      fileName: vData.fileName,
-      fileSizeBytes: vData.fileSizeBytes,
-      storagePath: restoredPath,
-      searchableText,
-      updatedAt: FieldValue.serverTimestamp(),
-    });
+    try {
+      // Re-extract searchable text from restored HTML
+      const restoredBuffer = await getHtmlFile(restoredPath);
+      const htmlContent = restoredBuffer.toString("utf-8");
+      const searchableText = extractTextFromHtml(htmlContent).slice(
+        0,
+        MAX_SEARCHABLE_TEXT
+      );
+
+      // Update dashboard metadata
+      const { FieldValue } = await import("firebase-admin/firestore");
+      await adminDb.collection("dashboards").doc(id).update({
+        fileName: vData.fileName,
+        fileSizeBytes: vData.fileSizeBytes,
+        storagePath: restoredPath,
+        searchableText,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    } catch (error) {
+      await deleteHtmlFile(restoredPath).catch(() => {});
+      throw error;
+    }
+
+    if (previousPath && previousPath !== restoredPath) {
+      await deleteHtmlFile(previousPath).catch(() => {});
+    }
 
     return NextResponse.json({ success: true, restoredVersion: versionId });
   } catch (error) {

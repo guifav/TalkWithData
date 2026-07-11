@@ -1,4 +1,5 @@
 import { Storage } from "@google-cloud/storage";
+import { randomUUID } from "node:crypto";
 import { promises as fs } from "fs";
 import path from "path";
 import { getStorageBucketName } from "@/lib/storage-bucket";
@@ -76,8 +77,9 @@ export class LocalStorage implements StorageProvider {
 
   async upload(filePath: string, buffer: Buffer): Promise<void> {
     const fullPath = this.resolvePath(filePath);
-    await fs.mkdir(path.dirname(fullPath), { recursive: true });
-    await fs.writeFile(fullPath, buffer);
+    await this.replaceAtomically(fullPath, (temporaryPath) =>
+      fs.writeFile(temporaryPath, buffer)
+    );
   }
 
   async download(filePath: string): Promise<Buffer> {
@@ -85,9 +87,11 @@ export class LocalStorage implements StorageProvider {
   }
 
   async copy(sourcePath: string, destinationPath: string): Promise<void> {
+    const source = this.resolvePath(sourcePath);
     const destination = this.resolvePath(destinationPath);
-    await fs.mkdir(path.dirname(destination), { recursive: true });
-    await fs.copyFile(this.resolvePath(sourcePath), destination);
+    await this.replaceAtomically(destination, (temporaryPath) =>
+      fs.copyFile(source, temporaryPath)
+    );
   }
 
   async delete(filePath: string): Promise<void> {
@@ -112,6 +116,26 @@ export class LocalStorage implements StorageProvider {
       return true;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
+      throw error;
+    }
+  }
+
+  private async replaceAtomically(
+    destinationPath: string,
+    writeTemporaryFile: (temporaryPath: string) => Promise<void>
+  ): Promise<void> {
+    const destinationDirectory = path.dirname(destinationPath);
+    const temporaryPath = path.join(
+      destinationDirectory,
+      `.${path.basename(destinationPath)}.${randomUUID()}.tmp`
+    );
+
+    await fs.mkdir(destinationDirectory, { recursive: true });
+    try {
+      await writeTemporaryFile(temporaryPath);
+      await fs.rename(temporaryPath, destinationPath);
+    } catch (error) {
+      await fs.rm(temporaryPath, { force: true }).catch(() => {});
       throw error;
     }
   }
