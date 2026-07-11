@@ -336,6 +336,53 @@ describe("admin inspect data source headers route", () => {
     expect(routeMocks.list).toHaveBeenCalledWith("daily/", { maxResults: 25 });
   });
 
+  it("rotaciona credencial bruta reutilizando credentialRef armazenado", async () => {
+    setupAuth("superadmin");
+    routeMocks.dataSources.set("source-1", {
+      exists: true,
+      data: {
+        id: "source-1",
+        kind: "csv",
+        orgId: "",
+        bucket: "external-bucket",
+        prefix: "daily/",
+        credentialRef: { kind: "encryptedBlob", ref: "credential-existing" },
+        credentialEnc: "stored-secret-base64",
+        ownerColumn: "owner_email",
+        accessGrants: { assignedUsers: [], assignedDepartments: [] },
+        configVersion: 7,
+        createdBy: "uid-superadmin",
+        updatedAt: "2026-07-01T00:00:00.000Z",
+      },
+    });
+
+    const response = await inspectHeaders(
+      request("token", {
+        dataSourceId: "source-1",
+        bucket: "external-bucket",
+        prefix: "daily",
+        credentialRef: { kind: "encryptedBlob", ref: "" },
+        credential: rawCredential,
+      }),
+    );
+    const body = await response.json();
+    const decodedTokenPayload = JSON.parse(
+      Buffer.from(String(body.inspectionToken).split(".")[0], "base64url").toString("utf8"),
+    );
+
+    expect(response.status).toBe(200);
+    expect(routeMocks.encrypt).toHaveBeenCalledWith(rawCredential);
+    expect(body.credentialEnc).toBe(Buffer.from("generated-ciphertext").toString("base64"));
+    expect(decodedTokenPayload.credentialProof).toMatchObject({
+      kind: "inline",
+      dataSourceId: "source-1",
+      configVersion: 7,
+    });
+    expect(JSON.stringify(decodedTokenPayload)).not.toContain("credential-existing");
+    expect(JSON.stringify(body)).not.toContain(rawCredential.private_key);
+    expect(JSON.stringify(body)).not.toContain(rawCredential.client_email);
+  });
+
   it("emite token inline versionado ao inspecionar edição com credencial nova", async () => {
     setupAuth("superadmin");
     routeMocks.dataSources.set("source-1", {
