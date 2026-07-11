@@ -48,13 +48,17 @@ test("rejects mismatched public and server auth domains", () => {
 test("parses comments and quoted values without exposing them", () => {
   const { values, errors } = parseEnv([
     "# comment",
-    'DATABASE_URL="postgresql://user:pass@localhost/db"',
+    'DATABASE_URL="postgresql://user:pass@localhost/db" # database',
     "APP_URL=https://example.com # public URL",
+    "CALLBACK_URL=https://example.com/callback#fragment",
+    "export STORAGE_PROVIDER='gcs' # provider",
   ].join("\n"));
 
   assert.deepEqual(errors, []);
   assert.equal(values.get("DATABASE_URL"), "postgresql://user:pass@localhost/db");
   assert.equal(values.get("APP_URL"), "https://example.com");
+  assert.equal(values.get("CALLBACK_URL"), "https://example.com/callback");
+  assert.equal(values.get("STORAGE_PROVIDER"), "gcs");
 });
 
 test("reports malformed lines and duplicate variables", () => {

@@ -33,13 +33,18 @@ function parseValue(rawValue, lineNumber) {
 
   const quote = trimmed[0];
   if (quote === '"' || quote === "'") {
-    if (trimmed.length < 2 || trimmed.at(-1) !== quote) {
+    const quotedValuePattern =
+      quote === '"'
+        ? /^"((?:\\"|[^"])*)"\s*(?:#.*)?$/
+        : /^'((?:\\'|[^'])*)'\s*(?:#.*)?$/;
+    const match = trimmed.match(quotedValuePattern);
+    if (!match) {
       throw new Error(`line ${lineNumber}: unterminated quoted value`);
     }
-    return trimmed.slice(1, -1).trim();
+    return match[1].trim();
   }
 
-  return trimmed.replace(/\s+#.*$/, "").trim();
+  return trimmed.replace(/#.*$/, "").trim();
 }
 
 export function parseEnv(contents) {
