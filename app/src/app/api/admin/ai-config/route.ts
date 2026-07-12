@@ -36,7 +36,7 @@ export async function PUT(request: NextRequest) {
       keepExistingApiKey?: boolean;
     };
 
-    if (uid === undefined || uid === null || (typeof uid === "string" && !uid.trim())) {
+    if (typeof uid !== "string" || !uid.trim()) {
       return NextResponse.json({ error: "uid is required" }, { status: 400 });
     }
 

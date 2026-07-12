@@ -12,6 +12,7 @@ import { verifyDataApiRequest } from "@/lib/data-api-auth";
 import { sanitizeIdentifier } from "@/lib/app-db/naming";
 import { updateRows, deleteRows } from "@/lib/app-db/schema-manager";
 import { recordAudit, getInstanceTables } from "@/lib/app-db/registry";
+import { parseRowPatchBody } from "@/app/api/dashboards/[id]/data/validation";
 
 
 const DATA_API_CORS_HEADERS = {
@@ -49,23 +50,23 @@ interface RouteContext {
 export async function GET(request: NextRequest, context: RouteContext) {
   const { id, table: logicalName, rowId } = await context.params;
 
-  const auth = await verifyDataApiRequest(request, id);
-  if (!auth) {
-    return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }), request);
-  }
-
-  const safeName = sanitizeIdentifier(logicalName);
-  if (!safeName) {
-    return withCors(NextResponse.json({ error: "Invalid table name" }, { status: 400 }), request);
-  }
-
-  const tables = await getInstanceTables(auth.instance.id);
-  const table = tables.find((t) => t.logicalName === safeName);
-  if (!table) {
-    return withCors(NextResponse.json({ error: "Table not found" }, { status: 404 }), request);
-  }
-
   try {
+    const auth = await verifyDataApiRequest(request, id);
+    if (!auth) {
+      return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }), request);
+    }
+
+    const safeName = sanitizeIdentifier(logicalName);
+    if (!safeName) {
+      return withCors(NextResponse.json({ error: "Invalid table name" }, { status: 400 }), request);
+    }
+
+    const tables = await getInstanceTables(auth.instance.id);
+    const table = tables.find((candidate) => candidate.logicalName === safeName);
+    if (!table) {
+      return withCors(NextResponse.json({ error: "Table not found" }, { status: 404 }), request);
+    }
+
     const { prisma } = await import("@/lib/prisma");
     const result = await prisma.$queryRawUnsafe<Record<string, unknown>[]>(
       `SELECT * FROM "${auth.instance.userSchema}"."${table.tableName}" WHERE "id" = $1 LIMIT 1`,
@@ -90,28 +91,29 @@ export async function GET(request: NextRequest, context: RouteContext) {
 export async function PATCH(request: NextRequest, context: RouteContext) {
   const { id, table: logicalName, rowId } = await context.params;
 
-  const auth = await verifyDataApiRequest(request, id);
-  if (!auth) {
-    return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }), request);
-  }
-
-  const safeName = sanitizeIdentifier(logicalName);
-  if (!safeName) {
-    return withCors(NextResponse.json({ error: "Invalid table name" }, { status: 400 }), request);
-  }
-
-  const tables = await getInstanceTables(auth.instance.id);
-  const table = tables.find((t) => t.logicalName === safeName);
-  if (!table) {
-    return withCors(NextResponse.json({ error: "Table not found" }, { status: 404 }), request);
-  }
-
   try {
-    const body = await request.json();
-    const data = body.data as Record<string, unknown>;
-    if (!data || typeof data !== "object") {
-      return withCors(NextResponse.json({ error: "data object required" }, { status: 400 }), request);
+    const auth = await verifyDataApiRequest(request, id);
+    if (!auth) {
+      return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }), request);
     }
+
+    const safeName = sanitizeIdentifier(logicalName);
+    if (!safeName) {
+      return withCors(NextResponse.json({ error: "Invalid table name" }, { status: 400 }), request);
+    }
+
+    const tables = await getInstanceTables(auth.instance.id);
+    const table = tables.find((candidate) => candidate.logicalName === safeName);
+    if (!table) {
+      return withCors(NextResponse.json({ error: "Table not found" }, { status: 404 }), request);
+    }
+
+    const body = await request.json();
+    const parsed = parseRowPatchBody(body);
+    if (!parsed.ok) {
+      return withCors(NextResponse.json({ error: parsed.error }, { status: 400 }), request);
+    }
+    const data = parsed.value;
 
     const updated = await updateRows(auth.instance.userSchema, table.tableName, [
       { id: rowId, data },
@@ -140,23 +142,23 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 export async function DELETE(request: NextRequest, context: RouteContext) {
   const { id, table: logicalName, rowId } = await context.params;
 
-  const auth = await verifyDataApiRequest(request, id);
-  if (!auth) {
-    return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }), request);
-  }
-
-  const safeName = sanitizeIdentifier(logicalName);
-  if (!safeName) {
-    return withCors(NextResponse.json({ error: "Invalid table name" }, { status: 400 }), request);
-  }
-
-  const tables = await getInstanceTables(auth.instance.id);
-  const table = tables.find((t) => t.logicalName === safeName);
-  if (!table) {
-    return withCors(NextResponse.json({ error: "Table not found" }, { status: 404 }), request);
-  }
-
   try {
+    const auth = await verifyDataApiRequest(request, id);
+    if (!auth) {
+      return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }), request);
+    }
+
+    const safeName = sanitizeIdentifier(logicalName);
+    if (!safeName) {
+      return withCors(NextResponse.json({ error: "Invalid table name" }, { status: 400 }), request);
+    }
+
+    const tables = await getInstanceTables(auth.instance.id);
+    const table = tables.find((candidate) => candidate.logicalName === safeName);
+    if (!table) {
+      return withCors(NextResponse.json({ error: "Table not found" }, { status: 404 }), request);
+    }
+
     const deleted = await deleteRows(auth.instance.userSchema, table.tableName, [rowId]);
 
     await recordAudit({

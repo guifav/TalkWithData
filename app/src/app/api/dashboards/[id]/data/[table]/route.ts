@@ -12,6 +12,7 @@ import { verifyDataApiRequest } from "@/lib/data-api-auth";
 import { sanitizeIdentifier } from "@/lib/app-db/naming";
 import { readRows, insertRows } from "@/lib/app-db/schema-manager";
 import { recordAudit, getInstanceTables } from "@/lib/app-db/registry";
+import { parseInsertRowsBody } from "@/app/api/dashboards/[id]/data/validation";
 
 
 const DATA_API_CORS_HEADERS = {
@@ -50,24 +51,24 @@ interface RouteContext {
 export async function GET(request: NextRequest, context: RouteContext) {
   const { id, table: logicalName } = await context.params;
 
-  const auth = await verifyDataApiRequest(request, id);
-  if (!auth) {
-    return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }), request);
-  }
-
-  const safeName = sanitizeIdentifier(logicalName);
-  if (!safeName) {
-    return withCors(NextResponse.json({ error: "Invalid table name" }, { status: 400 }), request);
-  }
-
-  // Verify table belongs to this dashboard
-  const tables = await getInstanceTables(auth.instance.id);
-  const table = tables.find((t) => t.logicalName === safeName);
-  if (!table) {
-    return withCors(NextResponse.json({ error: "Table not found" }, { status: 404 }), request);
-  }
-
   try {
+    const auth = await verifyDataApiRequest(request, id);
+    if (!auth) {
+      return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }), request);
+    }
+
+    const safeName = sanitizeIdentifier(logicalName);
+    if (!safeName) {
+      return withCors(NextResponse.json({ error: "Invalid table name" }, { status: 400 }), request);
+    }
+
+    // Verify table belongs to this dashboard
+    const tables = await getInstanceTables(auth.instance.id);
+    const table = tables.find((candidate) => candidate.logicalName === safeName);
+    if (!table) {
+      return withCors(NextResponse.json({ error: "Table not found" }, { status: 404 }), request);
+    }
+
     const params = request.nextUrl.searchParams;
     const result = await readRows(auth.instance.userSchema, table.tableName, {
       orderBy: params.get("orderBy") || undefined,
@@ -90,31 +91,29 @@ export async function GET(request: NextRequest, context: RouteContext) {
 export async function POST(request: NextRequest, context: RouteContext) {
   const { id, table: logicalName } = await context.params;
 
-  const auth = await verifyDataApiRequest(request, id);
-  if (!auth) {
-    return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }), request);
-  }
-
-  const safeName = sanitizeIdentifier(logicalName);
-  if (!safeName) {
-    return withCors(NextResponse.json({ error: "Invalid table name" }, { status: 400 }), request);
-  }
-
-  const tables = await getInstanceTables(auth.instance.id);
-  const table = tables.find((t) => t.logicalName === safeName);
-  if (!table) {
-    return withCors(NextResponse.json({ error: "Table not found" }, { status: 404 }), request);
-  }
-
   try {
+    const auth = await verifyDataApiRequest(request, id);
+    if (!auth) {
+      return withCors(NextResponse.json({ error: "Unauthorized" }, { status: 401 }), request);
+    }
+
+    const safeName = sanitizeIdentifier(logicalName);
+    if (!safeName) {
+      return withCors(NextResponse.json({ error: "Invalid table name" }, { status: 400 }), request);
+    }
+
+    const tables = await getInstanceTables(auth.instance.id);
+    const table = tables.find((candidate) => candidate.logicalName === safeName);
+    if (!table) {
+      return withCors(NextResponse.json({ error: "Table not found" }, { status: 404 }), request);
+    }
+
     const body = await request.json();
-    const rows = body.rows as Record<string, unknown>[];
-    if (!Array.isArray(rows) || rows.length === 0) {
-      return withCors(NextResponse.json({ error: "rows array required" }, { status: 400 }), request);
+    const parsed = parseInsertRowsBody(body);
+    if (!parsed.ok) {
+      return withCors(NextResponse.json({ error: parsed.error }, { status: 400 }), request);
     }
-    if (rows.length > 100) {
-      return withCors(NextResponse.json({ error: "Max 100 rows per request" }, { status: 400 }), request);
-    }
+    const rows = parsed.value;
 
     const inserted = await insertRows(auth.instance.userSchema, table.tableName, rows);
 

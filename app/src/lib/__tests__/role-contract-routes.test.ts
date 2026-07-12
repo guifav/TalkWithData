@@ -7,6 +7,7 @@ const mockVerifyIdToken = vi.fn();
 const mockCreateEmbedToken = vi.fn();
 const mockUserUpdate = vi.fn();
 const mockPendingGet = vi.fn();
+const mockPendingDelete = vi.fn();
 const mockDashboardGet = vi.fn();
 const mockDashboardUpdate = vi.fn();
 const mockConversationGet = vi.fn();
@@ -27,6 +28,7 @@ function snapshot(exists: boolean, data: Record<string, unknown> = {}) {
   return {
     exists,
     data: () => data,
+    ref: { delete: mockPendingDelete },
   };
 }
 
@@ -128,6 +130,7 @@ beforeEach(() => {
   mockVerifyIdToken.mockResolvedValue(authUser);
   mockUserUpdate.mockResolvedValue(undefined);
   mockPendingGet.mockResolvedValue(snapshot(false));
+  mockPendingDelete.mockResolvedValue(undefined);
   mockDashboardUpdate.mockResolvedValue(undefined);
   mockCreateEmbedToken.mockResolvedValue("embed-token");
   mockCheckUserHasMcpAccess.mockResolvedValue(true);
@@ -151,6 +154,35 @@ beforeEach(() => {
 });
 
 describe("role contract routes", () => {
+  it("rejects unauthenticated auth initialization before Firestore writes", async () => {
+    const res = await initAuth(
+      new NextRequest("http://localhost/api/auth/init", { method: "POST" }),
+    );
+
+    expect(res.status).toBe(401);
+    expect(mockUserUpdate).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when the user document does not exist", async () => {
+    const res = await initAuth(authedRequest("POST", "http://localhost/api/auth/init"));
+
+    expect(res.status).toBe(404);
+    await expect(res.json()).resolves.toEqual({
+      error: "User document not found. Please try again.",
+    });
+    expect(mockUserUpdate).not.toHaveBeenCalled();
+  });
+
+  it("keeps an existing role idempotently", async () => {
+    userDocs.set(authUser.uid, { exists: true, data: { role: "admin" } });
+
+    const res = await initAuth(authedRequest("POST", "http://localhost/api/auth/init"));
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({ role: "admin", alreadySet: true });
+    expect(mockUserUpdate).not.toHaveBeenCalled();
+  });
+
   it("assigns user by default on first login when pendingRoles has no match", async () => {
     userDocs.set(authUser.uid, { exists: true, data: {} });
 
@@ -158,6 +190,19 @@ describe("role contract routes", () => {
 
     expect(res.status).toBe(200);
     expect(mockUserUpdate).toHaveBeenCalledWith({ role: "user" });
+  });
+
+  it("applies a valid pending role and tolerates cleanup failure", async () => {
+    userDocs.set(authUser.uid, { exists: true, data: {} });
+    mockPendingGet.mockResolvedValue(snapshot(true, { role: "admin" }));
+    mockPendingDelete.mockRejectedValue(new Error("cleanup unavailable"));
+
+    const res = await initAuth(authedRequest("POST", "http://localhost/api/auth/init"));
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({ role: "admin", alreadySet: false });
+    expect(mockUserUpdate).toHaveBeenCalledWith({ role: "admin" });
+    expect(mockPendingDelete).toHaveBeenCalledOnce();
   });
 
   it("rejects admin callers changing another user's role", async () => {
