@@ -318,6 +318,36 @@ describe("GET /api/dashboards/[id]/view/[...path] security headers", () => {
     expect(mockCreateDashSessionToken).toHaveBeenCalledWith("dash-id", "read");
   });
 
+  it("rejects a sub-page when direct and shared-folder access are denied", async () => {
+    mockVerifyRequest.mockResolvedValue({
+      uid: "denied-viewer-uid",
+      email: "denied-viewer@example.com",
+      name: "Denied Viewer",
+    });
+    mockDashboardGet.mockResolvedValue(
+      snapshot(true, {
+        createdBy: "owner-uid",
+        visibility: "specific",
+        allowedEmails: [],
+        allowedDepartments: [],
+        storagePath: "dashboards/owner-uid/dash-id/index.html",
+      })
+    );
+
+    const response = await getAsset(
+      assetRequest("pages/detail.html"),
+      assetParams("pages/detail.html")
+    );
+
+    expect(response.status).toBe(403);
+    expect(mockCanViewViaSharedFolder).toHaveBeenCalledWith(
+      "dash-id",
+      expect.objectContaining({ uid: "denied-viewer-uid" }),
+      expect.anything()
+    );
+    expect(mockCreateDashSessionToken).not.toHaveBeenCalled();
+  });
+
   it("serves sub-page HTML with CSP sandbox and nosniff headers", async () => {
     mockGetDashboardAsset.mockResolvedValue({
       buffer: Buffer.from("<html><head></head><body>page</body></html>"),
