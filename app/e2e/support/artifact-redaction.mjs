@@ -13,6 +13,7 @@ export function redactArtifact(value) {
     .replace(/(dash_session_[^=;"\\]+[=\\"]+)(?:v1\.\d+\.)?[a-f0-9]{64}\b/gi, (_match, prefix) => `${prefix}${replacement("DASH_TOKEN")}`)
     .replace(/("private_key"\s*:\s*")[^"]*(")/g, (_match, prefix, suffix) => `${prefix}${replacement("PRIVATE_KEY")}${suffix}`)
     .replace(/((?:\\+)["']private_key(?:\\+)["']\s*:\s*(?:\\+)["'])[\s\S]*?((?:\\+)["'])/g, (_match, prefix, suffix) => `${prefix}${replacement("PRIVATE_KEY")}${suffix}`)
+    .replace(/(\bprivate_key\s*:\s*\\?["'])[^"']*(\\?["'])/g, (_match, prefix, suffix) => `${prefix}${replacement("PRIVATE_KEY")}${suffix}`)
     .replace(/("(?:inspectionToken|credentialEnc|token)"\s*:\s*")[^"]+("?)/g, (_match, prefix, suffix) => `${prefix}${replacement("SECRET_VALUE")}${suffix}`);
 
   return { content, redacted };

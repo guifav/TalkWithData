@@ -149,9 +149,17 @@ async function signInWithGoogleEmulator(page: Page, email: string, displayName: 
   const popupPromise = page.waitForEvent("popup");
   await page.getByRole("button", { name: "Sign in with Google" }).click();
   const popup = await popupPromise;
-  await popup.locator("#add-account-button").click();
-  await popup.locator("#email-input").fill(email);
-  await popup.locator("#display-name-input").fill(displayName);
+  const addAccountButton = popup.locator("#add-account-button");
+  const addUserForm = popup.locator("#add-user");
+  await expect.poll(async () => {
+    if (!(await addUserForm.isVisible())) await addAccountButton.click();
+    return addUserForm.isVisible();
+  }, {
+    message: "Firebase Auth emulator account form becomes interactive",
+    timeout: 10_000,
+  }).toBe(true);
+  await addUserForm.locator("#email-input").fill(email);
+  await addUserForm.locator("#display-name-input").fill(displayName);
   await popup.getByRole("button", { name: "Sign in with Google" }).click();
   await popup.waitForEvent("close");
   await page.waitForURL(/\/$/);

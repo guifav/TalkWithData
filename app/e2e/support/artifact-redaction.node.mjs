@@ -23,12 +23,13 @@ test("redacts browser session, embed, dashboard and encrypted values", () => {
     credentialEnc: "encrypted-credential-value",
     credential: { private_key: "fixture-private-key" },
     escapedCredential: "{\\\"private_key\\\":\\\"escaped-private-key\\\"}",
+    sourceCredential: 'const credential = { private_key: "source-private-key" };',
   });
 
   const result = redactArtifact(input);
 
-  assert.equal(result.redacted, 10);
-  assert.doesNotMatch(result.content, /eyJ|signed-inspection|encrypted-credential|fixture-private|escaped-private/);
+  assert.equal(result.redacted, 11);
+  assert.doesNotMatch(result.content, /eyJ|signed-inspection|encrypted-credential|fixture-private|escaped-private|source-private/);
   assert.match(result.content, /REDACTED_FIREBASE_TOKEN/);
   assert.match(result.content, /REDACTED_EMBED_TOKEN/);
   assert.match(result.content, /REDACTED_DASH_TOKEN/);
