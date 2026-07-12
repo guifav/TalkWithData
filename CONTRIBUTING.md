@@ -94,6 +94,10 @@ Container builds run `scripts/collect-artifact-licenses.mjs` against the actual
 runner and migrator package trees. Do not replace this per-artifact collection
 with a manually maintained package allowlist.
 
+The container base is separately bound to `scripts/base-image-policy.json`.
+When changing the pinned Node image digest, regenerate and review the exact Node,
+Yarn, and Alpine inventory and confirm that every base notice remains bundled.
+
 Never add a license override without evidence in the exact npm tarball or an
 authoritative upstream source. An unknown or ambiguous license blocks the pull
 request and release until the item is removed or supported by evidence. See

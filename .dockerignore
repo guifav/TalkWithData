@@ -17,6 +17,7 @@ app/**
 !app/prisma/**
 !app/scripts
 !app/scripts/local-storage-smoke.ts
+!app/scripts/prune-standalone-native-image.mjs
 !app/migrator
 !app/migrator/package.json
 !app/migrator/package-lock.json
@@ -24,6 +25,9 @@ app/**
 !LICENSE
 !THIRD_PARTY_NOTICES.md
 !scripts/collect-artifact-licenses.mjs
+!scripts/collect-base-image-licenses.mjs
+!scripts/artifact-license-supplements.json
+!scripts/base-image-policy.json
 
 app/.env*
 app/**/.env*

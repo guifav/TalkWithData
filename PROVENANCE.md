@@ -113,9 +113,24 @@ package-provided and vendored `LICENSE`, `NOTICE`, and `COPYING` files, and uses
 the declared SPDX standard text plus package metadata only when an npm package
 ships no license file. Collection fails when neither source exists or when a
 `WITH` exception has no package-provided exception text. SPDX `+` expressions
-retain their or-later meaning. The runner conservatively covers its full
-installed graph so client-side bundled code is included as well as externalized
-server packages.
+retain their or-later meaning. Expressions joined by `AND` always receive every
+required standard text. The `pako@1.0.11` Zlib subtree is additionally bound to
+its reviewed source checksum and carries the upstream Zlib notice. The runner
+conservatively covers its full installed graph so client-side bundled code is
+included as well as externalized server packages.
+
+The application uses only unoptimized image URLs. A post-build gate therefore
+removes the unused `sharp` and `@img/sharp-*` packages from the standalone
+artifact, avoiding redistribution of the optional libvips binary. The runtime
+smoke fails if any of those package directories remain.
+
+The Node container base is also part of the release artifact. The pinned digest
+is bound to Node `22.23.1`, Yarn `1.22.22`, and an exact 18-package Alpine
+inventory in `scripts/base-image-policy.json`. Container builds fail if that
+inventory changes. They preserve the Node, Yarn, npm, and Corepack notices and
+generate the applicable SPDX texts for every declared Alpine license under
+`/app/licenses/base`. GPL and LGPL entries also record the exact Alpine aports
+commit that provides the build recipe and upstream corresponding-source URLs.
 
 The thumbnail package additionally binds the four binary archives in
 `@sparticuz/chromium@149.0.0` to reviewed SHA-256 values. It carries the exact

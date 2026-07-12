@@ -72,15 +72,42 @@ docker run --rm --entrypoint sh "$IMAGE" -c '
   test -s /app/licenses/LICENSE
   test -s /app/licenses/THIRD_PARTY_NOTICES.md
   test -s /app/licenses/docs/THIRD-PARTY-LICENSES.md
+  test -s /app/licenses/base/manifest.json
 '
 docker run --rm --entrypoint node "$IMAGE" -e '
+  const fs = require("node:fs");
+  const path = require("node:path");
   const manifest = require("/app/licenses/npm/manifest.json");
+  const base = require("/app/licenses/base/manifest.json");
   const names = new Set(manifest.packages.map((entry) => entry.name));
   for (const name of ["firebase-admin", "@duckdb/node-api", "@duckdb/node-bindings", "exceljs", "unzipper", "lucide-react", "radix-ui", "recharts", "sonner"]) {
     if (!names.has(name)) throw new Error(`missing runner license bundle for ${name}`);
   }
   if (manifest.packages.some((entry) => entry.files.length === 0)) {
     throw new Error("runner license bundle contains an empty package entry");
+  }
+  function findSharp(directory) {
+    if (directory === "/app/licenses") return null;
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const child = path.join(directory, entry.name);
+      if (entry.name === "sharp" && path.basename(path.dirname(child)) === "node_modules") return child;
+      if (entry.name.startsWith("sharp-") && path.basename(path.dirname(child)) === "@img") return child;
+      const found = findSharp(child);
+      if (found) return found;
+    }
+    return null;
+  }
+  const leakedSharp = findSharp("/app");
+  if (leakedSharp) throw new Error(`unused native image optimizer leaked into runner: ${leakedSharp}`);
+  const pako = manifest.packages.find((entry) => entry.name === "pako");
+  for (const file of ["SPDX-MIT.txt", "SPDX-Zlib.txt", "supplements/ZLIB-LICENSE.txt"]) {
+    if (!pako?.files.includes(file)) throw new Error(`missing pako license material ${file}`);
+  }
+  for (const name of ["busybox", "musl", "zlib"]) {
+    if (!base.alpinePackages.some((entry) => entry.name === name)) {
+      throw new Error(`missing base image inventory entry ${name}`);
+    }
   }
 '
 
@@ -93,6 +120,7 @@ docker run --rm --entrypoint sh "$MIGRATOR_IMAGE" -c '
   test -s /app/licenses/LICENSE
   test -s /app/licenses/THIRD_PARTY_NOTICES.md
   test -s /app/licenses/docs/THIRD-PARTY-LICENSES.md
+  test -s /app/licenses/base/manifest.json
 '
 docker run --rm --entrypoint node "$MIGRATOR_IMAGE" -e '
   const manifest = require("/app/licenses/npm/manifest.json");

@@ -42,8 +42,10 @@ export async function collectArtifactLicenses({
     }
     const expression = parseLicenseExpression(entry.license, parseSpdxExpression);
     let files = await findLicenseFiles(entry.directory, entry.sourceDirectory);
-    if (files.length === 0) {
-      files = createSpdxLicenseFiles(entry, expression, spdxLicenses);
+    if (files.length === 0 || hasAndConjunction(expression)) {
+      const generated = createSpdxLicenseFiles(entry, expression, spdxLicenses);
+      const existingNames = new Set(files.map((file) => file.name));
+      files.push(...generated.filter((file) => !existingNames.has(file.name)));
     }
     const supplement = supplements[key];
     if (supplement) {
@@ -240,6 +242,15 @@ function hasSpdxException(expression) {
   );
 }
 
+function hasAndConjunction(expression) {
+  return Boolean(
+    expression
+      && (expression.conjunction === "and"
+        || (expression.left && hasAndConjunction(expression.left))
+        || (expression.right && hasAndConjunction(expression.right))),
+  );
+}
+
 function collectLicenseIds(expression, ids = new Set()) {
   if (expression.license) ids.add(`${expression.license}${expression.plus ? "+" : ""}`);
   if (expression.left) collectLicenseIds(expression.left, ids);
@@ -274,10 +285,15 @@ async function resolveSupplementFiles(entry, supplement) {
   }
   return Promise.all(supplement.files.map(async (file) => {
     assertSafeRelativePath(file.name, `${key} supplement`);
-    if (!await isFile(file.source)) {
-      throw new Error(`${key} is missing supplement source ${file.source}`);
+    if (file.sourceRelative) {
+      assertSafeRelativePath(file.sourceRelative, `${key} supplement source`);
     }
-    return { name: `supplements/${file.name}`, source: file.source };
+    const source = file.source
+      ?? (file.sourceRelative && path.join(entry.sourceDirectory, file.sourceRelative));
+    if (!await isFile(source)) {
+      throw new Error(`${key} is missing supplement source ${source}`);
+    }
+    return { name: `supplements/${file.name}`, source };
   }));
 }
 
@@ -340,17 +356,21 @@ async function isFile(file) {
 }
 
 async function main() {
-  const [artifactDir, sourceNodeModules, outputDir, toolPackageFile] = process.argv.slice(2);
+  const [artifactDir, sourceNodeModules, outputDir, toolPackageFile, supplementsFile] = process.argv.slice(2);
   if (!artifactDir || !sourceNodeModules || !outputDir) {
     throw new Error(
       "usage: collect-artifact-licenses.mjs <artifact-dir> <source-node_modules> <output-dir>",
     );
   }
+  const supplements = supplementsFile
+    ? JSON.parse(await readFile(path.resolve(supplementsFile), "utf8"))
+    : {};
   const manifest = await collectArtifactLicenses({
     artifactDir: path.resolve(artifactDir),
     sourceNodeModules: path.resolve(sourceNodeModules),
     outputDir: path.resolve(outputDir),
     toolPackageFile: toolPackageFile ? path.resolve(toolPackageFile) : undefined,
+    supplements,
   });
   console.log(`Collected license files for ${manifest.length} artifact packages`);
 }

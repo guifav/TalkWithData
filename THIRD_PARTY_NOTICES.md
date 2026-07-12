@@ -224,8 +224,22 @@ License. The installed package contains the complete combined notice.
 
 ## LGPL and MPL components
 
-The locked graph contains platform-specific libvips packages under
-`LGPL-3.0-or-later`, plus `axe-core` and Lightning CSS packages under
-`MPL-2.0`. Release automation must determine which of these files are present in
-each produced artifact, preserve the applicable license texts, and satisfy any
-source, relinking, or modified-file obligations before publication.
+The locked graph contains optional platform-specific libvips packages under
+`LGPL-3.0-or-later`, but the application globally disables image optimization
+and removes `sharp` plus `@img/sharp-*` from the standalone release artifact.
+The container smoke fails if those native package directories are present. They
+therefore do not form part of the published application container.
+
+Artifacts that contain `axe-core` or Lightning CSS preserve their package
+licenses under the generated npm bundle.
+
+## Node and Alpine container base
+
+The application and migration images inherit the pinned `node:22-alpine` digest
+recorded in `scripts/base-image-policy.json`. Each image carries an exact
+inventory of the inherited Alpine packages, their applicable SPDX texts, and
+the preserved Node.js, Yarn, npm, and Corepack notices under
+`/app/licenses/base`. `SOURCE-AVAILABILITY.md` records exact Alpine aports
+commits for packages under GPL or LGPL terms. A digest, runtime version, package
+version, or declared license change fails the build until the policy is reviewed
+and updated.

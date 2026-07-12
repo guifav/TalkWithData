@@ -53,6 +53,26 @@ test("local storage smoke honors the no-cache contract", async () => {
   assert.match(workflow, /Test bucketless local storage with Docker Compose[\s\S]*TWD_RUNTIME_CONFIG_NO_CACHE: "1"/);
 });
 
+test("standalone output excludes the unused native image optimizer", async () => {
+  const config = await readFile(path.join(root, "app/next.config.ts"), "utf8");
+
+  assert.match(config, /images:\s*\{\s*unoptimized:\s*true/);
+  assert.match(config, /outputFileTracingRoot:\s*process\.cwd\(\)/);
+  assert.match(config, /turbopack:\s*\{\s*root:\s*process\.cwd\(\)/);
+  const packageJson = JSON.parse(await readFile(path.join(root, "app/package.json"), "utf8"));
+  assert.equal(packageJson.scripts.postbuild, "node scripts/prune-standalone-native-image.mjs");
+});
+
+test("CI and Docker builds enforce all release license contracts", async () => {
+  const workflow = await readFile(path.join(root, ".github/workflows/ci.yml"), "utf8");
+  const dockerfile = await readFile(path.join(root, "app/Dockerfile"), "utf8");
+
+  assert.match(workflow, /node --test \.\.\/scripts\/__tests__\/\*\.test\.mjs/);
+  assert.match(dockerfile, /collect-base-image-licenses\.mjs/);
+  assert.match(dockerfile, /artifact-license-supplements\.json/);
+  assert.match(dockerfile, /COPY --from=base-license-builder \/base-licenses \.\/licenses\/base/g);
+});
+
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

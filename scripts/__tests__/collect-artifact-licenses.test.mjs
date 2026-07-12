@@ -198,6 +198,30 @@ test("preserves the or-later meaning of SPDX plus expressions", async () => {
   );
 });
 
+test("adds every required SPDX text for an AND expression", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "twd-artifact-licenses-"));
+  const artifact = path.join(root, "artifact");
+  const source = path.join(root, "source");
+  const metadata = { name: "example", version: "1.0.0", license: "MIT AND Zlib" };
+  await writePackage(path.join(artifact, "node_modules/example"), metadata);
+  await writePackage(path.join(source, "example"), metadata);
+  await writeFile(path.join(source, "example/LICENSE"), "MIT fixture\n");
+
+  const manifest = await collectArtifactLicenses({
+    artifactDir: artifact,
+    sourceNodeModules: source,
+    outputDir: path.join(root, "output"),
+    toolPackageFile,
+  });
+
+  assert.ok(manifest[0].files.includes("SPDX-MIT.txt"));
+  assert.ok(manifest[0].files.includes("SPDX-Zlib.txt"));
+  assert.match(
+    await readFile(path.join(root, "output/example@1.0.0/SPDX-Zlib.txt"), "utf8"),
+    /provided 'as-is'/i,
+  );
+});
+
 test("requires and copies declared license supplements for binary payloads", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "twd-artifact-licenses-"));
   const artifact = path.join(root, "artifact");
@@ -208,7 +232,7 @@ test("requires and copies declared license supplements for binary payloads", asy
   await writeFile(path.join(artifact, "node_modules/binary-package/bin/payload.br"), "binary\n");
   await writePackage(path.join(source, "binary-package"), metadata);
   await writeFile(path.join(source, "binary-package/LICENSE"), "Wrapper license\n");
-  await writeFile(path.join(root, "BINARY-NOTICE.txt"), "Binary notice\n");
+  await writeFile(path.join(source, "binary-package/BINARY-NOTICE.txt"), "Binary notice\n");
 
   const manifest = await collectArtifactLicenses({
     artifactDir: artifact,
@@ -221,7 +245,7 @@ test("requires and copies declared license supplements for binary payloads", asy
           path: "bin/payload.br",
           sha256: "58eaf5a78d580f5dbd49d31a5b733094169b31bfdf49055b74bcac2877d8f58c",
         }],
-        files: [{ source: path.join(root, "BINARY-NOTICE.txt"), name: "BINARY-NOTICE.txt" }],
+        files: [{ sourceRelative: "BINARY-NOTICE.txt", name: "BINARY-NOTICE.txt" }],
       },
     },
   });
@@ -246,7 +270,7 @@ test("rejects a supplemented binary payload whose checksum changed", async () =>
   await writeFile(path.join(artifact, "node_modules/binary-package/bin/payload.br"), "changed\n");
   await writePackage(path.join(source, "binary-package"), metadata);
   await writeFile(path.join(source, "binary-package/LICENSE"), "Wrapper license\n");
-  await writeFile(path.join(root, "BINARY-NOTICE.txt"), "Binary notice\n");
+  await writeFile(path.join(source, "binary-package/BINARY-NOTICE.txt"), "Binary notice\n");
 
   await assert.rejects(
     collectArtifactLicenses({
@@ -257,7 +281,7 @@ test("rejects a supplemented binary payload whose checksum changed", async () =>
       supplements: {
         "binary-package@1.0.0": {
           requiredArtifactFiles: [{ path: "bin/payload.br", sha256: "0".repeat(64) }],
-          files: [{ source: path.join(root, "BINARY-NOTICE.txt"), name: "BINARY-NOTICE.txt" }],
+          files: [{ sourceRelative: "BINARY-NOTICE.txt", name: "BINARY-NOTICE.txt" }],
         },
       },
     }),

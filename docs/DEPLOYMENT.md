@@ -105,6 +105,8 @@ starting the application container manually.
 - Ensure `DATABASE_URL` points to a persistent database.
 - For GCS storage, ensure `STORAGE_BUCKET_NAME` points to a persistent bucket.
 - For local storage, mount a persistent writable volume at `LOCAL_STORAGE_ROOT`.
+- Keep `/app/licenses` with exported images. It includes npm artifact notices and
+  the digest-bound Node and Alpine base inventory under `/app/licenses/base`.
 
 ## Google Cloud Run
 
