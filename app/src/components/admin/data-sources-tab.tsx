@@ -17,10 +17,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  acceptEncryptedInspection,
   hasRequiredCredentialInputs,
-  isInspectionCurrent,
+  isInspectionRequestCurrent,
   parseServiceAccountCredential,
+  resolveInspectionResponse,
 } from "@/components/admin/data-source-credential-form";
 import type { Department } from "@/lib/types";
 import type { UserRow } from "@/components/admin/admin-shared";
@@ -83,11 +83,12 @@ export function DataSourcesTab({
 }) {
   const [dataSources, setDataSources] = useState<DataSourceRow[]>([]);
   const [form, setFormState] = useState<FormState>(EMPTY_FORM);
-  const formRevision = useRef(0);
+  const formRef = useRef<FormState>(EMPTY_FORM);
   const inspectionRequestId = useRef(0);
   const setForm = useCallback((next: SetStateAction<FormState>) => {
-    formRevision.current += 1;
-    setFormState(next);
+    const resolved = typeof next === "function" ? next(formRef.current) : next;
+    formRef.current = resolved;
+    setFormState(resolved);
   }, []);
   const [headers, setHeaders] = useState<HeaderInspectResult | null>(null);
   const [inspectedSignature, setInspectedSignature] = useState<string | null>(null);
@@ -161,7 +162,7 @@ export function DataSourcesTab({
   async function inspectHeaders() {
     const requestId = inspectionRequestId.current + 1;
     inspectionRequestId.current = requestId;
-    const requestFormRevision = formRevision.current;
+    const requestForm = form;
     setInspecting(true);
     setError(null);
     setMessage(null);
@@ -203,16 +204,6 @@ export function DataSourcesTab({
         body: JSON.stringify(body),
       });
       const result = await res.json();
-      if (
-        !isInspectionCurrent({
-          requestId,
-          currentRequestId: inspectionRequestId.current,
-          formRevision: requestFormRevision,
-          currentFormRevision: formRevision.current,
-        })
-      ) {
-        return;
-      }
       if (!res.ok) throw new Error(result.error || "Failed to inspect headers");
       if (typeof result.inspectionToken !== "string" || !result.inspectionToken) {
         throw new Error("Header inspection did not return a verification token");
@@ -220,23 +211,26 @@ export function DataSourcesTab({
       if (hasRawCredential && (typeof result.credentialEnc !== "string" || !result.credentialEnc)) {
         throw new Error("Header inspection did not return an encrypted credential");
       }
-      let inspectedForm = hasRawCredential
-        ? acceptEncryptedInspection(form, result.credentialEnc)
-        : form;
-      if (!result.headers.includes(inspectedForm.ownerColumn)) {
-        inspectedForm = { ...inspectedForm, ownerColumn: result.headers[0] || "" };
-      }
+      const inspectedForm = resolveInspectionResponse({
+        requestId,
+        currentRequestId: inspectionRequestId.current,
+        requestForm,
+        currentForm: formRef.current,
+        credentialEnc: hasRawCredential ? result.credentialEnc : undefined,
+        headers: result.headers,
+      });
+      if (!inspectedForm) return;
       setForm(inspectedForm);
       setHeaders(result);
       setInspectedSignature(buildInspectSignature(inspectedForm));
       setMessage(`Inspected ${result.objectName || "CSV"}: ${result.headers.length} header(s).`);
     } catch (err) {
       if (
-        !isInspectionCurrent({
+        !isInspectionRequestCurrent({
           requestId,
           currentRequestId: inspectionRequestId.current,
-          formRevision: requestFormRevision,
-          currentFormRevision: formRevision.current,
+          requestForm,
+          currentForm: formRef.current,
         })
       ) {
         return;

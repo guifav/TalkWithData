@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   acceptEncryptedInspection,
   hasRequiredCredentialInputs,
-  isInspectionCurrent,
   parseServiceAccountCredential,
+  resolveInspectionResponse,
 } from "@/components/admin/data-source-credential-form";
 
 describe("data source credential form helpers", () => {
@@ -77,36 +77,78 @@ describe("data source credential form helpers", () => {
     ).toBe(true);
   });
 
-  it("rejeita resposta quando o formulário mudou durante a inspeção", () => {
+  const inspectedRequestForm = {
+    id: "source-1",
+    name: "Original name",
+    bucket: "source-bucket",
+    prefix: "exports/",
+    credentialRef: { kind: "encryptedBlob", ref: "credential-a" },
+    credentialJson: '{"private_key":"secret"}',
+    credentialEnc: "",
+    ownerColumn: "email",
+    assignedUsers: "user-a",
+    assignedDepartments: "department-a",
+  };
+
+  it("preserva edições não relacionadas ao aplicar a resposta atual", () => {
+    const currentForm = {
+      ...inspectedRequestForm,
+      name: "Updated while inspecting",
+      assignedUsers: "user-a, user-b",
+    };
+
     expect(
-      isInspectionCurrent({
-        requestId: 1,
-        currentRequestId: 1,
-        formRevision: 3,
-        currentFormRevision: 4,
+      resolveInspectionResponse({
+        requestId: 2,
+        currentRequestId: 2,
+        requestForm: inspectedRequestForm,
+        currentForm,
+        credentialEnc: "encrypted-base64",
+        headers: ["email", "amount"],
       }),
-    ).toBe(false);
+    ).toEqual({
+      ...currentForm,
+      credentialJson: "",
+      credentialEnc: "encrypted-base64",
+    });
+  });
+
+  it("rejeita resposta quando a entrada de inspeção mudou", () => {
+    expect(
+      resolveInspectionResponse({
+        requestId: 2,
+        currentRequestId: 2,
+        requestForm: inspectedRequestForm,
+        currentForm: { ...inspectedRequestForm, bucket: "other-bucket" },
+        credentialEnc: "encrypted-base64",
+        headers: ["email"],
+      }),
+    ).toBeNull();
+  });
+
+  it("rejeita resposta após reset ou reseleção da fonte", () => {
+    expect(
+      resolveInspectionResponse({
+        requestId: 2,
+        currentRequestId: 2,
+        requestForm: inspectedRequestForm,
+        currentForm: { ...inspectedRequestForm, id: "source-2" },
+        credentialEnc: "encrypted-base64",
+        headers: ["email"],
+      }),
+    ).toBeNull();
   });
 
   it("rejeita resposta de inspeção substituída por outra requisição", () => {
     expect(
-      isInspectionCurrent({
+      resolveInspectionResponse({
         requestId: 1,
         currentRequestId: 2,
-        formRevision: 3,
-        currentFormRevision: 3,
+        requestForm: inspectedRequestForm,
+        currentForm: inspectedRequestForm,
+        credentialEnc: "encrypted-base64",
+        headers: ["email"],
       }),
-    ).toBe(false);
-  });
-
-  it("aceita somente a resposta da requisição e revisão atuais", () => {
-    expect(
-      isInspectionCurrent({
-        requestId: 2,
-        currentRequestId: 2,
-        formRevision: 4,
-        currentFormRevision: 4,
-      }),
-    ).toBe(true);
+    ).toBeNull();
   });
 });

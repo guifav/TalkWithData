@@ -29,18 +29,78 @@ export function hasRequiredCredentialInputs(form: {
   return Boolean(form.credentialRef.ref.trim() && form.credentialEnc.trim());
 }
 
-export function isInspectionCurrent({
+type InspectionTrackedForm = {
+  id?: string;
+  bucket: string;
+  prefix: string;
+  credentialRef: { kind: string; ref: string };
+  credentialJson: string;
+  credentialEnc: string;
+  ownerColumn: string;
+};
+
+export function isInspectionRequestCurrent<T extends InspectionTrackedForm>({
   requestId,
   currentRequestId,
-  formRevision,
-  currentFormRevision,
+  requestForm,
+  currentForm,
 }: {
   requestId: number;
   currentRequestId: number;
-  formRevision: number;
-  currentFormRevision: number;
+  requestForm: T;
+  currentForm: T;
 }): boolean {
-  return requestId === currentRequestId && formRevision === currentFormRevision;
+  return requestId === currentRequestId && sameInspectionInput(requestForm, currentForm);
+}
+
+export function resolveInspectionResponse<T extends InspectionTrackedForm>({
+  requestId,
+  currentRequestId,
+  requestForm,
+  currentForm,
+  credentialEnc,
+  headers,
+}: {
+  requestId: number;
+  currentRequestId: number;
+  requestForm: T;
+  currentForm: T;
+  credentialEnc?: string;
+  headers: string[];
+}): T | null {
+  if (
+    !isInspectionRequestCurrent({
+      requestId,
+      currentRequestId,
+      requestForm,
+      currentForm,
+    })
+  ) {
+    return null;
+  }
+
+  let inspectedForm = credentialEnc
+    ? acceptEncryptedInspection(currentForm, credentialEnc)
+    : currentForm;
+  if (!headers.includes(inspectedForm.ownerColumn)) {
+    inspectedForm = { ...inspectedForm, ownerColumn: headers[0] || "" };
+  }
+  return inspectedForm;
+}
+
+function sameInspectionInput(
+  requestForm: InspectionTrackedForm,
+  currentForm: InspectionTrackedForm,
+): boolean {
+  return (
+    requestForm.id === currentForm.id &&
+    requestForm.bucket === currentForm.bucket &&
+    requestForm.prefix === currentForm.prefix &&
+    requestForm.credentialRef.kind === currentForm.credentialRef.kind &&
+    requestForm.credentialRef.ref === currentForm.credentialRef.ref &&
+    requestForm.credentialJson === currentForm.credentialJson &&
+    requestForm.credentialEnc === currentForm.credentialEnc
+  );
 }
 
 function isPlainObject(value: unknown): value is object {
