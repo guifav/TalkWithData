@@ -148,7 +148,8 @@ export async function GET(
     if (isHtml) {
       let html = prepareDashboardHtmlForRender(asset.buffer.toString("utf-8"));
       // Inject data API bootstrap for interactive multi-page apps
-      const sessionToken = createDashSessionToken(id, "write");
+      const dataScope = auth?.uid === data.createdBy ? "write" : "read";
+      const sessionToken = createDashSessionToken(id, dataScope);
       const bootstrap = {
         dashboardId: id,
         dataApi: `/api/dashboards/${id}/data`,

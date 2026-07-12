@@ -55,6 +55,9 @@ export async function verifyDataApiRequest(
       const bearerToken = authHeader.slice(7);
       if (verifyDashSessionToken(dashboardId, bearerToken, "write")) {
         authenticated = true;
+      } else if (verifyDashSessionToken(dashboardId, bearerToken, "read")) {
+        if (!isReadMethod) return null;
+        authenticated = true;
       }
     }
   }

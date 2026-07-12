@@ -10,6 +10,7 @@ const mockGetHtmlFile = vi.fn();
 const mockGetDashboardAsset = vi.fn();
 const mockDashboardGet = vi.fn();
 const mockVersionGet = vi.fn();
+const mockCreateDashSessionToken = vi.fn().mockReturnValue("session-token");
 
 function snapshot(exists: boolean, data: Record<string, unknown> = {}) {
   return {
@@ -36,7 +37,7 @@ vi.mock("@/lib/storage", () => ({
 }));
 
 vi.mock("@/lib/dash-session", () => ({
-  createDashSessionToken: vi.fn().mockReturnValue("session-token"),
+  createDashSessionToken: mockCreateDashSessionToken,
   verifyDashSessionToken: vi.fn().mockReturnValue(false),
 }));
 
@@ -138,6 +139,44 @@ beforeEach(() => {
 // garante origem opaca tambem quando a URL da rota e aberta direto no browser,
 // em paridade com o sandbox="allow-scripts" dos iframes da UI.
 describe("GET /api/dashboards/[id]/view security headers", () => {
+  it("mints write data scope only for the dashboard owner", async () => {
+    await getView(viewRequest(), viewParams);
+
+    expect(mockCreateDashSessionToken).toHaveBeenCalledWith("dash-id", "write");
+
+    mockCreateDashSessionToken.mockClear();
+    mockVerifyRequest.mockResolvedValue({
+      uid: "viewer-uid",
+      email: "viewer@example.com",
+      name: "Viewer",
+    });
+    mockDashboardGet.mockResolvedValue(
+      snapshot(true, {
+        createdBy: "owner-uid",
+        visibility: "team",
+        allowedEmails: [],
+        allowedDepartments: [],
+        storagePath: "dashboards/owner-uid/dash-id/index.html",
+      })
+    );
+
+    await getView(viewRequest(), viewParams);
+
+    expect(mockCreateDashSessionToken).toHaveBeenCalledWith("dash-id", "read");
+  });
+
+  it("mints read data scope for token embeds", async () => {
+    mockVerifyRequest.mockResolvedValue(null);
+    mockVerifyEmbedToken.mockResolvedValue(true);
+
+    await getView(
+      new NextRequest("http://localhost/api/dashboards/dash-id/view?embed_token=tok"),
+      viewParams
+    );
+
+    expect(mockCreateDashSessionToken).toHaveBeenCalledWith("dash-id", "read");
+  });
+
   it("serves dashboard HTML with CSP sandbox and nosniff headers", async () => {
     const response = await getView(viewRequest(), viewParams);
 
@@ -200,6 +239,31 @@ describe("GET /api/dashboards/[id]/versions/[versionId]/view security headers", 
 });
 
 describe("GET /api/dashboards/[id]/view/[...path] security headers", () => {
+  it("mints read data scope for a viewer sub-page", async () => {
+    mockVerifyRequest.mockResolvedValue({
+      uid: "viewer-uid",
+      email: "viewer@example.com",
+      name: "Viewer",
+    });
+    mockDashboardGet.mockResolvedValue(
+      snapshot(true, {
+        createdBy: "owner-uid",
+        visibility: "team",
+        allowedEmails: [],
+        allowedDepartments: [],
+        storagePath: "dashboards/owner-uid/dash-id/index.html",
+      })
+    );
+    mockGetDashboardAsset.mockResolvedValue({
+      buffer: Buffer.from("<html><head></head><body>page</body></html>"),
+      contentType: "text/html",
+    });
+
+    await getAsset(assetRequest("pages/detail.html"), assetParams("pages/detail.html"));
+
+    expect(mockCreateDashSessionToken).toHaveBeenCalledWith("dash-id", "read");
+  });
+
   it("serves sub-page HTML with CSP sandbox and nosniff headers", async () => {
     mockGetDashboardAsset.mockResolvedValue({
       buffer: Buffer.from("<html><head></head><body>page</body></html>"),
