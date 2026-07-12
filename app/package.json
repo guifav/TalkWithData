@@ -30,6 +30,8 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "../scripts/run-e2e.sh",
     "test:e2e:run": "playwright test",
+    "test:e2e:screenshots": "TWD_CAPTURE_README_SCREENSHOTS=1 playwright test e2e/readme-screenshots.spec.ts",
+    "capture:readme-screenshots": "TWD_E2E_NPM_SCRIPT=test:e2e:screenshots ../scripts/run-e2e.sh",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate deploy",

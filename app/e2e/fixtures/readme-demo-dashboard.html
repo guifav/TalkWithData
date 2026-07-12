@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Revenue Pulse</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #171717;
+        background: #f7f7f6;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #f7f7f6; }
+      main { min-height: 100vh; padding: 30px 36px 40px; }
+      header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 26px; }
+      h1 { font-size: 28px; letter-spacing: -0.04em; margin: 0 0 7px; }
+      .subtitle, .muted { color: #737373; }
+      .subtitle { font-size: 13px; }
+      .period { border: 1px solid #d4d4d4; border-radius: 8px; padding: 8px 12px; font-size: 12px; background: #fff; }
+      .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
+      .card { background: #fff; border: 1px solid #dededb; border-radius: 12px; padding: 18px; }
+      .label { color: #737373; font-size: 12px; margin-bottom: 12px; }
+      .value { font-size: 25px; font-weight: 650; letter-spacing: -0.035em; }
+      .delta { display: inline-block; margin-top: 8px; color: #166534; background: #f0fdf4; border-radius: 999px; padding: 4px 8px; font-size: 11px; }
+      .grid { display: grid; grid-template-columns: 1.45fr 1fr; gap: 14px; }
+      .card h2 { font-size: 14px; margin: 0 0 4px; }
+      .card p { font-size: 12px; margin: 0; }
+      .chart { height: 230px; display: flex; align-items: flex-end; gap: 16px; padding: 26px 4px 0; border-bottom: 1px solid #e5e5e5; }
+      .bar-wrap { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 8px; }
+      .bar { width: 100%; max-width: 42px; background: #262626; border-radius: 5px 5px 0 0; }
+      .bar.secondary { background: #a3a3a3; }
+      .month { color: #737373; font-size: 10px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 12px; }
+      th { color: #737373; font-weight: 500; text-align: left; padding: 9px 0; border-bottom: 1px solid #e5e5e5; }
+      td { padding: 13px 0; border-bottom: 1px solid #f0f0f0; }
+      td:last-child, th:last-child { text-align: right; }
+      .status { display: inline-block; width: 7px; height: 7px; margin-right: 7px; border-radius: 50%; background: #22c55e; }
+      footer { margin-top: 15px; color: #8a8a8a; font-size: 10px; text-align: right; }
+    </style>
+  </head>
+  <body>
+    <main id="fixture-ready">
+      <header>
+        <div>
+          <h1>Revenue Pulse</h1>
+          <div class="subtitle">Neutral demonstration workspace</div>
+        </div>
+        <div class="period">Last 6 months</div>
+      </header>
+
+      <section class="kpis" aria-label="Key metrics">
+        <article class="card"><div class="label">Net revenue</div><div class="value">$2.48M</div><div class="delta">+12.4%</div></article>
+        <article class="card"><div class="label">Active accounts</div><div class="value">1,284</div><div class="delta">+8.1%</div></article>
+        <article class="card"><div class="label">Average value</div><div class="value">$1,932</div><div class="delta">+3.7%</div></article>
+        <article class="card"><div class="label">Retention</div><div class="value">94.6%</div><div class="delta">+1.8 pts</div></article>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <h2>Revenue trend</h2>
+          <p class="muted">Monthly net revenue, synthetic data</p>
+          <div class="chart" aria-label="Revenue bar chart">
+            <div class="bar-wrap"><div class="bar secondary" style="height:44%"></div><span class="month">Feb</span></div>
+            <div class="bar-wrap"><div class="bar secondary" style="height:53%"></div><span class="month">Mar</span></div>
+            <div class="bar-wrap"><div class="bar secondary" style="height:62%"></div><span class="month">Apr</span></div>
+            <div class="bar-wrap"><div class="bar" style="height:73%"></div><span class="month">May</span></div>
+            <div class="bar-wrap"><div class="bar" style="height:82%"></div><span class="month">Jun</span></div>
+            <div class="bar-wrap"><div class="bar" style="height:94%"></div><span class="month">Jul</span></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>Regional performance</h2>
+          <p class="muted">Contribution to current revenue</p>
+          <table>
+            <thead><tr><th>Region</th><th>Revenue</th></tr></thead>
+            <tbody>
+              <tr><td><span class="status"></span>North</td><td>$812K</td></tr>
+              <tr><td><span class="status"></span>West</td><td>$694K</td></tr>
+              <tr><td><span class="status"></span>Central</td><td>$561K</td></tr>
+              <tr><td><span class="status"></span>South</td><td>$413K</td></tr>
+            </tbody>
+          </table>
+        </article>
+      </section>
+      <footer>Updated July 12, 2026 at 12:00 BRT</footer>
+    </main>
+  </body>
+</html>
