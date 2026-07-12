@@ -122,7 +122,7 @@ describe("createCorrelationId", () => {
       .toBe("018f52a2-7e1d-7c4b-9a80-123456789abc");
     expect(createCorrelationId("Bearer secret", () => "generated-id"))
       .toBe("generated-id");
-    expect(createCorrelationId("sk-secret-with-safe-characters", () => "generated-id"))
+    expect(createCorrelationId("secret-with-safe-characters", () => "generated-id"))
       .toBe("generated-id");
   });
 

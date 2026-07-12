@@ -65,7 +65,7 @@ test("function correlation IDs reject unsafe header values", () => {
     "018f52a2-7e1d-7c4b-9a80-123456789abc",
   );
   assert.equal(
-    createFunctionCorrelationId("sk-secret-with-safe-characters", () => "generated-id"),
+    createFunctionCorrelationId("secret-with-safe-characters", () => "generated-id"),
     "generated-id",
   );
 });
