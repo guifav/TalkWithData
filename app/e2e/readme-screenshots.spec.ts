@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { getApps, initializeApp } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
 
 const SCREENSHOT_DIR = path.join(process.cwd(), "..", "docs", "screenshots");
 const DASHBOARD_FIXTURE = path.join(
@@ -16,25 +16,33 @@ test.use({
   viewport: { width: 1440, height: 900 },
   colorScheme: "light",
   deviceScaleFactor: 1,
+  locale: "en-US",
+  timezoneId: "America/Sao_Paulo",
 });
 
 test("captures neutral README product screenshots", async ({ page }) => {
   test.setTimeout(120_000);
   mkdirSync(SCREENSHOT_DIR, { recursive: true });
   await page.addInitScript(() => localStorage.setItem("theme", "light"));
+  await page.clock.setFixedTime(new Date("2026-07-12T15:00:00.000Z"));
 
   await signInWithGoogleEmulator(page, "owner@example.com", "Demo Owner");
   const ownerUid = await authenticatedUid(page);
 
   const revenueId = await uploadDashboard(page, "Revenue Pulse");
-  await uploadDashboard(page, "Customer Growth");
-  await uploadDashboard(page, "Operations Health");
+  const customerId = await uploadDashboard(page, "Customer Growth");
+  const operationsId = await uploadDashboard(page, "Operations Health");
+  await pinDashboardDates([
+    { id: revenueId, isoDate: "2026-07-10T15:00:00.000Z" },
+    { id: customerId, isoDate: "2026-07-11T15:00:00.000Z" },
+    { id: operationsId, isoDate: "2026-07-12T15:00:00.000Z" },
+  ]);
 
   await page.goto("/");
   await expect(page.getByText("Revenue Pulse", { exact: true })).toBeVisible();
   await expect(page.getByText("Customer Growth", { exact: true })).toBeVisible();
   await expect(page.getByText("Operations Health", { exact: true })).toBeVisible();
-  await capture(page, "home-dashboards.png");
+  await capture(page, "home-dashboards.png", 560);
 
   await page.goto(`/view/${revenueId}`);
   await expect(page.getByRole("heading", { name: "Revenue Pulse" })).toBeVisible();
@@ -43,7 +51,7 @@ test("captures neutral README product screenshots", async ({ page }) => {
       name: "Revenue Pulse",
     }),
   ).toBeVisible();
-  await capture(page, "dashboard-view.png");
+  await capture(page, "dashboard-view.png", 680);
 
   const chatSessionId = await seedChatSession(ownerUid);
   await page.goto("/chat");
@@ -56,7 +64,7 @@ test("captures neutral README product screenshots", async ({ page }) => {
   await createNeutralDataSource(page);
   await page.getByText("CSV Data Sources", { exact: true }).scrollIntoViewIfNeeded();
   await expect(page.getByText("Neutral revenue export", { exact: true })).toBeVisible();
-  await capture(page, "data-sources-admin.png");
+  await capture(page, "data-sources-admin.png", 330);
 
   const embedUrl = await page.evaluate(async (dashboardId) => {
     const response = await fetch(`/api/dashboards/${dashboardId}/embed-token`, {
@@ -73,7 +81,7 @@ test("captures neutral README product screenshots", async ({ page }) => {
       name: "Revenue Pulse",
     }),
   ).toBeVisible();
-  await capture(page, "embed-view.png");
+  await capture(page, "embed-view.png", 650);
 
   await deleteChatSession(chatSessionId);
 });
@@ -147,6 +155,20 @@ async function deleteChatSession(id: string) {
   await screenshotFirestore().collection("chat_sessions").doc(id).delete();
 }
 
+async function pinDashboardDates(
+  dashboards: Array<{ id: string; isoDate: string }>,
+) {
+  await Promise.all(
+    dashboards.map(({ id, isoDate }) => {
+      const timestamp = Timestamp.fromDate(new Date(isoDate));
+      return screenshotFirestore().collection("dashboards").doc(id).update({
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      });
+    }),
+  );
+}
+
 function screenshotFirestore() {
   const projectId = process.env.FIREBASE_PROJECT_ID;
   if (!projectId) throw new Error("FIREBASE_PROJECT_ID is required for screenshots");
@@ -155,13 +177,13 @@ function screenshotFirestore() {
   return getFirestore(app);
 }
 
-async function capture(page: Page, fileName: string) {
+async function capture(page: Page, fileName: string, height = 900) {
   await page.evaluate(() => {
     document.querySelectorAll("nextjs-portal").forEach((portal) => portal.remove());
   });
   await page.screenshot({
     path: path.join(SCREENSHOT_DIR, fileName),
-    fullPage: false,
+    clip: { x: 0, y: 0, width: 1440, height },
     animations: "disabled",
   });
 }

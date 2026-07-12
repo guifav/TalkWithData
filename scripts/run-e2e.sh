@@ -13,6 +13,13 @@ case "$TWD_E2E_NPM_SCRIPT" in
     ;;
 esac
 
+# The isolated runner must not inherit credentials or outbound integrations
+# from the caller's shell. Every dependency used below is local or emulated.
+unset SA_KEY_JSON GOOGLE_APPLICATION_CREDENTIALS
+unset THUMBNAIL_FUNCTION_URL THUMBNAIL_SECRET
+unset MCP_URL MCP_API_KEY MCP_ALLOWED_HOSTS
+unset ANTHROPIC_API_KEY OPENAI_API_KEY GOOGLE_AI_API_KEY KIMI_API_KEY GLM_API_KEY
+
 node --test "$APP_DIR/e2e/support/artifact-redaction.node.mjs"
 
 if [ -z "${CI:-}" ]; then
