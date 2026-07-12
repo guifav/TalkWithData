@@ -4,14 +4,27 @@ Talk With Data handles authentication, embed tokens, database credentials, and u
 
 ## Supported versions
 
-Talk With Data is pre-1.0 software. There are no maintenance branches and no backports.
+Talk With Data is pre-1.0 software. Before the first non-prerelease GitHub
+Release is published, there is no supported version. The `main` branch is
+development-only and is not a release channel.
+
+After releases begin, support follows this rolling policy:
 
 | Version | Supported |
 | --- | --- |
-| Latest commit on `main` | Yes |
-| Any older commit or fork | No |
+| Latest non-prerelease GitHub Release | Yes |
+| Prereleases | No |
+| Older releases, tags, commits, and forks | No |
 
-Security fixes land on `main` only. If you self-host, update to the latest `main` to receive fixes.
+There are no maintenance branches and no backports. Security fixes land on
+`main` first and become supported only when they are published in a new
+non-prerelease GitHub Release. Self-hosters must update to the latest supported
+release to receive security fixes. A repository tag or package version without
+a corresponding GitHub Release is not a supported release.
+
+Critical fixes are prioritized for an expedited release, subject to maintainer
+availability. This volunteer-maintained project does not guarantee a release
+schedule or compatibility between pre-1.0 releases.
 
 ## How to report a vulnerability
 

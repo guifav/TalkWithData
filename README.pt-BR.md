@@ -10,6 +10,25 @@ Hub open-source de dashboards com IA. Envie, organize, pesquise e incorpore dash
 
 Talk With Data ajuda equipes a publicar pacotes HTML de dashboards, pesquisar conteudo, explorar dados com IA, conectar ferramentas MCP e compartilhar visualizacoes com autenticacao ou tokens de embed. Superadmins tambem podem conectar buckets de CSV como fontes de dados governadas, para perguntas em linguagem natural com respostas sempre restritas as linhas que cada pessoa pode ver.
 
+A interface atual usa ingles como idioma padrao para a audiencia internacional de OSS. Este README em PT-BR e uma traducao da documentacao, nao um locale da interface. PT-BR e outros idiomas na aplicacao exigem uma implementacao explicita de i18n.
+
+## Visao do produto
+
+Todas as capturas usam dados sinteticos gerados pela stack E2E local e isolada.
+
+![Home do Talk With Data com dashboards neutros de demonstracao](docs/screenshots/home-dashboards.png)
+
+<table>
+  <tr>
+    <td width="50%"><strong>Visualizacao do dashboard</strong><br><img src="docs/screenshots/dashboard-view.png" alt="Dashboard Revenue Pulse na visualizacao autenticada" width="100%"></td>
+    <td width="50%"><strong>Chat de dados com IA</strong><br><img src="docs/screenshots/ai-data-chat.png" alt="Chat de dados com IA respondendo com uma ferramenta governada" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="50%"><strong>Fontes de dados governadas</strong><br><img src="docs/screenshots/data-sources-admin.png" alt="Tela administrativa de fontes de dados CSV governadas" width="100%"></td>
+    <td width="50%"><strong>Visualizacao embed</strong><br><img src="docs/screenshots/embed-view.png" alt="Embed de dashboard por token sem o shell da aplicacao" width="100%"></td>
+  </tr>
+</table>
+
 ## Pre-requisitos
 
 - Node.js 22 ou superior para desenvolvimento local sem Docker.
@@ -108,6 +127,7 @@ Comandos uteis:
 npm test
 npm run lint
 npm run build
+npm run capture:readme-screenshots
 ```
 
 Para rodar as jornadas principais no navegador a partir de `app`, com Docker e
@@ -123,6 +143,10 @@ Auth e Firestore, storage local para dashboards e uma fixture CSV local neutra.
 Ele nao usa credenciais de producao do Firebase ou GCP. Traces e screenshots
 so sao mantidos quando um teste falha, com valores de sessao e credenciais
 redigidos antes que os artefatos possam ser enviados.
+
+`npm run capture:readme-screenshots` usa os mesmos servicos isolados e regenera
+as imagens neutras em `docs/screenshots/`. O comando nao conecta a recursos de
+producao no Firebase, GCP ou PostgreSQL.
 
 ## Deploy
 

@@ -88,7 +88,7 @@ export function DashboardGrid({
             variant="outline"
             onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
           >
-            Mostrar mais ({dashboards.length - visibleCount} restantes)
+            Load more ({dashboards.length - visibleCount} remaining)
           </Button>
         </div>
       )}

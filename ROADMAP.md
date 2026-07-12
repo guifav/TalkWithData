@@ -47,6 +47,7 @@ commitments:
 - Expanded observability for self-hosted production instances.
 - Richer admin analytics and audit trails.
 - More automated release provenance and artifact attestations.
+- PT-BR and additional UI locales through an explicit i18n implementation.
 
 ## Release policy
 

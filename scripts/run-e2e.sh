@@ -4,6 +4,22 @@ set -eu
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 APP_DIR="$ROOT_DIR/app"
 
+TWD_E2E_NPM_SCRIPT="${TWD_E2E_NPM_SCRIPT:-test:e2e:run}"
+case "$TWD_E2E_NPM_SCRIPT" in
+  test:e2e:run|test:e2e:screenshots) ;;
+  *)
+    echo "Unsupported E2E npm script: $TWD_E2E_NPM_SCRIPT" >&2
+    exit 2
+    ;;
+esac
+
+# The isolated runner must not inherit credentials or outbound integrations
+# from the caller's shell. Every dependency used below is local or emulated.
+unset SA_KEY_JSON GOOGLE_APPLICATION_CREDENTIALS
+unset THUMBNAIL_FUNCTION_URL THUMBNAIL_SECRET
+unset MCP_URL MCP_API_KEY MCP_ALLOWED_HOSTS
+unset ANTHROPIC_API_KEY OPENAI_API_KEY GOOGLE_AI_API_KEY KIMI_API_KEY GLM_API_KEY
+
 node --test "$APP_DIR/e2e/support/artifact-redaction.node.mjs"
 
 if [ -z "${CI:-}" ]; then
@@ -47,7 +63,7 @@ npx -y firebase-tools@15.23.0 emulators:exec \
   --config "$ROOT_DIR/firebase.json" \
   --project "$FIREBASE_PROJECT_ID" \
   --only auth,firestore \
-  "npm run test:e2e:run"
+  "npm run $TWD_E2E_NPM_SCRIPT"
 test_status=$?
 set -e
 

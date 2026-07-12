@@ -61,7 +61,7 @@ export default function HomePage() {
   const [dashboardsLoaded, setDashboardsLoaded] = useState(false);
   const [archivedLoaded, setArchivedLoaded] = useState(false);
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("All");
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [folderFilter, setFolderFilter] = useState<string | null>(null);
   const [sharedFolderFilter, setSharedFolderFilter] = useState<string | null>(null);
 
@@ -77,10 +77,10 @@ export default function HomePage() {
   // Reset category filter when selected category disappears (or list empties)
   useEffect(() => {
     if (
-      categoryFilter !== "All" &&
+      categoryFilter !== null &&
       !visibleCategories.includes(categoryFilter)
     ) {
-      setCategoryFilter("All");
+      setCategoryFilter(null);
     }
   }, [visibleCategories, categoryFilter]);
   const [showFolderManager, setShowFolderManager] = useState(false);
@@ -234,7 +234,7 @@ export default function HomePage() {
           else next.delete(dashboardId);
           return next;
         });
-        toast.error("Falha ao atualizar favorito");
+        toast.error("Failed to update favorite");
       }
     },
     [firebaseUser, favoriteIds]
@@ -253,7 +253,7 @@ export default function HomePage() {
             (serverSearchIds !== null && serverSearchIds.has(d.id))
         );
       }
-      if (categoryFilter !== "All") {
+      if (categoryFilter !== null) {
         result = result.filter(
           (d) => (d.category || "Other") === categoryFilter
         );
@@ -313,7 +313,7 @@ export default function HomePage() {
 
   const uid = firebaseUser?.uid;
   const hasNoDashboards = dashboards.length === 0 && archivedDashboards.length === 0 && !loading;
-  const isFiltering = Boolean(search) || categoryFilter !== "All" || Boolean(folderFilter) || Boolean(sharedFolderFilter);
+  const isFiltering = Boolean(search) || categoryFilter !== null || Boolean(folderFilter) || Boolean(sharedFolderFilter);
 
   return (
     <AppShell>
@@ -344,7 +344,7 @@ export default function HomePage() {
                     onClick={() => setFolderFilter(null)}
                     className="text-xs h-7"
                   >
-                    Todas
+                    All
                   </Button>
                   {folders.map((f) => (
                     <Button
@@ -369,7 +369,7 @@ export default function HomePage() {
               >
                 {folders.length === 0 ? (
                   <>
-                    <Plus className="size-3" /> Criar pasta
+                    <Plus className="size-3" /> New folder
                   </>
                 ) : (
                   <Settings2 className="size-3.5" />
@@ -415,7 +415,7 @@ export default function HomePage() {
 
             {!isFiltering && (
               <DashboardStrip
-                title="Vistos recentemente"
+                title="Recently viewed"
                 icon={<Clock className="size-4" />}
                 dashboards={recentDashboards.slice(0, 10)}
                 uid={uid}
@@ -430,16 +430,16 @@ export default function HomePage() {
             <Tabs defaultValue="mine">
               <TabsList className="group-data-[orientation=horizontal]/tabs:h-auto flex-wrap justify-start">
                 <TabsTrigger value="mine">
-                  Meus ({myDashboards.length})
+                  My dashboards ({myDashboards.length})
                 </TabsTrigger>
                 <TabsTrigger value="shared">
-                  Compartilhados ({sharedDashboards.length})
+                  Shared ({sharedDashboards.length})
                 </TabsTrigger>
                 <TabsTrigger value="favorites">
-                  Favoritos ({favoriteDashboards.length})
+                  Favorites ({favoriteDashboards.length})
                 </TabsTrigger>
                 <TabsTrigger value="archived">
-                  Arquivados ({filteredArchived.length})
+                  Archived ({filteredArchived.length})
                 </TabsTrigger>
               </TabsList>
 
@@ -453,13 +453,13 @@ export default function HomePage() {
                   isAdmin={isAdmin}
                   emptyMessage={
                     isFiltering
-                      ? "Nenhum dashboard seu bate com os filtros."
-                      : "Você ainda não criou dashboards."
+                      ? "None of your dashboards match the filters."
+                      : "You have not created any dashboards yet."
                   }
                   emptyAction={
                     !isFiltering && (
                       <Button asChild size="sm" variant="outline">
-                        <Link href="/upload">Fazer upload do primeiro</Link>
+                        <Link href="/upload">Upload your first dashboard</Link>
                       </Button>
                     )
                   }
@@ -478,8 +478,8 @@ export default function HomePage() {
                   isAdmin={isAdmin}
                   emptyMessage={
                     isFiltering
-                      ? "Nenhum dashboard compartilhado bate com os filtros."
-                      : "Ninguém compartilhou dashboards com você ainda."
+                      ? "No shared dashboards match the filters."
+                      : "No dashboards have been shared with you yet."
                   }
                   folders={folders}
                   sharedFolders={sharedFolders}
@@ -496,8 +496,8 @@ export default function HomePage() {
                   isAdmin={isAdmin}
                   emptyMessage={
                     isFiltering
-                      ? "Nenhum dashboard favorito bate com os filtros."
-                      : "Você ainda não tem dashboards favoritos."
+                      ? "No favorite dashboards match the filters."
+                      : "You do not have any favorite dashboards yet."
                   }
                   folders={folders}
                   sharedFolders={sharedFolders}
@@ -513,7 +513,7 @@ export default function HomePage() {
                   viewedTimestamps={viewedTimestamps}
                   onToggleFavorite={handleToggleFavorite}
                   isAdmin={isAdmin}
-                  emptyMessage="Nenhum dashboard arquivado."
+                  emptyMessage="No archived dashboards."
                   folders={folders}
                   sharedFolders={sharedFolders}
                 />
