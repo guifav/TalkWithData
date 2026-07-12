@@ -109,6 +109,61 @@ test("keeps missing license metadata visible as a release blocker", async () => 
   assert.match(renderInventory(inventory), /UNKNOWN.*release blocker/);
 });
 
+test("rejects overrides without reviewable evidence", async () => {
+  const root = await createOverrideFixture({
+    "unknown@1.2.3": { license: "MIT" },
+  });
+
+  await assert.rejects(
+    collectInventory({
+      rootDir: root,
+      lockfiles: ["app/package-lock.json"],
+      overridesFile: "overrides.json",
+    }),
+    /unknown@1\.2\.3.*non-empty evidence/,
+  );
+});
+
+test("rejects overrides with invalid SPDX expressions", async () => {
+  const root = await createOverrideFixture({
+    "unknown@1.2.3": { license: "definitely not SPDX", evidence: "upstream LICENSE" },
+  });
+
+  await assert.rejects(
+    collectInventory({
+      rootDir: root,
+      lockfiles: ["app/package-lock.json"],
+      overridesFile: "overrides.json",
+    }),
+    /unknown@1\.2\.3.*valid SPDX expression/,
+  );
+});
+
+test("rejects unused overrides", async () => {
+  const root = await createOverrideFixture({
+    "other@9.9.9": { license: "MIT", evidence: "upstream LICENSE" },
+  });
+
+  await assert.rejects(
+    collectInventory({
+      rootDir: root,
+      lockfiles: ["app/package-lock.json"],
+      overridesFile: "overrides.json",
+    }),
+    /unused license overrides: other@9\.9\.9/,
+  );
+});
+
+async function createOverrideFixture(overrides) {
+  const root = await mkdtemp(path.join(os.tmpdir(), "twd-licenses-"));
+  await mkdir(path.join(root, "app"), { recursive: true });
+  await writeLock(path.join(root, "app/package-lock.json"), {
+    "node_modules/unknown": { version: "1.2.3" },
+  });
+  await writeFile(path.join(root, "overrides.json"), `${JSON.stringify(overrides)}\n`);
+  return root;
+}
+
 async function writeLock(file, packages) {
   await writeFile(
     file,

@@ -6,10 +6,10 @@ IMAGE="${TWD_RUNTIME_CONFIG_IMAGE:-talkwithdata-runtime-config-smoke}"
 RUN_ID="$$"
 TMP_DIR="$(mktemp -d)"
 CONTAINERS=()
-BUILD_ARGS=()
+BUILD_COMMAND=(docker build)
 
 if [[ "${TWD_RUNTIME_CONFIG_NO_CACHE:-0}" == "1" ]]; then
-  BUILD_ARGS+=(--no-cache)
+  BUILD_COMMAND+=(--no-cache)
 fi
 
 cleanup() {
@@ -62,8 +62,16 @@ wait_for_html() {
   return 1
 }
 
-docker build "${BUILD_ARGS[@]}" -t "$IMAGE" \
-  -f "$ROOT_DIR/app/Dockerfile" "$ROOT_DIR/app"
+BUILD_COMMAND+=(-t "$IMAGE" -f "$ROOT_DIR/app/Dockerfile" "$ROOT_DIR")
+"${BUILD_COMMAND[@]}"
+
+docker run --rm --entrypoint sh "$IMAGE" -c '
+  test -s /app/licenses/LICENSE
+  test -s /app/licenses/THIRD_PARTY_NOTICES.md
+  test -s /app/licenses/THIRD-PARTY-LICENSES.md
+  test -s /app/licenses/npm/exceljs-4.4.0-LICENSE
+  test -s /app/licenses/npm/unzipper-0.12.5-LICENSE
+'
 
 for suffix in one two; do
   env_file="$TMP_DIR/${suffix}.env"

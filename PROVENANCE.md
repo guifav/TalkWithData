@@ -90,7 +90,9 @@ files listed above.
   attribution or preservation.
 - `scripts/third-party-license-overrides.json` contains only reviewed corrections
   for old packages whose lock metadata omitted a license but whose npm tarball
-  includes a license file. It must never be used to guess a license.
+  includes a license file. The generator rejects missing evidence, invalid SPDX
+  expressions, unexpected fields, and unused overrides. Overrides must never be
+  used to guess a license.
 - `node scripts/generate-third-party-licenses.mjs --check --fail-on-unknown`
   is the release gate. It intentionally fails if any license is `UNKNOWN`.
 - The review originally found `buffers@0.1.1` without a declared license. The
@@ -103,6 +105,12 @@ The locked graph is broader than a particular source archive, container, or
 standalone Next.js build. Release automation must also inspect each produced
 artifact and carry forward every license and upstream `NOTICE` file for the
 packages and assets it actually redistributes.
+
+The production container carries the project license, this notice record, the
+locked inventory, and the ExcelJS and unzipper license files under
+`/app/licenses`. Its CI smoke test asserts that each file is present. The
+container build uses the repository root as its context so those canonical
+records are copied directly rather than maintained as duplicates.
 
 ## Procedure for future additions
 

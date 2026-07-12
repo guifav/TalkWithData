@@ -20,9 +20,13 @@ The production container is built from `app/Dockerfile`. It exposes port `8080` 
 
 ```bash
 cp app/.env.example app/.env
-docker build -t talk-with-data -f app/Dockerfile app
+docker build -t talk-with-data -f app/Dockerfile .
 docker run --rm --env-file app/.env -p 3000:8080 talk-with-data
 ```
+
+Run these commands from the repository root. The root build context is required
+so the image can include the canonical project and third-party license records
+in `/app/licenses` without maintaining duplicate copies.
 
 Open http://localhost:3000.
 
@@ -160,8 +164,8 @@ flags to both commands when the database requires them.
 
 ```bash
 gcloud auth configure-docker "$REGION-docker.pkg.dev"
-docker build --pull --tag "$APP_IMAGE" --file app/Dockerfile app
-docker build --pull --target migrator --tag "$MIGRATOR_IMAGE" --file app/Dockerfile app
+docker build --pull --tag "$APP_IMAGE" --file app/Dockerfile .
+docker build --pull --target migrator --tag "$MIGRATOR_IMAGE" --file app/Dockerfile .
 docker push "$APP_IMAGE"
 docker push "$MIGRATOR_IMAGE"
 

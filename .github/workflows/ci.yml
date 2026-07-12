@@ -69,13 +69,13 @@ jobs:
       - name: Test migration observability contract
         run: node --test ../scripts/test-migrations-observability.test.mjs
 
+      - name: Install dependencies
+        run: npm ci
+
       - name: Verify third-party license inventory
         run: |
           node --test ../scripts/__tests__/generate-third-party-licenses.test.mjs
           node ../scripts/generate-third-party-licenses.mjs --check --fail-on-unknown
-
-      - name: Install dependencies
-        run: npm ci
 
       - name: Generate Prisma client
         run: npx prisma generate

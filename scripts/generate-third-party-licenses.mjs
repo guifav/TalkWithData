@@ -3,6 +3,7 @@
 import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
@@ -10,6 +11,10 @@ import { fileURLToPath } from "node:url";
 const DEFAULT_OVERRIDES = "scripts/third-party-license-overrides.json";
 const DEFAULT_OUTPUT = "docs/THIRD-PARTY-LICENSES.md";
 const execFileAsync = promisify(execFile);
+const repositoryRequire = createRequire(
+  path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../app/package.json"),
+);
+const parseSpdxExpression = repositoryRequire("spdx-expression-parse");
 
 export async function collectInventory({
   rootDir,
@@ -20,6 +25,8 @@ export async function collectInventory({
   const overrides = JSON.parse(
     await readFile(path.join(rootDir, overridesFile), "utf8"),
   );
+  validateOverrides(overrides);
+  const usedOverrides = new Set();
   const packages = new Map();
   const lockfileHashes = [];
 
@@ -48,6 +55,7 @@ export async function collectInventory({
       const key = `${name}@${version}`;
       const override = overrides[key];
       const declaredLicense = normalizeLicense(metadata.license);
+      if (!declaredLicense && override) usedOverrides.add(key);
       const license = declaredLicense || normalizeLicense(override?.license) || "UNKNOWN";
       const evidence = declaredLicense
         ? "lockfile"
@@ -75,6 +83,13 @@ export async function collectInventory({
     }
   }
 
+  const unusedOverrides = Object.keys(overrides)
+    .filter((key) => !usedOverrides.has(key))
+    .sort();
+  if (unusedOverrides.length > 0) {
+    throw new Error(`unused license overrides: ${unusedOverrides.join(", ")}`);
+  }
+
   const rows = Array.from(packages.values())
     .map((entry) => ({
       name: entry.name,
@@ -93,6 +108,36 @@ export async function collectInventory({
       .filter((entry) => entry.license === "UNKNOWN")
       .map((entry) => `${entry.name}@${entry.version}`),
   };
+}
+
+function validateOverrides(overrides) {
+  if (!overrides || typeof overrides !== "object" || Array.isArray(overrides)) {
+    throw new Error("license overrides must be a JSON object");
+  }
+
+  for (const [key, override] of Object.entries(overrides)) {
+    if (!override || typeof override !== "object" || Array.isArray(override)) {
+      throw new Error(`${key} override must be an object`);
+    }
+    const unexpectedKeys = Object.keys(override).filter(
+      (field) => field !== "license" && field !== "evidence",
+    );
+    if (unexpectedKeys.length > 0) {
+      throw new Error(`${key} override has unexpected fields: ${unexpectedKeys.join(", ")}`);
+    }
+    const license = normalizeLicense(override.license);
+    if (!license || license === "UNKNOWN") {
+      throw new Error(`${key} override must have a non-empty license`);
+    }
+    try {
+      parseSpdxExpression(license);
+    } catch {
+      throw new Error(`${key} override must have a valid SPDX expression`);
+    }
+    if (typeof override.evidence !== "string" || !override.evidence.trim()) {
+      throw new Error(`${key} override must have non-empty evidence`);
+    }
+  }
 }
 
 export async function discoverCommittedLockfiles(rootDir) {

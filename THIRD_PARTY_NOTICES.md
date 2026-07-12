@@ -9,6 +9,9 @@ This notice inventory is an engineering record, not legal advice. Artifact
 publishers remain responsible for confirming that the licenses and notices in
 the actual artifact are complete.
 
+The production container stores this file, the locked inventory, the project
+license, and separately preserved package license files under `/app/licenses`.
+
 ## Lucide favicon and icons
 
 `app/public/favicon.svg` is derived from Lucide's `layout-dashboard` icon. The

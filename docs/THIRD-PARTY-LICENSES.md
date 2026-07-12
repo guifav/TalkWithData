@@ -6,7 +6,7 @@ It is an engineering inventory, not legal advice.
 
 ## Snapshot
 
-- Locked package versions: 1132
+- Locked package versions: 1133
 - Unique package names: 1041
 - Unresolved licenses: 0
 - Any `UNKNOWN` entry is a release blocker until evidence is reviewed and recorded.
@@ -14,7 +14,7 @@ It is an engineering inventory, not legal advice.
 Lockfile SHA-256 values:
 
 - `app/migrator/package-lock.json`: `d3761f1d249121526b3cb4f4a8672c35d8d497ab5dbc89e2deccd35cc048c613`
-- `app/package-lock.json`: `be4b13ebce5c5fcf84e0b5f705448aa54fd1cb294312baeb91f12238a2522454`
+- `app/package-lock.json`: `0f393e5faf936d9e87a158a0eaa68573a2244fdc61d67493d002ae253eed91ca`
 - `functions/generate-thumbnail/package-lock.json`: `d070e05f98c79467af805bb5a1fb08552ac64d02aa5aff50f3fe6635dbbe54a6`
 
 ## License summary
@@ -36,7 +36,7 @@ Lockfile SHA-256 values:
 | `CC0-1.0` | 2 |
 | `ISC` | 58 |
 | `LGPL-3.0-or-later` | 10 |
-| `MIT` | 839 |
+| `MIT` | 840 |
 | `MIT AND ISC` | 1 |
 | `MPL-2.0` | 13 |
 | `Python-2.0` | 1 |
@@ -1058,9 +1058,10 @@ reviewed metadata override.
 | `sonner` | `2.0.7` | `MIT` | app | runtime | lockfile |
 | `source-map-js` | `1.2.1` | `BSD-3-Clause` | app | runtime | lockfile |
 | `spdx-correct` | `3.2.0` | `Apache-2.0` | functions/generate-thumbnail | runtime | lockfile |
-| `spdx-exceptions` | `2.5.0` | `CC-BY-3.0` | functions/generate-thumbnail | runtime | lockfile |
+| `spdx-exceptions` | `2.5.0` | `CC-BY-3.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `spdx-expression-parse` | `3.0.1` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
-| `spdx-license-ids` | `3.0.23` | `CC0-1.0` | functions/generate-thumbnail | runtime | lockfile |
+| `spdx-expression-parse` | `4.0.0` | `MIT` | app | development | lockfile |
+| `spdx-license-ids` | `3.0.23` | `CC0-1.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `split2` | `4.2.0` | `ISC` | app | runtime | lockfile |
 | `sqlstring` | `2.3.3` | `MIT` | app, app/migrator | runtime | lockfile |
 | `stable-hash` | `0.0.5` | `MIT` | app | development | lockfile |
