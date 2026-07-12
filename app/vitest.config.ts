@@ -77,6 +77,12 @@ export default defineConfig({
           functions: 75,
           lines: 90,
         },
+        "src/lib/observability.ts": {
+          statements: 90,
+          branches: 90,
+          functions: 95,
+          lines: 90,
+        },
       },
     },
   },

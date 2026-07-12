@@ -49,7 +49,7 @@ const MAX_DEPTH = 4;
 const MAX_COLLECTION_ITEMS = 20;
 const MAX_OBJECT_KEYS = 40;
 const MAX_STRING_LENGTH = 256;
-const SAFE_CORRELATION_ID = /^[A-Za-z0-9._:-]{8,128}$/;
+const SAFE_CORRELATION_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const EXACT_SENSITIVE_KEYS = new Set([
   "authorization",
@@ -108,7 +108,7 @@ export async function observeStorageOperation<T>(
     level: "info",
     event: OPERATIONAL_EVENTS.storageStarted,
     correlationId,
-    metadata: { outcome: "started", operation, ...metadata },
+    metadata: { ...metadata, outcome: "started", operation },
   });
 
   try {
@@ -118,10 +118,10 @@ export async function observeStorageOperation<T>(
       event: OPERATIONAL_EVENTS.storageSucceeded,
       correlationId,
       metadata: {
+        ...metadata,
         outcome: "succeeded",
         operation,
         durationMs: Math.max(0, nowMs() - startedAt),
-        ...metadata,
       },
     });
     return result;
@@ -131,11 +131,11 @@ export async function observeStorageOperation<T>(
       event: OPERATIONAL_EVENTS.storageFailed,
       correlationId,
       metadata: {
+        ...metadata,
         outcome: "failed",
         operation,
         durationMs: Math.max(0, nowMs() - startedAt),
         error,
-        ...metadata,
       },
     });
     throw error;

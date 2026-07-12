@@ -118,22 +118,22 @@ describe("serializeOperationalEvent", () => {
 
 describe("createCorrelationId", () => {
   it("preserva somente request IDs com formato seguro", () => {
-    expect(createCorrelationId("request:abc-123_456", () => "generated-id"))
-      .toBe("request:abc-123_456");
+    expect(createCorrelationId("018f52a2-7e1d-7c4b-9a80-123456789abc", () => "generated-id"))
+      .toBe("018f52a2-7e1d-7c4b-9a80-123456789abc");
     expect(createCorrelationId("Bearer secret", () => "generated-id"))
       .toBe("generated-id");
-    expect(createCorrelationId("short", () => "generated-id"))
+    expect(createCorrelationId("sk-secret-with-safe-characters", () => "generated-id"))
       .toBe("generated-id");
   });
 
   it("anexa o identificador sanitizado à resposta", () => {
     const response = withCorrelationId(
       new Response(null, { status: 204 }),
-      "request-12345678",
+      "018f52a2-7e1d-7c4b-9a80-123456789abc",
     );
 
     expect(response.status).toBe(204);
-    expect(response.headers.get("x-request-id")).toBe("request-12345678");
+    expect(response.headers.get("x-request-id")).toBe("018f52a2-7e1d-7c4b-9a80-123456789abc");
   });
 });
 

@@ -203,12 +203,12 @@ describe("local storage routes", () => {
       method: "POST",
       headers: {
         Authorization: "Bearer request-secret",
-        "x-request-id": "upload-request-123",
+        "x-request-id": "018f52a2-7e1d-7c4b-9a80-123456789abc",
       },
     }));
 
     expect(response.status).toBe(401);
-    expect(response.headers.get("x-request-id")).toBe("upload-request-123");
+    expect(response.headers.get("x-request-id")).toBe("018f52a2-7e1d-7c4b-9a80-123456789abc");
     expect(warn).toHaveBeenCalledOnce();
     const output = warn.mock.calls[0][0] as string;
     expect(output).toContain('"event":"request.upload.rejected"');
@@ -223,13 +223,13 @@ describe("local storage routes", () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-request-id": "upload-request-456",
+        "x-request-id": "018f52a2-7e1d-7c4b-9a80-abcdef123456",
       },
       body: JSON.stringify({ authorization: "Bearer body-secret" }),
     }));
 
     expect(response.status).toBe(500);
-    expect(response.headers.get("x-request-id")).toBe("upload-request-456");
+    expect(response.headers.get("x-request-id")).toBe("018f52a2-7e1d-7c4b-9a80-abcdef123456");
     expect(errorLog).toHaveBeenCalledOnce();
     const output = errorLog.mock.calls[0][0] as string;
     expect(output).toContain('"event":"request.upload.failed"');

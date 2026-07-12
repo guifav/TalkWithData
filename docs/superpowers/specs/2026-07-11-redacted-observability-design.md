@@ -54,7 +54,7 @@ Log metadata must be bounded to a maximum depth, collection length, key count, a
 
 ## Correlation
 
-HTTP boundaries accept `x-request-id` only when it contains 8 to 128 ASCII letters, digits, dots, underscores, colons, or hyphens. Invalid or missing values are replaced by `crypto.randomUUID()`. Responses expose the selected value through `x-request-id`, never an authentication value.
+HTTP boundaries accept `x-request-id` only when it is a valid UUID. Invalid or missing values are replaced by `crypto.randomUUID()`. Responses expose the selected value through `x-request-id`, never an authentication value.
 
 Storage operations receive a fresh operation correlation ID unless a request-scoped value is explicitly supplied in a future API. Object paths and bucket names are not logged.
 
