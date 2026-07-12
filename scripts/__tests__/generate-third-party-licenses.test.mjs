@@ -109,6 +109,24 @@ test("keeps missing license metadata visible as a release blocker", async () => 
   assert.match(renderInventory(inventory), /UNKNOWN.*release blocker/);
 });
 
+test("rejects invalid SPDX expressions declared by lockfiles", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "twd-licenses-"));
+  await mkdir(path.join(root, "app"), { recursive: true });
+  await writeLock(path.join(root, "app/package-lock.json"), {
+    "node_modules/invalid": { version: "1.0.0", license: "definitely not SPDX" },
+  });
+  await writeFile(path.join(root, "overrides.json"), "{}\n");
+
+  await assert.rejects(
+    collectInventory({
+      rootDir: root,
+      lockfiles: ["app/package-lock.json"],
+      overridesFile: "overrides.json",
+    }),
+    /invalid@1\.0\.0.*valid SPDX expression/,
+  );
+});
+
 test("rejects overrides without reviewable evidence", async () => {
   const root = await createOverrideFixture({
     "unknown@1.2.3": { license: "MIT" },

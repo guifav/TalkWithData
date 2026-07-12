@@ -55,6 +55,7 @@ export async function collectInventory({
       const key = `${name}@${version}`;
       const override = overrides[key];
       const declaredLicense = normalizeLicense(metadata.license);
+      if (declaredLicense) validateSpdxExpression(key, declaredLicense, "lockfile");
       if (!declaredLicense && override) usedOverrides.add(key);
       const license = declaredLicense || normalizeLicense(override?.license) || "UNKNOWN";
       const evidence = declaredLicense
@@ -129,14 +130,18 @@ function validateOverrides(overrides) {
     if (!license || license === "UNKNOWN") {
       throw new Error(`${key} override must have a non-empty license`);
     }
-    try {
-      parseSpdxExpression(license);
-    } catch {
-      throw new Error(`${key} override must have a valid SPDX expression`);
-    }
+    validateSpdxExpression(key, license, "override");
     if (typeof override.evidence !== "string" || !override.evidence.trim()) {
       throw new Error(`${key} override must have non-empty evidence`);
     }
+  }
+}
+
+function validateSpdxExpression(key, license, source) {
+  try {
+    parseSpdxExpression(license);
+  } catch {
+    throw new Error(`${key} ${source} must have a valid SPDX expression`);
   }
 }
 

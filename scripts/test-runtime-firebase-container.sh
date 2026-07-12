@@ -69,8 +69,8 @@ docker run --rm --entrypoint sh "$IMAGE" -c '
   test -s /app/licenses/LICENSE
   test -s /app/licenses/THIRD_PARTY_NOTICES.md
   test -s /app/licenses/THIRD-PARTY-LICENSES.md
-  test -s /app/licenses/npm/exceljs-4.4.0-LICENSE
-  test -s /app/licenses/npm/unzipper-0.12.5-LICENSE
+  test -s /app/licenses/npm/exceljs-LICENSE
+  test -s /app/licenses/npm/unzipper-LICENSE
 '
 
 for suffix in one two; do

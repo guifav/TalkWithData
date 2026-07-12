@@ -54,8 +54,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --chown=nextjs:nodejs LICENSE THIRD_PARTY_NOTICES.md ./licenses/
 COPY --chown=nextjs:nodejs docs/THIRD-PARTY-LICENSES.md ./licenses/THIRD-PARTY-LICENSES.md
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/exceljs/LICENSE ./licenses/npm/exceljs-4.4.0-LICENSE
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/unzipper/LICENSE ./licenses/npm/unzipper-0.12.5-LICENSE
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/exceljs/LICENSE ./licenses/npm/exceljs-LICENSE
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/unzipper/LICENSE ./licenses/npm/unzipper-LICENSE
 
 USER nextjs
 EXPOSE 8080
