@@ -111,6 +111,7 @@ Copy `app/.env.example` to `app/.env`, then replace placeholders with project va
 | `THUMBNAIL_SECRET` | Optional | Shared secret for thumbnail generation. |
 | `STORAGE_PROVIDER` | Optional | Dashboard storage adapter: `gcs` (default) or `local`. Both adapters support upload, serving, replacement, deletion, and version copies. |
 | `LOCAL_STORAGE_ROOT` | Local storage | Persistent directory used when `STORAGE_PROVIDER=local`. Defaults to `/data/uploads`; Docker Compose mounts it from `app_data`. |
+| `TWD_LOG_LEVEL` | Optional | Minimum structured log level: `info` (default), `warn`, or `error`. |
 
 See [app/.env.example](app/.env.example) for the current template.
 
@@ -136,6 +137,8 @@ npm run build
 Docker is the recommended portable runtime. Build from `app/Dockerfile`, provide the same variables from `app/.env.example`, and expose container port `8080` through your platform.
 
 See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for Docker, Google Cloud Run, Firebase setup, storage, AI providers, and optional MCP setup.
+
+See [Operational Observability](docs/OBSERVABILITY.md) for structured event names, redaction guarantees, log levels, correlation IDs, and sanitized troubleshooting.
 
 Firestore security rules and indexes are deployed separately with the Firebase CLI, and `firestore.rules` requires your `ALLOWED_AUTH_DOMAIN` in place of the placeholder domain. See [Deploy Firestore rules and indexes](docs/DEPLOYMENT.md#4-deploy-firestore-rules-and-indexes).
 

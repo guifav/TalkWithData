@@ -23,14 +23,14 @@
 
 ## Task 4: Instrument migrations and thumbnails
 
-- [ ] Emit JSON migration lifecycle events without `DATABASE_URL`.
-- [ ] Emit thumbnail lifecycle events without internal keys, paths, HTML, or dashboard capabilities.
-- [ ] Add thumbnail logger tests and execute them in CI.
+- [x] Emit JSON migration lifecycle events without `DATABASE_URL`.
+- [x] Emit thumbnail lifecycle events without internal keys, paths, HTML, or dashboard capabilities.
+- [x] Add thumbnail logger tests and execute them in CI.
 
 ## Task 5: Document operations
 
-- [ ] Document log levels, production defaults, event vocabulary, and sanitized troubleshooting.
-- [ ] Document examples using only safe fields.
+- [x] Document log levels, production defaults, event vocabulary, and sanitized troubleshooting.
+- [x] Document examples using only safe fields.
 
 ## Task 6: Validate and review
 
