@@ -98,7 +98,7 @@ export const PLATFORM_PLAYBOOK = `## Talk With Data Playbook
 
 ### Dashboard Standards
 - Always include a data update timestamp showing when data was last refreshed
-- Show a clear empty state message when data is unavailable (e.g. "Sem dados disponíveis para este período")
+- Show a clear empty state message when data is unavailable (e.g. "No data available for this period")
 - Target audience: Talk With Data analysts and institutional partners
 - Dashboards should be self-explanatory without requiring external documentation
 - Maintain visual consistency: spacing, font sizes, and chart colors should be uniform across sections`;

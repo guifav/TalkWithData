@@ -28,7 +28,7 @@ export function HomeHeader({
         <div className="relative w-full sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar dashboards..."
+            placeholder="Search dashboards..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             className="pl-9"
@@ -40,8 +40,8 @@ export function HomeHeader({
       </div>
 
       <div className="flex items-center gap-1 overflow-x-auto pb-1 [scrollbar-width:thin]">
-        {(categories.length > 0 ? ["Todas", ...categories] : []).map((cat) => {
-          const value = cat === "Todas" ? "All" : cat;
+        {(categories.length > 0 ? ["All", ...categories] : []).map((cat) => {
+          const value = cat;
           return (
             <Button
               key={cat}

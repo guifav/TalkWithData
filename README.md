@@ -14,6 +14,8 @@ Open-source dashboard hub with AI. Upload, organize, search, and embed dashboard
 
 Talk With Data helps teams publish dashboard HTML packages, search across content, explore data with AI, connect MCP tools, and share dashboards through authenticated or embedded views. Superadmins can also connect CSV buckets as governed data sources, so users ask questions in natural language and every answer stays scoped to the rows they are allowed to see.
 
+The current application UI defaults to English for the international OSS audience. The PT-BR README is a documentation translation, not a UI locale. PT-BR and additional interface languages require an explicit i18n implementation.
+
 ## Prerequisites
 
 - Node.js 22 or newer for local development without Docker.

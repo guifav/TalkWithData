@@ -25,6 +25,8 @@ AGENTS.md is the operational wrapper; this file defines the design system and co
 ### Language and Style
 - PT-BR for code comments and internal documentation
 - EN for opensource-facing docs (README, CONTRIBUTING, ARCHITECTURE, DEPLOYMENT)
+- English is the default UI language for the current OSS release
+- PT-BR requires an explicit i18n locale; do not mix it into the English surface
 - No em-dash or en-dash in text. Use comma, period, or parentheses.
 - Treatment: "voce" always (never "tu")
 

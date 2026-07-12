@@ -10,6 +10,8 @@ Hub open-source de dashboards com IA. Envie, organize, pesquise e incorpore dash
 
 Talk With Data ajuda equipes a publicar pacotes HTML de dashboards, pesquisar conteudo, explorar dados com IA, conectar ferramentas MCP e compartilhar visualizacoes com autenticacao ou tokens de embed. Superadmins tambem podem conectar buckets de CSV como fontes de dados governadas, para perguntas em linguagem natural com respostas sempre restritas as linhas que cada pessoa pode ver.
 
+A interface atual usa ingles como idioma padrao para a audiencia internacional de OSS. Este README em PT-BR e uma traducao da documentacao, nao um locale da interface. PT-BR e outros idiomas na aplicacao exigem uma implementacao explicita de i18n.
+
 ## Pre-requisitos
 
 - Node.js 22 ou superior para desenvolvimento local sem Docker.

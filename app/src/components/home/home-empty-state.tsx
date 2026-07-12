@@ -28,14 +28,14 @@ export function HomeEmptyState({
   userName?: string | null;
   hasMcpAccess: boolean;
 }) {
-  const greeting = userName ? `Olá, ${userName.split(" ")[0]}` : "Bem-vindo";
+  const greeting = userName ? `Hello, ${userName.split(" ")[0]}` : "Welcome";
 
   const options: Option[] = [
     {
       href: "/upload",
       icon: <Upload className="size-5" />,
-      title: "Upload de arquivo",
-      description: "Já tem um HTML ou ZIP pronto? Publique em segundos.",
+      title: "Upload a file",
+      description: "Already have an HTML or ZIP file? Publish it in seconds.",
       accent: "from-blue-500/20 to-blue-500/5 text-blue-700 dark:text-blue-300",
     },
   ];
@@ -44,8 +44,8 @@ export function HomeEmptyState({
     options.push({
       href: "/create",
       icon: <Sparkles className="size-5" />,
-      title: "Criar com IA",
-      description: "Descreva o que quer ver e deixe a IA montar o dashboard.",
+      title: "Create with AI",
+      description: "Describe what you need and let AI build the dashboard.",
       accent:
         "from-purple-500/20 to-purple-500/5 text-purple-700 dark:text-purple-300",
       beta: true,
@@ -57,17 +57,17 @@ export function HomeEmptyState({
       {
         href: "/chat",
         icon: <MessageSquare className="size-5" />,
-        title: "Conversar com dados",
+        title: "Chat with data",
         description:
-          "Chat iterativo com MCPs autorizados para construir e ajustar.",
+          "Use authorized MCP servers to build and refine in an interactive chat.",
         accent:
           "from-emerald-500/20 to-emerald-500/5 text-emerald-700 dark:text-emerald-300",
       },
       {
         href: "/explore",
         icon: <Compass className="size-5" />,
-        title: "Explorar dados",
-        description: "Veja o que já está conectado antes de começar.",
+        title: "Explore data",
+        description: "See what is already connected before you begin.",
         accent:
           "from-amber-500/20 to-amber-500/5 text-amber-700 dark:text-amber-300",
       }
@@ -83,7 +83,7 @@ export function HomeEmptyState({
         <div>
           <h1 className="text-xl font-semibold">{greeting}!</h1>
           <p className="text-sm text-muted-foreground">
-            Você ainda não tem dashboards. Escolha por onde começar.
+            You do not have any dashboards yet. Choose how to get started.
           </p>
         </div>
       </div>

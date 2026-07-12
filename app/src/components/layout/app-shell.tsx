@@ -25,7 +25,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             className="flex items-center gap-1 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <Home className="size-4" />
-            <span className="hidden md:inline">Início</span>
+            <span className="hidden md:inline">Home</span>
           </Link>
           {hasMcpAccess && (
             <Link
@@ -33,7 +33,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               className="flex items-center gap-1 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <Compass className="size-4" />
-              <span className="hidden md:inline">Explorar</span>
+              <span className="hidden md:inline">Explore</span>
             </Link>
           )}
           <Link
@@ -41,7 +41,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             className="flex items-center gap-1 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <HelpCircle className="size-4" />
-            <span className="hidden md:inline">Guia</span>
+            <span className="hidden md:inline">Guide</span>
           </Link>
           {isAdmin && (
             <Link

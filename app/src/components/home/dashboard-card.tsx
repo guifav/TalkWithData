@@ -57,7 +57,7 @@ import { getCategoryColor } from "./category-color";
 function formatDate(ts: { toDate: () => Date } | null): string {
   if (!ts) return "";
   const d = ts.toDate();
-  return d.toLocaleDateString("pt-BR", {
+  return d.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -110,9 +110,9 @@ export function DashboardCard({
       if (!res.ok) throw new Error("Failed to generate embed token");
       const data = await res.json();
       await navigator.clipboard.writeText(data.embedUrl);
-      toast.success("Link de embed copiado! Válido por 7 dias.");
+      toast.success("Embed link copied. Valid for 7 days.");
     } catch {
-      toast.error("Falha ao gerar link de embed");
+      toast.error("Failed to generate embed link");
     }
   };
 
@@ -120,13 +120,13 @@ export function DashboardCard({
     try {
       if (isArchived) {
         await unarchiveDashboard(dashboard.id);
-        toast.success("Dashboard desarquivado");
+        toast.success("Dashboard unarchived");
       } else {
         await archiveDashboard(dashboard.id);
-        toast.success("Dashboard arquivado");
+        toast.success("Dashboard archived");
       }
     } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : "Falha na ação";
+      const msg = error instanceof Error ? error.message : "Action failed";
       toast.error(msg);
     }
   };
@@ -145,7 +145,7 @@ export function DashboardCard({
                   {isAi && (
                     <span
                       className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-medium text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 shrink-0"
-                      title="Gerado com IA"
+                      title="Generated with AI"
                     >
                       <Sparkles className="size-3" />
                       IA
@@ -162,11 +162,11 @@ export function DashboardCard({
                     {category}
                   </span>
                   <Badge variant="outline">
-                    {dashboard.visibility === "team" ? "Time" : "Específico"}
+                    {dashboard.visibility === "team" ? "Team" : "Specific"}
                   </Badge>
                   {Boolean(isUpdated) && (
                     <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
-                      Atualizado
+                      Updated
                     </span>
                   )}
                   {canManageSharing && <div className="w-8" />}
@@ -203,7 +203,7 @@ export function DashboardCard({
             }}
             className="absolute bottom-3 right-3 z-10 p-1 rounded-md hover:bg-accent transition-colors"
             title={
-              isFavorited ? "Remover dos favoritos" : "Adicionar aos favoritos"
+              isFavorited ? "Remove from favorites" : "Add to favorites"
             }
           >
             <Star
@@ -235,20 +235,20 @@ export function DashboardCard({
                     onClick={() => setActiveDialog("sharing")}
                   >
                     <Users className="size-4 mr-2" />
-                    Compartilhamento
+                    Sharing
                   </DropdownMenuItem>
                 )}
                 {isOwner && (
                   <>
                     <DropdownMenuItem onClick={() => setActiveDialog("rename")}>
                       <Pencil className="size-4 mr-2" />
-                      Renomear
+                      Rename
                     </DropdownMenuItem>
                     {dashboard.source === "ai" && (
                       <DropdownMenuItem asChild>
                         <Link href={`/create?edit=${dashboard.id}`}>
                           <Sparkles className="size-4 mr-2" />
-                          Editar com IA
+                          Edit with AI
                         </Link>
                       </DropdownMenuItem>
                     )}
@@ -256,13 +256,13 @@ export function DashboardCard({
                       onClick={() => setActiveDialog("replace")}
                     >
                       <Upload className="size-4 mr-2" />
-                      Substituir arquivo
+                      Replace file
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => setActiveDialog("versions")}
                     >
                       <History className="size-4 mr-2" />
-                      Versões anteriores
+                      Previous versions
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => setActiveDialog("analytics")}
@@ -275,13 +275,13 @@ export function DashboardCard({
                 {(folders ?? []).length > 0 && (
                   <DropdownMenuItem onClick={() => setActiveDialog("folders")}>
                     <FolderOpen className="size-4 mr-2" />
-                    Adicionar à pasta
+                    Add to folder
                   </DropdownMenuItem>
                 )}
                 {canCreateEmbed && (
                   <DropdownMenuItem onClick={handleCopyEmbedLink}>
                     <Code className="size-4 mr-2" />
-                    Copiar link de embed
+                    Copy embed link
                   </DropdownMenuItem>
                 )}
                 {isOwner && (
@@ -289,14 +289,14 @@ export function DashboardCard({
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleArchiveToggle}>
                       <Archive className="size-4 mr-2" />
-                      {isArchived ? "Desarquivar" : "Arquivar"}
+                      {isArchived ? "Unarchive" : "Archive"}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => setActiveDialog("delete")}
                       className="text-destructive focus:text-destructive"
                     >
                       <Trash2 className="size-4 mr-2" />
-                      Excluir
+                      Delete
                     </DropdownMenuItem>
                   </>
                 )}
