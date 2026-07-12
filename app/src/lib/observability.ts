@@ -206,6 +206,10 @@ function sanitizeValue(value: unknown, depth: number, seen: WeakSet<object>): un
     return sanitizeError(value);
   }
 
+  if (isBinaryValue(value)) {
+    return "[REDACTED_BINARY]";
+  }
+
   if (typeof value !== "object") {
     return String(value).slice(0, MAX_STRING_LENGTH);
   }
@@ -224,7 +228,7 @@ function sanitizeValue(value: unknown, depth: number, seen: WeakSet<object>): un
 
   const result: Record<string, unknown> = {};
   for (const [key, item] of Object.entries(value).slice(0, MAX_OBJECT_KEYS)) {
-    if (isSensitiveKey(key)) continue;
+    if (isSensitiveKey(key) || isBinaryValue(item)) continue;
     result[key] = sanitizeValue(item, depth + 1, seen);
   }
   seen.delete(value);
@@ -266,8 +270,23 @@ function isSensitiveKey(key: string): boolean {
     normalized.includes("email") ||
     normalized.includes("path") ||
     normalized.includes("bucket") ||
+    normalized.includes("buffer") ||
+    normalized.includes("password") ||
+    normalized.includes("passwd") ||
+    normalized.endsWith("pwd") ||
+    normalized.includes("passphrase") ||
+    normalized.includes("connectionstring") ||
+    normalized.includes("databaseurl") ||
+    normalized.includes("pgurl") ||
+    normalized.includes("keymaterial") ||
+    normalized.includes("keyjson") ||
+    normalized.endsWith("keys") ||
     (normalized.endsWith("key") && normalized !== "keycount")
   );
+}
+
+function isBinaryValue(value: unknown): boolean {
+  return value instanceof ArrayBuffer || ArrayBuffer.isView(value);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
