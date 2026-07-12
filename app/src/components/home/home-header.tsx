@@ -18,8 +18,8 @@ export function HomeHeader({
   search: string;
   onSearchChange: (value: string) => void;
   categories: string[];
-  categoryFilter: string;
-  onCategoryChange: (value: string) => void;
+  categoryFilter: string | null;
+  onCategoryChange: (value: string | null) => void;
   hasMcpAccess: boolean;
 }) {
   return (
@@ -40,20 +40,27 @@ export function HomeHeader({
       </div>
 
       <div className="flex items-center gap-1 overflow-x-auto pb-1 [scrollbar-width:thin]">
-        {(categories.length > 0 ? ["All", ...categories] : []).map((cat) => {
-          const value = cat;
-          return (
-            <Button
-              key={cat}
-              variant={categoryFilter === value ? "default" : "outline"}
-              size="sm"
-              onClick={() => onCategoryChange(value)}
-              className="text-xs shrink-0"
-            >
-              {cat}
-            </Button>
-          );
-        })}
+        {categories.length > 0 && (
+          <Button
+            variant={categoryFilter === null ? "default" : "outline"}
+            size="sm"
+            onClick={() => onCategoryChange(null)}
+            className="text-xs shrink-0"
+          >
+            All
+          </Button>
+        )}
+        {categories.map((category) => (
+          <Button
+            key={category}
+            variant={categoryFilter === category ? "default" : "outline"}
+            size="sm"
+            onClick={() => onCategoryChange(category)}
+            className="text-xs shrink-0"
+          >
+            {category}
+          </Button>
+        ))}
       </div>
     </div>
   );

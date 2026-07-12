@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 const surfaceFiles = [
   "src/app/login/page.tsx",
   "src/app/page.tsx",
+  "src/app/guide/page.tsx",
   "src/components/layout/app-shell.tsx",
   "src/components/home/home-empty-state.tsx",
   "src/components/home/home-header.tsx",
@@ -43,6 +44,7 @@ describe("default UI language contract", () => {
       "Conversar com dados",
       "Upload de arquivo",
       "Gerado com IA",
+      ">\n                      IA\n",
       "Específico",
       "Atualizado",
       "Compartilhamento",
@@ -63,6 +65,23 @@ describe("default UI language contract", () => {
     for (const phrase of forbiddenPortuguese) {
       expect(surfaceSource, `unexpected PT-BR surface text: ${phrase}`).not.toContain(phrase);
     }
+  });
+
+  it("uses English defaults without reserving a valid category name", () => {
+    const guidePage = readFileSync(join(process.cwd(), "src/app/guide/page.tsx"), "utf8");
+    const homePage = readFileSync(join(process.cwd(), "src/app/page.tsx"), "utf8");
+    const homeHeader = readFileSync(
+      join(process.cwd(), "src/components/home/home-header.tsx"),
+      "utf8",
+    );
+    const aiPrompt = readFileSync(join(process.cwd(), "src/lib/ai-prompt.ts"), "utf8");
+
+    expect(guidePage).toContain('useState<Lang>("en")');
+    expect(homePage).toContain("useState<string | null>(null)");
+    expect(homeHeader).toContain("onCategoryChange(null)");
+    expect(homeHeader).not.toContain('["All", ...categories]');
+    expect(aiPrompt).toContain("Use descriptive column names in English by default");
+    expect(aiPrompt).not.toContain('e.g. "clientes", "pedidos", "config"');
   });
 
   it("documents English as the current default until i18n exists", () => {

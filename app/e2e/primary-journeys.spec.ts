@@ -17,6 +17,10 @@ test("login, upload, authenticated view, embed, and neutral CSV onboarding", asy
   await expect(page.getByText("You do not have any dashboards yet. Choose how to get started.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Upload a file" })).toBeVisible();
 
+  await page.goto("/guide");
+  await expect(page.getByRole("heading", { name: "User Guide" })).toBeVisible();
+  await expect(page.getByText("Everything you need to know to use Talk With Data.")).toBeVisible();
+
   await page.goto("/upload");
   await page.locator('input[type="file"]').setInputFiles(
     path.join(process.cwd(), "e2e/fixtures/neutral-dashboard.html"),

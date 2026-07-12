@@ -61,7 +61,7 @@ export default function HomePage() {
   const [dashboardsLoaded, setDashboardsLoaded] = useState(false);
   const [archivedLoaded, setArchivedLoaded] = useState(false);
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("All");
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [folderFilter, setFolderFilter] = useState<string | null>(null);
   const [sharedFolderFilter, setSharedFolderFilter] = useState<string | null>(null);
 
@@ -77,10 +77,10 @@ export default function HomePage() {
   // Reset category filter when selected category disappears (or list empties)
   useEffect(() => {
     if (
-      categoryFilter !== "All" &&
+      categoryFilter !== null &&
       !visibleCategories.includes(categoryFilter)
     ) {
-      setCategoryFilter("All");
+      setCategoryFilter(null);
     }
   }, [visibleCategories, categoryFilter]);
   const [showFolderManager, setShowFolderManager] = useState(false);
@@ -253,7 +253,7 @@ export default function HomePage() {
             (serverSearchIds !== null && serverSearchIds.has(d.id))
         );
       }
-      if (categoryFilter !== "All") {
+      if (categoryFilter !== null) {
         result = result.filter(
           (d) => (d.category || "Other") === categoryFilter
         );
@@ -313,7 +313,7 @@ export default function HomePage() {
 
   const uid = firebaseUser?.uid;
   const hasNoDashboards = dashboards.length === 0 && archivedDashboards.length === 0 && !loading;
-  const isFiltering = Boolean(search) || categoryFilter !== "All" || Boolean(folderFilter) || Boolean(sharedFolderFilter);
+  const isFiltering = Boolean(search) || categoryFilter !== null || Boolean(folderFilter) || Boolean(sharedFolderFilter);
 
   return (
     <AppShell>

@@ -116,9 +116,9 @@ You have access to database tools that let you create tables and manage data for
 - If editing an existing app, **reuse the existing tables** — do not recreate them.
 
 ### Table design
-- Create a new table only when there is a clear, isolated entity (e.g. "clientes", "pedidos", "config").
+- Create a new table only when there is a clear, isolated entity (e.g. "clients", "orders", "settings").
 - Prefer fewer, cohesive tables over many single-field tables.
-- Use descriptive column names in Portuguese when the app is for Brazilian users.
+- Use descriptive column names in English by default. Use another language only when the user explicitly requests it.
 - Every table automatically has \`id\` (UUID), \`created_at\`, and \`updated_at\` — do not add them.
 
 ### Security boundaries

@@ -148,7 +148,7 @@ export function DashboardCard({
                       title="Generated with AI"
                     >
                       <Sparkles className="size-3" />
-                      IA
+                      AI
                     </span>
                   )}
                   <CardTitle className="text-base line-clamp-1 min-w-0">
