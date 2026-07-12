@@ -11,6 +11,7 @@ const mockGetDashboardAsset = vi.fn();
 const mockDashboardGet = vi.fn();
 const mockVersionGet = vi.fn();
 const mockCreateDashSessionToken = vi.fn().mockReturnValue("session-token");
+const mockVerifyDashSessionToken = vi.fn().mockReturnValue(false);
 
 function snapshot(exists: boolean, data: Record<string, unknown> = {}) {
   return {
@@ -38,7 +39,7 @@ vi.mock("@/lib/storage", () => ({
 
 vi.mock("@/lib/dash-session", () => ({
   createDashSessionToken: mockCreateDashSessionToken,
-  verifyDashSessionToken: vi.fn().mockReturnValue(false),
+  verifyDashSessionToken: mockVerifyDashSessionToken,
 }));
 
 // Passthrough: o shim de compat nao importa para os asserts de headers
@@ -142,7 +143,8 @@ describe("GET /api/dashboards/[id]/view security headers", () => {
   it("mints write data scope only for the dashboard owner", async () => {
     await getView(viewRequest(), viewParams);
 
-    expect(mockCreateDashSessionToken).toHaveBeenCalledWith("dash-id", "write");
+    expect(mockCreateDashSessionToken).toHaveBeenNthCalledWith(1, "dash-id", "write");
+    expect(mockCreateDashSessionToken).toHaveBeenNthCalledWith(2, "dash-id", "write");
 
     mockCreateDashSessionToken.mockClear();
     mockVerifyRequest.mockResolvedValue({
@@ -162,7 +164,8 @@ describe("GET /api/dashboards/[id]/view security headers", () => {
 
     await getView(viewRequest(), viewParams);
 
-    expect(mockCreateDashSessionToken).toHaveBeenCalledWith("dash-id", "read");
+    expect(mockCreateDashSessionToken).toHaveBeenNthCalledWith(1, "dash-id", "read");
+    expect(mockCreateDashSessionToken).toHaveBeenNthCalledWith(2, "dash-id", "read");
   });
 
   it("mints read data scope for token embeds", async () => {
@@ -262,6 +265,27 @@ describe("GET /api/dashboards/[id]/view/[...path] security headers", () => {
     await getAsset(assetRequest("pages/detail.html"), assetParams("pages/detail.html"));
 
     expect(mockCreateDashSessionToken).toHaveBeenCalledWith("dash-id", "read");
+  });
+
+  it("preserves owner write scope for a cookie-authenticated sub-page", async () => {
+    mockVerifyRequest.mockResolvedValue(null);
+    mockVerifyDashSessionToken.mockImplementation(
+      (_dashboardId: string, _token: string, scope?: string) => scope === "write"
+    );
+    mockGetDashboardAsset.mockResolvedValue({
+      buffer: Buffer.from("<html><head></head><body>page</body></html>"),
+      contentType: "text/html",
+    });
+
+    await getAsset(
+      new NextRequest(
+        "http://localhost/api/dashboards/dash-id/view/pages/detail.html",
+        { headers: { Cookie: "dash_session_dash-id=owner-session" } }
+      ),
+      assetParams("pages/detail.html")
+    );
+
+    expect(mockCreateDashSessionToken).toHaveBeenCalledWith("dash-id", "write");
   });
 
   it("serves sub-page HTML with CSP sandbox and nosniff headers", async () => {

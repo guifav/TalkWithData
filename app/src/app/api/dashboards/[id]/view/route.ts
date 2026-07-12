@@ -162,8 +162,8 @@ export async function GET(
 
     // Inject dashboard ID, data API base URL, and session token for runtime data access
     // Skip for raw=1 (editor loads pristine HTML to avoid persisting server injections)
+    const dataScope = auth?.uid === data.createdBy ? "write" : "read";
     if (!isRaw) {
-      const dataScope = auth?.uid === data.createdBy ? "write" : "read";
       const sessionToken = createDashSessionToken(id, dataScope);
       const bootstrap = {
         dashboardId: id,
@@ -193,7 +193,7 @@ export async function GET(
     // Set session cookie so sub-resource requests (CSS, JS, images) from this
     // dashboard are authenticated without needing embed_token on each URL.
     const cookieName = `dash_session_${id}`;
-    const cookieValue = createDashSessionToken(id);
+    const cookieValue = createDashSessionToken(id, dataScope);
     response.cookies.set(cookieName, cookieValue, {
       httpOnly: true,
       secure: true, // Required for SameSite=None

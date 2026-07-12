@@ -45,6 +45,7 @@ export async function GET(
   //   2. embed_token in query string, OR
   //   3. Session cookie set by the main view route (dash_session_{id})
   const auth = await verifyRequest(request);
+  let sessionScope: "read" | "write" | null = null;
 
   if (!auth) {
     const embedToken = request.nextUrl.searchParams.get("embed_token");
@@ -60,11 +61,15 @@ export async function GET(
       // This allows sub-resource AND sub-page requests to authenticate without
       // embed_token on each URL. The short TTL limits post-logout exposure.
       const sessionCookie = request.cookies.get(`dash_session_${id}`)?.value;
-      const sessionValid = sessionCookie
-        ? verifyDashSessionToken(id, sessionCookie)
-        : false;
+      if (sessionCookie) {
+        if (verifyDashSessionToken(id, sessionCookie, "write")) {
+          sessionScope = "write";
+        } else if (verifyDashSessionToken(id, sessionCookie, "read")) {
+          sessionScope = "read";
+        }
+      }
 
-      if (!sessionValid) {
+      if (!sessionScope) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
     }
@@ -148,7 +153,9 @@ export async function GET(
     if (isHtml) {
       let html = prepareDashboardHtmlForRender(asset.buffer.toString("utf-8"));
       // Inject data API bootstrap for interactive multi-page apps
-      const dataScope = auth?.uid === data.createdBy ? "write" : "read";
+      const dataScope = auth?.uid === data.createdBy || sessionScope === "write"
+        ? "write"
+        : "read";
       const sessionToken = createDashSessionToken(id, dataScope);
       const bootstrap = {
         dashboardId: id,
