@@ -106,11 +106,15 @@ standalone Next.js build. Release automation must also inspect each produced
 artifact and carry forward every license and upstream `NOTICE` file for the
 packages and assets it actually redistributes.
 
-The production container carries the project license, this notice record, the
-locked inventory, and the ExcelJS and unzipper license files under
-`/app/licenses`. Its CI smoke test asserts that each file is present. The
-container build uses the repository root as its context so those canonical
-records are copied directly rather than maintained as duplicates.
+The production application and migration containers carry the project license,
+this notice record, the locked inventory, and a generated per-package license
+bundle under `/app/licenses`. The collector follows the packages in each actual
+artifact, preserves package-provided `LICENSE`, `NOTICE`, and `COPYING` files,
+and uses the declared SPDX standard text plus package metadata only when an npm
+package ships no license file. Collection fails when neither source exists. CI
+asserts both images contain non-empty bundles for their redistributed packages.
+The container build uses the repository root as its context so canonical records
+are copied directly rather than maintained as duplicates.
 
 ## Procedure for future additions
 

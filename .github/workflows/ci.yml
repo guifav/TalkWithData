@@ -74,6 +74,7 @@ jobs:
 
       - name: Verify third-party license inventory
         run: |
+          node --test ../scripts/__tests__/collect-artifact-licenses.test.mjs
           node --test ../scripts/__tests__/generate-third-party-licenses.test.mjs
           node ../scripts/generate-third-party-licenses.mjs --check --fail-on-unknown
 

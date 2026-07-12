@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 IMAGE="${TWD_RUNTIME_CONFIG_IMAGE:-talkwithdata-runtime-config-smoke}"
+MIGRATOR_IMAGE="${IMAGE}-migrator"
 RUN_ID="$$"
 TMP_DIR="$(mktemp -d)"
 CONTAINERS=()
@@ -69,8 +70,34 @@ docker run --rm --entrypoint sh "$IMAGE" -c '
   test -s /app/licenses/LICENSE
   test -s /app/licenses/THIRD_PARTY_NOTICES.md
   test -s /app/licenses/THIRD-PARTY-LICENSES.md
-  test -s /app/licenses/npm/exceljs-LICENSE
-  test -s /app/licenses/npm/unzipper-LICENSE
+'
+docker run --rm --entrypoint node "$IMAGE" -e '
+  const manifest = require("/app/licenses/npm/manifest.json");
+  const names = new Set(manifest.packages.map((entry) => entry.name));
+  for (const name of ["firebase-admin", "@duckdb/node-api", "@duckdb/node-bindings", "exceljs", "unzipper"]) {
+    if (!names.has(name)) throw new Error(`missing runner license bundle for ${name}`);
+  }
+  if (manifest.packages.some((entry) => entry.files.length === 0)) {
+    throw new Error("runner license bundle contains an empty package entry");
+  }
+'
+
+docker build -t "$MIGRATOR_IMAGE" --target migrator \
+  -f "$ROOT_DIR/app/Dockerfile" "$ROOT_DIR"
+docker run --rm --entrypoint sh "$MIGRATOR_IMAGE" -c '
+  test -s /app/licenses/LICENSE
+  test -s /app/licenses/THIRD_PARTY_NOTICES.md
+  test -s /app/licenses/THIRD-PARTY-LICENSES.md
+'
+docker run --rm --entrypoint node "$MIGRATOR_IMAGE" -e '
+  const manifest = require("/app/licenses/npm/manifest.json");
+  const names = new Set(manifest.packages.map((entry) => entry.name));
+  for (const name of ["prisma", "dotenv"]) {
+    if (!names.has(name)) throw new Error(`missing migrator license bundle for ${name}`);
+  }
+  if (manifest.packages.some((entry) => entry.files.length === 0)) {
+    throw new Error("migrator license bundle contains an empty package entry");
+  }
 '
 
 for suffix in one two; do

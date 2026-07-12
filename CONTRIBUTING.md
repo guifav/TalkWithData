@@ -90,6 +90,10 @@ screenshot, fixture, or other asset:
 - review the produced source archive, container, and binary assets because the
   locked graph alone does not prove what an artifact redistributes.
 
+Container builds run `scripts/collect-artifact-licenses.mjs` against the actual
+runner and migrator package trees. Do not replace this per-artifact collection
+with a manually maintained package allowlist.
+
 Never add a license override without evidence in the exact npm tarball or an
 authoritative upstream source. An unknown or ambiguous license blocks the pull
 request and release until the item is removed or supported by evidence. See

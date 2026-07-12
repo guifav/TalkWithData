@@ -5,6 +5,8 @@
 !docs/THIRD-PARTY-LICENSES.md
 !LICENSE
 !THIRD_PARTY_NOTICES.md
+!scripts
+!scripts/collect-artifact-licenses.mjs
 
 app/.env*
 app/.next
