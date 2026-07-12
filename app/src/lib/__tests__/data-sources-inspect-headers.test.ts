@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { createHash } from "crypto";
 
 process.env.ALLOWED_AUTH_DOMAIN = "example.com";
 
@@ -16,7 +17,10 @@ const routeMocks = vi.hoisted(() => {
   const readPrefix = vi.fn(async () =>
     Buffer.from("owner_email,owner email,amount\nana@example.com,ana@example.com,10\n"),
   );
-  const resolve = vi.fn(async () => ({ project_id: "test-project" }));
+  const resolve = vi.fn(async (ref?: unknown) => {
+    void ref;
+    return { project_id: "test-project" };
+  });
   const encrypt = vi.fn((value: object) => {
     void value;
     return Buffer.from("generated-ciphertext");
@@ -85,8 +89,8 @@ vi.mock("@/lib/data-sources/credentials", async (importOriginal) => {
       return routeMocks.encrypt(value);
     }
 
-    async resolve() {
-      return routeMocks.resolve();
+    async resolve(ref: unknown) {
+      return routeMocks.resolve(ref);
     }
   }
   return { ...actual, SecretService };
@@ -100,6 +104,9 @@ vi.mock("@/lib/data-sources/storage", () => ({
 }));
 
 const { CredentialConfigError } = await import("@/lib/data-sources/credentials");
+const { credentialEncProof, verifyDataSourceInspectionToken } = await import(
+  "@/lib/data-sources/inspection-token"
+);
 const { POST: inspectHeaders } = await import(
   "@/app/api/admin/data-sources/inspect-headers/route"
 );
@@ -403,11 +410,42 @@ describe("admin inspect data source headers route", () => {
     expect(response.status).toBe(200);
     expect(routeMocks.encrypt).toHaveBeenCalledWith(rawCredential);
     expect(body.credentialEnc).toBe(Buffer.from("generated-ciphertext").toString("base64"));
+    expect(routeMocks.resolve).toHaveBeenCalledWith({
+      kind: "encryptedBlob",
+      ref: "credential-existing",
+    });
     expect(decodedTokenPayload.credentialProof).toMatchObject({
       kind: "inline",
+      sha256: createHash("sha256").update(body.credentialEnc, "utf8").digest("hex"),
       dataSourceId: "source-1",
       configVersion: 7,
     });
+    expect(
+      verifyDataSourceInspectionToken({
+        token: body.inspectionToken,
+        bucket: "external-bucket",
+        prefix: "daily",
+        credentialRef: { kind: "encryptedBlob", ref: "credential-existing" },
+        credentialProof: credentialEncProof(body.credentialEnc, {
+          dataSourceId: "source-1",
+          configVersion: 7,
+        }),
+        ownerColumn: "owner_email",
+      }),
+    ).toEqual({ ok: false, error: "CSV headers contain duplicate normalized identities" });
+    expect(
+      verifyDataSourceInspectionToken({
+        token: body.inspectionToken,
+        bucket: "external-bucket",
+        prefix: "daily",
+        credentialRef: { kind: "encryptedBlob", ref: "credential-existing" },
+        credentialProof: credentialEncProof(`${body.credentialEnc}-modified`, {
+          dataSourceId: "source-1",
+          configVersion: 7,
+        }),
+        ownerColumn: "owner_email",
+      }),
+    ).toEqual({ ok: false, error: "inspectionToken does not match data source inputs" });
     expect(JSON.stringify(decodedTokenPayload)).not.toContain("credential-existing");
     expect(JSON.stringify(body)).not.toContain(rawCredential.private_key);
     expect(JSON.stringify(body)).not.toContain(rawCredential.client_email);
