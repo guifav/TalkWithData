@@ -33,5 +33,9 @@ describe("README product screenshots", () => {
 
     expect(e2eRunner).toContain("unset THUMBNAIL_FUNCTION_URL THUMBNAIL_SECRET");
     expect(e2eRunner).toContain("unset SA_KEY_JSON GOOGLE_APPLICATION_CREDENTIALS");
+    expect(e2eRunner).toContain("unset MCP_URL MCP_API_KEY MCP_ALLOWED_HOSTS");
+    expect(e2eRunner).toContain(
+      "unset ANTHROPIC_API_KEY OPENAI_API_KEY GOOGLE_AI_API_KEY KIMI_API_KEY GLM_API_KEY",
+    );
   });
 });

@@ -5,6 +5,7 @@ import { getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 
 const SCREENSHOT_DIR = path.join(process.cwd(), "..", "docs", "screenshots");
+const SCREENSHOT_NOW = "2026-07-12T15:00:00.000Z";
 const DASHBOARD_FIXTURE = path.join(
   process.cwd(),
   "e2e",
@@ -24,7 +25,7 @@ test("captures neutral README product screenshots", async ({ page }) => {
   test.setTimeout(120_000);
   mkdirSync(SCREENSHOT_DIR, { recursive: true });
   await page.addInitScript(() => localStorage.setItem("theme", "light"));
-  await page.clock.setFixedTime(new Date("2026-07-12T15:00:00.000Z"));
+  await page.clock.setFixedTime(new Date(SCREENSHOT_NOW));
 
   await signInWithGoogleEmulator(page, "owner@example.com", "Demo Owner");
   const ownerUid = await authenticatedUid(page);
@@ -123,7 +124,7 @@ async function createNeutralDataSource(page: Page) {
 }
 
 async function seedChatSession(ownerUid: string): Promise<string> {
-  const now = new Date().toISOString();
+  const now = SCREENSHOT_NOW;
   const ref = screenshotFirestore().collection("chat_sessions").doc();
   await ref.set({
     userId: ownerUid,
