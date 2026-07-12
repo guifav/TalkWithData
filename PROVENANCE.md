@@ -71,12 +71,14 @@ of additional holders must be based on that evidence, not on commit counts.
 | `docs/banner.svg` | Added by Guilherme Favaron in PR #72. Uses SVG primitives and system font names. | Covered only after the owner statement confirms repository-authored assets. |
 | `app/e2e/fixtures/neutral-dashboard.html` | Added by Guilherme Favaron in PR #85 as synthetic test content. | No organization, customer, or personal material found. Covered by the owner statement. |
 | `app/e2e/fixtures/neutral-sales.csv` | Added by Guilherme Favaron in PR #85 with `example.com` identities and synthetic values. | Neutral fixture, covered by the owner statement. |
+| `app/e2e/fixtures/readme-demo-dashboard.html` | Added by Guilherme Favaron in PR #90 as a synthetic dashboard rendered by the isolated screenshot workflow. | No organization, customer, or personal material found. Covered by the owner statement. |
+| `docs/screenshots/*.png` | Generated in PR #90 by `app/e2e/readme-screenshots.spec.ts` from the local PostgreSQL and Firebase emulator stack using fixed time, neutral fixtures, and `example.com` identities. | No real organization content found. The captures contain repository UI plus Lucide icons and Inter glyphs whose notices are preserved in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Repository-authored portions are covered only after the owner statement. |
 | `app/public/favicon.svg` | Present in the initial import. Its geometry is the Lucide `layout-dashboard` icon. | Redistributed under Lucide's ISC license. The required notice is in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). |
 | Inter font files in Next.js builds | `app/src/app/layout.tsx` imports `Inter` from `next/font/google`; Next.js self-hosts the resulting font files in build output. | Inter is under SIL OFL 1.1. The copyright and license are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). |
 
-No tracked raster screenshots, videos, PDFs, or standalone font binaries were
-found at the time of this review. Issue #37 must repeat the rights review before
-adding screenshots.
+No tracked videos, PDFs, or standalone font binaries were found at the time of
+this review. The tracked raster screenshots are limited to the five generated
+files listed above.
 
 ## Dependency and notice evidence
 
