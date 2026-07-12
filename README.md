@@ -154,6 +154,8 @@ See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for Docker, Google Cloud Run, Firebase s
 
 See [Operational Observability](docs/OBSERVABILITY.md) for structured event names, redaction guarantees, log levels, correlation IDs, and sanitized troubleshooting.
 
+See [Data, Privacy, and Retention](docs/DATA-PRIVACY.md) for the as-built data inventory, default retention and deletion behavior, access-control assumptions, and self-hoster responsibilities.
+
 Firestore security rules and indexes are deployed separately with the Firebase CLI, and `firestore.rules` requires your `ALLOWED_AUTH_DOMAIN` in place of the placeholder domain. See [Deploy Firestore rules and indexes](docs/DEPLOYMENT.md#4-deploy-firestore-rules-and-indexes).
 
 ## Contributing
