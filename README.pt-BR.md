@@ -132,6 +132,8 @@ Consulte [DEPLOYMENT.md](docs/DEPLOYMENT.md) para Docker, Google Cloud Run, Fire
 
 Consulte [Operational Observability](docs/OBSERVABILITY.md) para nomes de eventos, garantias de redaction, IDs de correlacao e troubleshooting sanitizado.
 
+Consulte [Dados, privacidade e retencao](docs/DATA-PRIVACY.md) para o inventario as-built canonico, comportamento padrao de retencao e delecao, premissas de controle de acesso e responsabilidades do self-hoster.
+
 ## Como contribuir
 
 Leia [CONTRIBUTING.md](CONTRIBUTING.md) antes de abrir issues ou pull requests.
