@@ -84,6 +84,7 @@ describe("GET /api/dashboards active ID resolution", () => {
     await expect(response.json()).resolves.toEqual({
       ids: ["owned-active", "email-active"],
     });
+    expect(mockFolderAccess).not.toHaveBeenCalled();
   });
 
   it("rejects unauthenticated requests", async () => {

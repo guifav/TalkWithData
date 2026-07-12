@@ -110,11 +110,11 @@ npm run lint
 npm run build
 ```
 
-Para rodar as jornadas principais no navegador a partir de `app`, com Docker
-disponivel:
+Para rodar as jornadas principais no navegador a partir de `app`, com Docker e
+Java 21 ou superior disponiveis:
 
 ```bash
-npx playwright install chromium
+npx playwright install --with-deps chromium
 npm run test:e2e
 ```
 

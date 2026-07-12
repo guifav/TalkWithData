@@ -81,7 +81,9 @@ async function authenticatedUid(page: Page): Promise<string> {
       .find((entry) => entry.startsWith("twd_auth="))
       ?.slice("twd_auth=".length);
     if (!token) throw new Error("Missing authenticated session cookie");
-    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))) as {
+    const encodedPayload = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const paddedPayload = encodedPayload.padEnd(Math.ceil(encodedPayload.length / 4) * 4, "=");
+    const payload = JSON.parse(atob(paddedPayload)) as {
       sub?: string;
     };
     if (!payload.sub) throw new Error("Missing uid in authenticated session");

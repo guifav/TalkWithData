@@ -60,6 +60,7 @@ function resilientSnapshot(
 }
 
 const COLLECTION = "dashboards";
+const ACCESS_REFRESH_INTERVAL_MS = 30_000;
 
 function dashboardsRef() {
   return collection(db, COLLECTION);
@@ -120,8 +121,12 @@ export function subscribeToDashboards(
     )
   );
 
-  void authFetch("/api/dashboards?scope=active-ids")
-    .then(async (response) => {
+  let refreshInFlight = false;
+  async function refreshServerDashboards() {
+    if (refreshInFlight || cancelled) return;
+    refreshInFlight = true;
+    try {
+      const response = await authFetch("/api/dashboards?scope=active-ids");
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const payload = (await response.json()) as { ids?: unknown };
       const ids = Array.isArray(payload.ids)
@@ -133,15 +138,21 @@ export function subscribeToDashboards(
         result.status === "fulfilled" && result.value ? [result.value] : []
       );
       emitMerged();
-    })
-    .catch((error: unknown) => {
+    } catch (error: unknown) {
       if (!cancelled) {
         console.warn("[subscribeToDashboards:accessible-ids] request failed", error);
       }
-    });
+    } finally {
+      refreshInFlight = false;
+    }
+  }
+
+  void refreshServerDashboards();
+  const refreshTimer = setInterval(refreshServerDashboards, ACCESS_REFRESH_INTERVAL_MS);
 
   return () => {
     cancelled = true;
+    clearInterval(refreshTimer);
     for (const unsubscribe of unsubscribers) unsubscribe();
   };
 }

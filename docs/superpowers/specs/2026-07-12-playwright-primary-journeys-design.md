@@ -23,7 +23,7 @@ The alternatives were rejected:
 
 The browser uses the Firebase Auth emulator's Google-provider popup. The test identity uses `owner@example.com`, matching the checked-in Firestore rules. A deterministic pending-role document promotes the owner to `superadmin` through the same `/api/auth/init` route used in production.
 
-Client emulator connections are enabled only when explicit public emulator host variables are present. Production defaults remain unchanged.
+Client emulator connections are enabled only when explicit public emulator host variables are present. Production defaults remain unchanged. Email and department access IDs are refreshed through the authenticated server every 30 seconds because Firestore rules cannot safely prove those dynamic list queries.
 
 ## Journeys
 
@@ -44,4 +44,4 @@ The E2E job is separate from unit coverage, uses one Chromium worker, bounded re
 
 ## Security correction exposed by the journey
 
-The current view route injects a write-scoped dashboard token for every authenticated viewer and embed. The implementation will mint write scope only for the dashboard owner and read scope for viewers and token embeds. The data API will accept a read-scoped bearer token only for GET or HEAD, preserving dynamic read-only dashboards while rejecting POST, PATCH, and DELETE.
+The current view route injects a write-scoped dashboard token for every authenticated viewer and embed. The implementation will mint write scope only for the dashboard owner and read scope for viewers and token embeds. Dashboard session tokens expire after 10 minutes. The data API will accept a read-scoped bearer token only for GET or HEAD, preserving dynamic read-only dashboards while rejecting POST, PATCH, and DELETE.

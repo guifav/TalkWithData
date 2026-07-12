@@ -13,7 +13,7 @@ if [ -z "${CI:-}" ]; then
   trap cleanup EXIT INT TERM
   export TWD_E2E_POSTGRES_PORT="${TWD_E2E_POSTGRES_PORT:-55556}"
   docker compose -p talkwithdata-e2e -f "$ROOT_DIR/docker-compose.e2e.yml" up -d --wait postgres
-  DATABASE_URL="${DATABASE_URL:-postgresql://talkwithdata:talkwithdata@127.0.0.1:${TWD_E2E_POSTGRES_PORT}/talkwithdata}"
+  export DATABASE_URL="postgresql://talkwithdata:talkwithdata@127.0.0.1:${TWD_E2E_POSTGRES_PORT}/talkwithdata"
 fi
 
 export FIREBASE_PROJECT_ID="demo-talkwithdata"

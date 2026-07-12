@@ -46,9 +46,8 @@ export async function verifyDataApiRequest(
 
   // Method 1b: Bearer token with dash_session value (for sandboxed iframes without cookies)
   // Sandboxed iframes (sandbox="allow-scripts") have null origin and cannot send cookies.
-  // The injected __TWD_DATA_TOKEN__ is the only auth path. It allows all methods because
-  // interactive dashboards need POST/PATCH/DELETE. The token is per-dashboard and only
-  // accessible to users who can already view the dashboard (permission checked in view route).
+  // The injected __TWD_DATA_TOKEN__ is the runtime auth path. Owners receive write scope;
+  // viewers and embeds receive read scope, which is accepted only for GET and HEAD.
   if (!authenticated) {
     const authHeader = request.headers.get("authorization");
     if (authHeader?.startsWith("Bearer ")) {

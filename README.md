@@ -132,10 +132,11 @@ npm run lint
 npm run build
 ```
 
-Run the primary browser journeys from `app` with Docker available:
+Run the primary browser journeys from `app` with Docker and Java 21 or newer
+available:
 
 ```bash
-npx playwright install chromium
+npx playwright install --with-deps chromium
 npm run test:e2e
 ```
 

@@ -3,7 +3,8 @@ import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "
 import path from "node:path";
 import { redactArtifact } from "./artifact-redaction.mjs";
 
-const roots = ["test-results", "playwright-report"]
+const requestedRoots = process.argv.slice(2);
+const roots = (requestedRoots.length > 0 ? requestedRoots : ["test-results", "playwright-report"])
   .map((directory) => path.resolve(process.cwd(), directory))
   .filter(existsSync);
 
@@ -27,8 +28,10 @@ function sanitizeZip(file) {
   const zip = new AdmZip(file);
   let changed = false;
   for (const entry of zip.getEntries()) {
-    if (entry.isDirectory || !isTextArtifact(entry.entryName)) continue;
-    const original = entry.getData().toString("utf8");
+    if (entry.isDirectory) continue;
+    const data = entry.getData();
+    if (!isTextArtifact(entry.entryName) && !isLikelyText(data)) continue;
+    const original = data.toString("utf8");
     const sanitized = redact(original);
     if (sanitized !== original) {
       zip.updateFile(entry.entryName, Buffer.from(sanitized, "utf8"));
@@ -39,7 +42,9 @@ function sanitizeZip(file) {
 }
 
 function sanitizeTextFile(file) {
-  const original = readFileSync(file, "utf8");
+  const data = readFileSync(file);
+  if (!isTextArtifact(file) && !isLikelyText(data)) return;
+  const original = data.toString("utf8");
   const sanitized = redact(original);
   if (sanitized !== original) writeFileSync(file, sanitized, "utf8");
 }
@@ -62,4 +67,10 @@ function walk(root) {
 
 function isTextArtifact(file) {
   return /(?:\.trace|\.network|\.stacks|\.json|\.txt|\.md|\.html)$/i.test(file);
+}
+
+function isLikelyText(data) {
+  if (data.length === 0) return true;
+  if (data.includes(0)) return false;
+  return !data.toString("utf8").includes("\uFFFD");
 }

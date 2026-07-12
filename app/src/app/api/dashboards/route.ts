@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
           auth,
           userDepartmentIds
         );
-        const folderAccess = directAccess
+        const folderAccess = directAccess || activeOnly
           ? false
           : (await canViewDashboardViaSharedFolder(doc.id, auth, adminDb)).allowed;
 
