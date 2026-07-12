@@ -156,6 +156,8 @@ See [Operational Observability](docs/OBSERVABILITY.md) for structured event name
 
 See [Data, Privacy, and Retention](docs/DATA-PRIVACY.md) for the as-built data inventory, default retention and deletion behavior, access-control assumptions, and self-hoster responsibilities.
 
+See the [Governed CSV walkthrough](docs/CSV-WALKTHROUGH.md) for a neutral, as-built demonstration of source onboarding, grants, per-viewer row scope, fail-closed behavior, and the read-only DuckDB boundary.
+
 Firestore security rules and indexes are deployed separately with the Firebase CLI, and `firestore.rules` requires your `ALLOWED_AUTH_DOMAIN` in place of the placeholder domain. See [Deploy Firestore rules and indexes](docs/DEPLOYMENT.md#4-deploy-firestore-rules-and-indexes).
 
 ## Contributing

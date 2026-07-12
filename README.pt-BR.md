@@ -134,6 +134,8 @@ Consulte [Operational Observability](docs/OBSERVABILITY.md) para nomes de evento
 
 Consulte [Dados, privacidade e retencao](docs/DATA-PRIVACY.md) para o inventario as-built canonico, comportamento padrao de retencao e delecao, premissas de controle de acesso e responsabilidades do self-hoster.
 
+Consulte o [walkthrough de CSV governado](docs/CSV-WALKTHROUGH.md) para a demonstracao canonica e neutra, em ingles, de onboarding da fonte, grants, escopo de linhas por viewer, falhas fechadas e a fronteira read-only do DuckDB.
+
 ## Como contribuir
 
 Leia [CONTRIBUTING.md](CONTRIBUTING.md) antes de abrir issues ou pull requests.
