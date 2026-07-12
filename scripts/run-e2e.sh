@@ -4,6 +4,15 @@ set -eu
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 APP_DIR="$ROOT_DIR/app"
 
+TWD_E2E_NPM_SCRIPT="${TWD_E2E_NPM_SCRIPT:-test:e2e:run}"
+case "$TWD_E2E_NPM_SCRIPT" in
+  test:e2e:run|test:e2e:screenshots) ;;
+  *)
+    echo "Unsupported E2E npm script: $TWD_E2E_NPM_SCRIPT" >&2
+    exit 2
+    ;;
+esac
+
 node --test "$APP_DIR/e2e/support/artifact-redaction.node.mjs"
 
 if [ -z "${CI:-}" ]; then
@@ -47,7 +56,7 @@ npx -y firebase-tools@15.23.0 emulators:exec \
   --config "$ROOT_DIR/firebase.json" \
   --project "$FIREBASE_PROJECT_ID" \
   --only auth,firestore \
-  "npm run test:e2e:run"
+  "npm run $TWD_E2E_NPM_SCRIPT"
 test_status=$?
 set -e
 
