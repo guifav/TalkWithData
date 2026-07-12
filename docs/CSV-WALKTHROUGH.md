@@ -137,7 +137,7 @@ receives only their own owner key.
 | Viewer has no user or department grant | The request is denied with `You do not have access to this data source.` before credentials are loaded. |
 
 For the duplicate case, headers such as `owner-email` and `owner_email` both
-normalize to `owneremail` and are rejected.
+normalize to `owner_email` and are rejected.
 
 ## 6. Read-only query boundary
 
