@@ -3,6 +3,7 @@ import { Storage } from "@google-cloud/storage";
 import { Firestore } from "@google-cloud/firestore";
 import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
+import { createFunctionCorrelationId, writeThumbnailEvent } from "./observability";
 
 const BUCKET_NAME = process.env.STORAGE_BUCKET_NAME || process.env.GCS_BUCKET || "";
 const THUMBNAIL_SECRET = process.env.THUMBNAIL_SECRET || "";
@@ -11,6 +12,12 @@ const storage = new Storage();
 const firestore = new Firestore();
 
 ff.http("generateThumbnail", async (req, res) => {
+  const requestIdHeader = req.headers["x-request-id"];
+  const correlationId = createFunctionCorrelationId(
+    Array.isArray(requestIdHeader) ? requestIdHeader[0] : requestIdHeader,
+  );
+  res.setHeader("x-request-id", correlationId);
+
   // Only accept POST
   if (req.method !== "POST") {
     res.status(405).json({ error: "Method not allowed" });
@@ -29,6 +36,14 @@ ff.http("generateThumbnail", async (req, res) => {
     res.status(400).json({ error: "dashboardId is required" });
     return;
   }
+
+  const startedAt = Date.now();
+  writeThumbnailEvent({
+    level: "info",
+    event: "thumbnail.generation.started",
+    correlationId,
+    metadata: { outcome: "started", operation: "generate_thumbnail" },
+  });
 
   let browser: Awaited<ReturnType<typeof puppeteer.launch>> | null = null;
 
@@ -115,11 +130,30 @@ ff.http("generateThumbnail", async (req, res) => {
       bucket.file(oldStoragePath).delete({ ignoreNotFound: true }).catch(() => {});
     }
 
-    console.log(`[Thumbnail] Generated for dashboard ${dashboardId}`);
+    writeThumbnailEvent({
+      level: "info",
+      event: "thumbnail.generation.succeeded",
+      correlationId,
+      metadata: {
+        outcome: "succeeded",
+        operation: "generate_thumbnail",
+        durationMs: Math.max(0, Date.now() - startedAt),
+      },
+    });
 
     res.status(200).json({ ok: true, thumbnailUrl });
   } catch (error) {
-    console.error(`[Thumbnail] Error for ${dashboardId}:`, error);
+    writeThumbnailEvent({
+      level: "error",
+      event: "thumbnail.generation.failed",
+      correlationId,
+      metadata: {
+        outcome: "failed",
+        operation: "generate_thumbnail",
+        durationMs: Math.max(0, Date.now() - startedAt),
+        error,
+      },
+    });
     res.status(500).json({
       error: "Failed to generate thumbnail",
       details: error instanceof Error ? error.message : String(error),

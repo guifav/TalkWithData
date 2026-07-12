@@ -15,6 +15,8 @@ Cloud Function that generates PNG thumbnails for Talk With Data dashboards using
 The function checks `X-Internal-Key` header against the `THUMBNAIL_SECRET` env var.
 The same secret must be configured on the Cloud Run app.
 
+Successful authenticated requests emit redacted JSON lifecycle events. The function accepts a safe `X-Request-Id`, generates one when absent or invalid, and returns it in the response. See [Operational Observability](../../docs/OBSERVABILITY.md).
+
 ## Deploy
 
 ```bash

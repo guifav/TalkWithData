@@ -89,6 +89,7 @@ Variaveis principais:
 - `MCP_ALLOWED_HOSTS`, `MCP_API_KEY` e `MCP_URL`, configuracao opcional de MCP.
 - `THUMBNAIL_FUNCTION_URL` e `THUMBNAIL_SECRET`, thumbnails opcionais.
 - `STORAGE_PROVIDER` e `LOCAL_STORAGE_ROOT`, seletor do adaptador de dashboard storage e diretorio persistente usado pelo provider `local`. Upload, serve, replace, delete e versoes usam o provider selecionado.
+- `TWD_LOG_LEVEL`, nivel minimo dos logs estruturados: `info` (padrao), `warn` ou `error`.
 
 Veja [app/.env.example](app/.env.example) para o template completo.
 
@@ -114,6 +115,8 @@ npm run build
 Docker e o caminho portavel recomendado. Use `app/Dockerfile`, forneca as variaveis de ambiente e exponha a porta `8080` do container.
 
 Consulte [DEPLOYMENT.md](docs/DEPLOYMENT.md) para Docker, Google Cloud Run, Firebase, storage, provedores de IA e MCP opcional.
+
+Consulte [Operational Observability](docs/OBSERVABILITY.md) para nomes de eventos, garantias de redaction, IDs de correlacao e troubleshooting sanitizado.
 
 ## Como contribuir
 
