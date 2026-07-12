@@ -109,4 +109,3 @@ Thresholds are a floor, not a target. New reachable branches in critical files r
 ## CI Contract
 
 `npm run test:coverage` remains the canonical gate. Its text reporter lists uncovered critical lines, and Vitest exits non-zero when any critical threshold is missed. The existing GitHub Actions job already runs this command before the production build.
-

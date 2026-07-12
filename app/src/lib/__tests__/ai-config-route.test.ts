@@ -142,4 +142,3 @@ describe("admin AI config route", () => {
     expect(consoleError).toHaveBeenCalledOnce();
   });
 });
-
