@@ -1,0 +1,10 @@
+{
+  "limiter@1.1.5": {
+    "license": "MIT",
+    "evidence": "the npm tarball includes node_modules/limiter/LICENSE.txt"
+  },
+  "seq-queue@0.0.5": {
+    "license": "MIT",
+    "evidence": "the npm tarball includes node_modules/seq-queue/LICENSE"
+  }
+}

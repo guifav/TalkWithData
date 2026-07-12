@@ -69,6 +69,33 @@ failed migration prevents the application from starting.
 
 ## Code standards
 
+### Contribution licensing and provenance
+
+By submitting a contribution, you certify that you have the right to submit it
+and agree that it is licensed under the repository's MIT License. Do not submit
+confidential code, material copied from an employer or client, or third-party
+content without documented redistribution permission.
+
+For every new dependency, copied fragment, generated artifact, icon, font,
+screenshot, fixture, or other asset:
+
+- record its source, author or generator, license, and any modifications;
+- preserve required copyright, attribution, source, and notice material;
+- regenerate the locked inventory after any package-lock change with
+  `node scripts/generate-third-party-licenses.mjs`;
+- verify it is current with
+  `node scripts/generate-third-party-licenses.mjs --check`;
+- treat `node scripts/generate-third-party-licenses.mjs --check --fail-on-unknown`
+  as a release gate; and
+- review the produced source archive, container, and binary assets because the
+  locked graph alone does not prove what an artifact redistributes.
+
+Never add a license override without evidence in the exact npm tarball or an
+authoritative upstream source. An unknown or ambiguous license blocks the pull
+request and release until the item is removed or supported by evidence. See
+[PROVENANCE.md](PROVENANCE.md) and
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
 ### TypeScript and structure
 
 - TypeScript strict mode is required.
