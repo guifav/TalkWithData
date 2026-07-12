@@ -93,6 +93,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Test ExcelJS in standalone artifact
+        run: npm run test:exceljs-standalone
+
   functions-generate-thumbnail:
     runs-on: ubuntu-latest
     defaults:

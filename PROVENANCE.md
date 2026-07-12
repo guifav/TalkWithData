@@ -96,7 +96,8 @@ files listed above.
 - The review originally found `buffers@0.1.1` without a declared license. The
   locked `unzipper` override was upgraded from the legacy `0.10` chain to MIT
   licensed `unzipper@0.12.5`, removing `buffers` from the graph. An ExcelJS XLSX
-  round-trip and the application checks validate the replacement.
+  round-trip against both the source install and the generated standalone
+  artifact validates the replacement in CI.
 
 The locked graph is broader than a particular source archive, container, or
 standalone Next.js build. Release automation must also inspect each produced

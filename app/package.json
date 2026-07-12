@@ -29,6 +29,7 @@
     "test:firestore-rules": "REQUIRE_FIRESTORE_EMULATOR=1 vitest run src/lib/__tests__/firestore-rules.test.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:exceljs-standalone": "node ../scripts/test-exceljs-standalone.mjs",
     "test:e2e": "../scripts/run-e2e.sh",
     "test:e2e:run": "playwright test",
     "test:e2e:screenshots": "TWD_CAPTURE_README_SCREENSHOTS=1 playwright test e2e/readme-screenshots.spec.ts",
