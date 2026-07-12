@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { promises as fs } from "fs";
 import path from "path";
 import { getStorageBucketName } from "@/lib/storage-bucket";
+import { observeStorageOperation } from "@/lib/observability";
 
 export interface StorageUploadOptions {
   contentType?: string;
@@ -27,44 +28,53 @@ export class GcsStorage implements StorageProvider {
   }
 
   async upload(filePath: string, buffer: Buffer, options: StorageUploadOptions = {}): Promise<void> {
-    await this.storage.bucket(this.bucketName).file(filePath).save(buffer, {
-      contentType: options.contentType,
-      metadata: options.cacheControl
-        ? { cacheControl: options.cacheControl }
-        : undefined,
-    });
+    await observeStorageOperation("upload", () =>
+      this.storage.bucket(this.bucketName).file(filePath).save(buffer, {
+        contentType: options.contentType,
+        metadata: options.cacheControl
+          ? { cacheControl: options.cacheControl }
+          : undefined,
+      }), { bytes: buffer.length, provider: "gcs" });
   }
 
   async download(filePath: string): Promise<Buffer> {
-    const [contents] = await this.storage.bucket(this.bucketName).file(filePath).download();
-    return contents;
+    return observeStorageOperation("download", async () => {
+      const [contents] = await this.storage.bucket(this.bucketName).file(filePath).download();
+      return contents;
+    }, { provider: "gcs" });
   }
 
   async copy(sourcePath: string, destinationPath: string): Promise<void> {
-    const bucket = this.storage.bucket(this.bucketName);
-    await bucket.file(sourcePath).copy(bucket.file(destinationPath));
+    await observeStorageOperation("copy", async () => {
+      const bucket = this.storage.bucket(this.bucketName);
+      await bucket.file(sourcePath).copy(bucket.file(destinationPath));
+    }, { provider: "gcs" });
   }
 
   async delete(filePath: string): Promise<void> {
-    const bucket = this.storage.bucket(this.bucketName);
+    await observeStorageOperation("delete", async () => {
+      const bucket = this.storage.bucket(this.bucketName);
 
-    if (filePath.endsWith("/")) {
-      await bucket.deleteFiles({ prefix: filePath, force: true });
-      return;
-    }
+      if (filePath.endsWith("/")) {
+        await bucket.deleteFiles({ prefix: filePath, force: true });
+        return;
+      }
 
-    await bucket
-      .file(filePath)
-      .delete({ ignoreNotFound: true })
-      .catch((error: unknown) => {
-        if (isNotFoundError(error)) return;
-        throw error;
-      });
+      await bucket
+        .file(filePath)
+        .delete({ ignoreNotFound: true })
+        .catch((error: unknown) => {
+          if (isNotFoundError(error)) return;
+          throw error;
+        });
+    }, { provider: "gcs" });
   }
 
   async exists(filePath: string): Promise<boolean> {
-    const [exists] = await this.storage.bucket(this.bucketName).file(filePath).exists();
-    return exists;
+    return observeStorageOperation("exists", async () => {
+      const [exists] = await this.storage.bucket(this.bucketName).file(filePath).exists();
+      return exists;
+    }, { provider: "gcs" });
   }
 }
 
@@ -76,48 +86,60 @@ export class LocalStorage implements StorageProvider {
   }
 
   async upload(filePath: string, buffer: Buffer): Promise<void> {
-    const fullPath = this.resolvePath(filePath);
-    await this.replaceAtomically(fullPath, (temporaryPath) =>
-      fs.writeFile(temporaryPath, buffer)
-    );
+    await observeStorageOperation("upload", async () => {
+      const fullPath = this.resolvePath(filePath);
+      await this.replaceAtomically(fullPath, (temporaryPath) =>
+        fs.writeFile(temporaryPath, buffer)
+      );
+    }, { bytes: buffer.length, provider: "local" });
   }
 
   async download(filePath: string): Promise<Buffer> {
-    return fs.readFile(this.resolvePath(filePath));
-  }
-
-  async copy(sourcePath: string, destinationPath: string): Promise<void> {
-    const source = this.resolvePath(sourcePath);
-    const destination = this.resolvePath(destinationPath);
-    await this.replaceAtomically(destination, (temporaryPath) =>
-      fs.copyFile(source, temporaryPath)
+    return observeStorageOperation(
+      "download",
+      () => fs.readFile(this.resolvePath(filePath)),
+      { provider: "local" },
     );
   }
 
-  async delete(filePath: string): Promise<void> {
-    const fullPath = this.resolvePath(filePath);
+  async copy(sourcePath: string, destinationPath: string): Promise<void> {
+    await observeStorageOperation("copy", async () => {
+      const source = this.resolvePath(sourcePath);
+      const destination = this.resolvePath(destinationPath);
+      await this.replaceAtomically(destination, (temporaryPath) =>
+        fs.copyFile(source, temporaryPath)
+      );
+    }, { provider: "local" });
+  }
 
-    try {
-      const stats = await fs.stat(fullPath);
-      if (stats.isDirectory()) {
-        await fs.rm(fullPath, { recursive: true, force: true });
-      } else {
-        await fs.rm(fullPath, { force: true });
+  async delete(filePath: string): Promise<void> {
+    await observeStorageOperation("delete", async () => {
+      const fullPath = this.resolvePath(filePath);
+
+      try {
+        const stats = await fs.stat(fullPath);
+        if (stats.isDirectory()) {
+          await fs.rm(fullPath, { recursive: true, force: true });
+        } else {
+          await fs.rm(fullPath, { force: true });
+        }
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
+        throw error;
       }
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
-      throw error;
-    }
+    }, { provider: "local" });
   }
 
   async exists(filePath: string): Promise<boolean> {
-    try {
-      await fs.access(this.resolvePath(filePath));
-      return true;
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
-      throw error;
-    }
+    return observeStorageOperation("exists", async () => {
+      try {
+        await fs.access(this.resolvePath(filePath));
+        return true;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
+        throw error;
+      }
+    }, { provider: "local" });
   }
 
   private async replaceAtomically(

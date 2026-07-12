@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -6,6 +6,10 @@ import AdmZip from "adm-zip";
 import { NextRequest } from "next/server";
 
 process.env.ALLOWED_AUTH_DOMAIN = "example.com";
+
+const routeMocks = vi.hoisted(() => ({
+  verifyRequest: vi.fn(),
+}));
 
 const dashboardData = new Map<string, Record<string, unknown>>();
 const versionData = new Map<string, Record<string, unknown>>();
@@ -19,7 +23,7 @@ const auth = {
 };
 
 vi.mock("@/lib/api-auth", () => ({
-  verifyRequest: vi.fn().mockResolvedValue(auth),
+  verifyRequest: routeMocks.verifyRequest,
 }));
 
 vi.mock("@/lib/categories", () => ({
@@ -175,6 +179,8 @@ beforeEach(() => {
   versionData.clear();
   nextDashboardId = 0;
   dashboardUpdateError = null;
+  routeMocks.verifyRequest.mockReset();
+  routeMocks.verifyRequest.mockResolvedValue(auth);
 });
 
 afterAll(async () => {
@@ -184,7 +190,54 @@ afterAll(async () => {
   restoreEnv("STORAGE_BUCKET_NAME", previousBucket);
 });
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe("local storage routes", () => {
+  it("correlaciona e sanitiza rejeições de upload", async () => {
+    routeMocks.verifyRequest.mockResolvedValue(null);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    const response = await uploadDashboard(new NextRequest("http://localhost/api/upload", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer request-secret",
+        "x-request-id": "upload-request-123",
+      },
+    }));
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get("x-request-id")).toBe("upload-request-123");
+    expect(warn).toHaveBeenCalledOnce();
+    const output = warn.mock.calls[0][0] as string;
+    expect(output).toContain('"event":"request.upload.rejected"');
+    expect(output).toContain('"reason":"unauthorized"');
+    expect(output).not.toContain("request-secret");
+  });
+
+  it("correlaciona falhas sem serializar o corpo da requisição", async () => {
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const response = await uploadDashboard(new NextRequest("http://localhost/api/upload", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-request-id": "upload-request-456",
+      },
+      body: JSON.stringify({ authorization: "Bearer body-secret" }),
+    }));
+
+    expect(response.status).toBe(500);
+    expect(response.headers.get("x-request-id")).toBe("upload-request-456");
+    expect(errorLog).toHaveBeenCalledOnce();
+    const output = errorLog.mock.calls[0][0] as string;
+    expect(output).toContain('"event":"request.upload.failed"');
+    expect(output).toContain('"name":"TypeError"');
+    expect(output).not.toContain("body-secret");
+    expect(output).not.toContain("authorization");
+  });
+
   it("uploads and serves a single HTML dashboard without a bucket", async () => {
     const form = new FormData();
     form.set("title", "Local dashboard");

@@ -8,15 +8,32 @@ import { isValidCategory } from "@/lib/categories";
 import { extractTextFromHtml, MAX_SEARCHABLE_TEXT } from "@/lib/html-text";
 import { triggerThumbnailGeneration } from "@/lib/thumbnail";
 import { isAllowedEmailDomain } from "@/lib/auth-domain";
+import {
+  createCorrelationId,
+  OPERATIONAL_EVENTS,
+  withCorrelationId,
+  writeOperationalEvent,
+} from "@/lib/observability";
 
 const MAX_HTML_SIZE = 10 * 1024 * 1024; // 10MB for single HTML
 const MAX_ZIP_SIZE = 50 * 1024 * 1024; // 50MB for ZIP packages
 
 export async function POST(request: NextRequest) {
+  const correlationId = createCorrelationId(request.headers.get("x-request-id"));
+  const respond = (response: NextResponse) => withCorrelationId(response, correlationId);
+  const reject = (error: string, status: number, reason: string) => {
+    writeOperationalEvent({
+      level: "warn",
+      event: OPERATIONAL_EVENTS.uploadRejected,
+      correlationId,
+      metadata: { outcome: "rejected", operation: "upload", reason, status },
+    });
+    return respond(NextResponse.json({ error }, { status }));
+  };
+
   const auth = await verifyRequest(request);
   if (!auth) {
-    console.log("[Upload] verifyRequest returned null — token invalid or missing");
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return reject("Unauthorized", 401, "unauthorized");
   }
 
   try {
@@ -33,27 +50,22 @@ export async function POST(request: NextRequest) {
     const entrypoint = (formData.get("entrypoint") as string) || "index.html";
 
     if (!file || !title?.trim()) {
-      return NextResponse.json(
-        { error: "File and title are required" },
-        { status: 400 }
-      );
+      return reject("File and title are required", 400, "missing_input");
     }
 
     const isZip = file.name.endsWith(".zip");
     const isHtml = file.name.endsWith(".html");
 
     if (!isZip && !isHtml) {
-      return NextResponse.json(
-        { error: "Only .html and .zip files are allowed" },
-        { status: 400 }
-      );
+      return reject("Only .html and .zip files are allowed", 400, "unsupported_file_type");
     }
 
     const maxSize = isZip ? MAX_ZIP_SIZE : MAX_HTML_SIZE;
     if (file.size > maxSize) {
-      return NextResponse.json(
-        { error: `File size exceeds ${maxSize / 1024 / 1024}MB limit` },
-        { status: 400 }
+      return reject(
+        `File size exceeds ${maxSize / 1024 / 1024}MB limit`,
+        400,
+        "file_too_large",
       );
     }
 
@@ -71,10 +83,10 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
 
     if (isZip) {
-      return await handleZipUpload({
+      return respond(await handleZipUpload({
         auth, docRef, dashboardId, buffer, title: title.trim(),
-        description, category, visibility, allowedEmails, entrypoint,
-      });
+        description, category, visibility, allowedEmails, entrypoint, correlationId,
+      }));
     }
 
     // ── Single HTML upload (existing flow) ──
@@ -127,12 +139,17 @@ export async function POST(request: NextRequest) {
     }
 
     triggerThumbnailGeneration(dashboardId);
-    return NextResponse.json({ id: dashboardId, storagePath });
+    return respond(NextResponse.json({ id: dashboardId, storagePath }));
 
   } catch (error) {
-    console.error("Upload failed:", error);
+    writeOperationalEvent({
+      level: "error",
+      event: OPERATIONAL_EVENTS.uploadFailed,
+      correlationId,
+      metadata: { outcome: "failed", operation: "upload", error },
+    });
     const message = error instanceof Error ? error.message : "Upload failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return respond(NextResponse.json({ error: message }, { status: 500 }));
   }
 }
 
@@ -149,11 +166,12 @@ interface ZipUploadParams {
   visibility: "team" | "specific";
   allowedEmails: string[];
   entrypoint: string;
+  correlationId: string;
 }
 
 async function handleZipUpload({
   auth, docRef, dashboardId, buffer, title,
-  description, category, visibility, allowedEmails, entrypoint,
+  description, category, visibility, allowedEmails, entrypoint, correlationId,
 }: ZipUploadParams) {
   // Phase 1: Extract and upload ZIP to the configured storage provider
   let zipResult;
@@ -164,6 +182,18 @@ async function handleZipUpload({
     const partialPrefix = `dashboards/${auth.uid}/${dashboardId}/`;
     await deleteDashboardFiles(partialPrefix).catch(() => {});
     const message = err instanceof Error ? err.message : "ZIP extraction failed";
+    writeOperationalEvent({
+      level: "warn",
+      event: OPERATIONAL_EVENTS.uploadRejected,
+      correlationId,
+      metadata: {
+        outcome: "rejected",
+        operation: "upload",
+        reason: "invalid_zip",
+        status: 400,
+        error: err,
+      },
+    });
     return NextResponse.json({ error: message }, { status: 400 });
   }
 

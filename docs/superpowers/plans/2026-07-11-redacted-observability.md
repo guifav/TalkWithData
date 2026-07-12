@@ -11,15 +11,15 @@
 
 ## Task 2: Build the app logger with TDD
 
-- [ ] Add failing tests for sensitive fields, nested values, errors, cycles, bounds, log levels, and request IDs.
-- [ ] Implement the serializer, event writer, and request correlation helper.
-- [ ] Confirm focused RED then GREEN.
+- [x] Add failing tests for sensitive fields, nested values, errors, cycles, bounds, log levels, and request IDs.
+- [x] Implement the serializer, event writer, and request correlation helper.
+- [x] Confirm focused RED then GREEN.
 
 ## Task 3: Instrument requests and storage
 
-- [ ] Emit sanitized upload rejection and failure events with response correlation IDs.
-- [ ] Emit storage lifecycle events without bucket names, paths, buffers, or credentials.
-- [ ] Add focused route and provider tests.
+- [x] Emit sanitized upload rejection and failure events with response correlation IDs.
+- [x] Emit storage lifecycle events without bucket names, paths, buffers, or credentials.
+- [x] Add focused route and provider tests.
 
 ## Task 4: Instrument migrations and thumbnails
 
