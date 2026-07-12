@@ -71,7 +71,7 @@ BUILD_COMMAND+=(-t "$IMAGE" -f "$ROOT_DIR/app/Dockerfile" "$ROOT_DIR")
 docker run --rm --entrypoint sh "$IMAGE" -c '
   test -s /app/licenses/LICENSE
   test -s /app/licenses/THIRD_PARTY_NOTICES.md
-  test -s /app/licenses/THIRD-PARTY-LICENSES.md
+  test -s /app/licenses/docs/THIRD-PARTY-LICENSES.md
 '
 docker run --rm --entrypoint node "$IMAGE" -e '
   const manifest = require("/app/licenses/npm/manifest.json");
@@ -92,7 +92,7 @@ MIGRATOR_BUILD_COMMAND+=(
 docker run --rm --entrypoint sh "$MIGRATOR_IMAGE" -c '
   test -s /app/licenses/LICENSE
   test -s /app/licenses/THIRD_PARTY_NOTICES.md
-  test -s /app/licenses/THIRD-PARTY-LICENSES.md
+  test -s /app/licenses/docs/THIRD-PARTY-LICENSES.md
 '
 docker run --rm --entrypoint node "$MIGRATOR_IMAGE" -e '
   const manifest = require("/app/licenses/npm/manifest.json");

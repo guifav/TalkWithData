@@ -37,7 +37,9 @@ gcloud functions deploy generateThumbnail \
 
 The packaging step copies only tracked function sources plus the canonical
 project notices and a generated license bundle for the installed dependency
-graph. Do not deploy directly from the working directory.
+graph. The bundle also verifies the checksums of the Chromium, SwiftShader,
+Open Sans, and Amazon Linux payloads and includes their reviewed notices. Do not
+deploy directly from the working directory.
 
 After deploying, set the function URL on Cloud Run:
 

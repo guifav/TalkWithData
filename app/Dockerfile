@@ -46,7 +46,7 @@ COPY --from=migrator-builder /migrator/package.json /migrator/package-lock.json 
 COPY --from=migrator-builder /migrator/node_modules ./node_modules
 COPY --from=migrator-builder /migrator/licenses/npm ./licenses/npm
 COPY LICENSE THIRD_PARTY_NOTICES.md ./licenses/
-COPY docs/THIRD-PARTY-LICENSES.md ./licenses/THIRD-PARTY-LICENSES.md
+COPY docs/THIRD-PARTY-LICENSES.md ./licenses/docs/THIRD-PARTY-LICENSES.md
 COPY app/prisma.config.ts ./
 COPY app/prisma ./prisma
 USER node
@@ -68,7 +68,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --chown=nextjs:nodejs LICENSE THIRD_PARTY_NOTICES.md ./licenses/
-COPY --chown=nextjs:nodejs docs/THIRD-PARTY-LICENSES.md ./licenses/THIRD-PARTY-LICENSES.md
+COPY --chown=nextjs:nodejs docs/THIRD-PARTY-LICENSES.md ./licenses/docs/THIRD-PARTY-LICENSES.md
 
 USER nextjs
 EXPOSE 8080

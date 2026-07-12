@@ -109,12 +109,21 @@ packages and assets it actually redistributes.
 The production application and migration containers, plus the packaged thumbnail
 function source, carry the project license, this notice record, the locked
 inventory, and generated per-package license bundles. The collector preserves
-package-provided `LICENSE`, `NOTICE`, and `COPYING` files, and uses the declared
-SPDX standard text plus package metadata only when an npm package ships no
-license file. Collection fails when neither source exists or when a `WITH`
-exception has no package-provided text. The runner conservatively covers its full
+package-provided and vendored `LICENSE`, `NOTICE`, and `COPYING` files, and uses
+the declared SPDX standard text plus package metadata only when an npm package
+ships no license file. Collection fails when neither source exists or when a
+`WITH` exception has no package-provided exception text. SPDX `+` expressions
+retain their or-later meaning. The runner conservatively covers its full
 installed graph so client-side bundled code is included as well as externalized
-server packages. CI validates all three release artifacts.
+server packages.
+
+The thumbnail package additionally binds the four binary archives in
+`@sparticuz/chromium@149.0.0` to reviewed SHA-256 values. It carries the exact
+Chromium `149.0.7827.22` license and generated third-party credits, plus the
+Open Sans, Amazon Linux NSS, NSPR, and Expat license texts documented in
+`third_party/chromium-149.0.7827.22/BINARY-PAYLOAD-NOTICES.md`. A payload hash
+or dependency version change blocks packaging until those notices are reviewed.
+CI validates all three release artifacts.
 
 ## Procedure for future additions
 

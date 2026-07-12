@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -11,6 +12,7 @@ export async function collectArtifactLicenses({
   sourceNodeModules,
   outputDir,
   toolPackageFile = path.join(sourceNodeModules, "../package.json"),
+  supplements = {},
 }) {
   const toolRequire = createRequire(toolPackageFile);
   const parseSpdxExpression = toolRequire("spdx-expression-parse");
@@ -30,6 +32,7 @@ export async function collectArtifactLicenses({
   await rm(outputDir, { recursive: true, force: true });
   await mkdir(outputDir, { recursive: true });
   const manifest = [];
+  const usedSupplements = new Set();
 
   for (const artifactEntry of uniquePackages(artifactPackages)) {
     const entry = resolveArtifactPackage(artifactEntry, sourceByKey, sourceByName);
@@ -37,18 +40,25 @@ export async function collectArtifactLicenses({
     if (!entry.sourceDirectory) {
       throw new Error(`${key} is present in the artifact but not in the source install`);
     }
+    const expression = parseLicenseExpression(entry.license, parseSpdxExpression);
     let files = await findLicenseFiles(entry.directory, entry.sourceDirectory);
     if (files.length === 0) {
-      files = createSpdxLicenseFiles(entry, parseSpdxExpression, spdxLicenses);
+      files = createSpdxLicenseFiles(entry, expression, spdxLicenses);
+    }
+    const supplement = supplements[key];
+    if (supplement) {
+      usedSupplements.add(key);
+      files.push(...await resolveSupplementFiles(entry, supplement));
     }
     if (files.length === 0) {
       throw new Error(`${key} has no LICENSE, NOTICE, or COPYING file`);
     }
+    await assertSpdxExceptionsPresent(key, expression, files);
 
     const destination = path.join(outputDir, safePackageDirectory(entry.name, entry.version));
-    await mkdir(destination, { recursive: true });
     for (const file of files) {
       const target = path.join(destination, file.name);
+      await mkdir(path.dirname(target), { recursive: true });
       if (file.source) await copyFile(file.source, target);
       else await writeFile(target, file.content);
     }
@@ -58,6 +68,11 @@ export async function collectArtifactLicenses({
       license: entry.license,
       files: files.map((file) => file.name),
     });
+  }
+
+  const unusedSupplements = Object.keys(supplements).filter((key) => !usedSupplements.has(key));
+  if (unusedSupplements.length > 0) {
+    throw new Error(`unused artifact license supplements: ${unusedSupplements.sort().join(", ")}`);
   }
 
   await writeFile(
@@ -131,13 +146,22 @@ async function addPackage(directory, packages, inferredName) {
 async function findLicenseFiles(...directories) {
   const files = new Map();
   for (const directory of directories) {
-    for (const entry of await readdir(directory, { withFileTypes: true })) {
-      if (entry.isFile() && LICENSE_FILE.test(entry.name) && !files.has(entry.name)) {
-        files.set(entry.name, { name: entry.name, source: path.join(directory, entry.name) });
-      }
-    }
+    await findLicenseFilesRecursively(directory, directory, files);
   }
   return Array.from(files.values()).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function findLicenseFilesRecursively(root, directory, files) {
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    if (entry.name === "node_modules") continue;
+    const source = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      await findLicenseFilesRecursively(root, source, files);
+    } else if (entry.isFile() && LICENSE_FILE.test(entry.name)) {
+      const name = path.relative(root, source).split(path.sep).join("/");
+      if (!files.has(name)) files.set(name, { name, source });
+    }
+  }
 }
 
 function uniquePackages(packages) {
@@ -172,15 +196,17 @@ function resolveArtifactPackage(entry, sourceByKey, sourceByName) {
   };
 }
 
-function createSpdxLicenseFiles(entry, parseSpdxExpression, spdxLicenses) {
-  if (!entry.license) return [];
-  let expression;
+function parseLicenseExpression(license, parseSpdxExpression) {
+  if (!license) return null;
   try {
-    expression = parseSpdxExpression(entry.license);
+    return parseSpdxExpression(license);
   } catch {
-    return [];
+    return null;
   }
-  if (hasSpdxException(expression)) return [];
+}
+
+function createSpdxLicenseFiles(entry, expression, spdxLicenses) {
+  if (!expression || hasSpdxException(expression)) return [];
   const ids = Array.from(collectLicenseIds(expression)).sort();
   const files = [];
   for (const id of ids) {
@@ -215,10 +241,82 @@ function hasSpdxException(expression) {
 }
 
 function collectLicenseIds(expression, ids = new Set()) {
-  if (expression.license) ids.add(expression.license);
+  if (expression.license) ids.add(`${expression.license}${expression.plus ? "+" : ""}`);
   if (expression.left) collectLicenseIds(expression.left, ids);
   if (expression.right) collectLicenseIds(expression.right, ids);
   return ids;
+}
+
+async function resolveSupplementFiles(entry, supplement) {
+  const key = `${entry.name}@${entry.version}`;
+  if (!Array.isArray(supplement.requiredArtifactFiles) || supplement.requiredArtifactFiles.length === 0) {
+    throw new Error(`${key} supplement must declare requiredArtifactFiles`);
+  }
+  for (const required of supplement.requiredArtifactFiles) {
+    const relative = required?.path;
+    assertSafeRelativePath(relative, `${key} required artifact`);
+    if (!/^[a-f0-9]{64}$/.test(required.sha256)) {
+      throw new Error(`${key} required artifact ${relative} must declare a SHA-256`);
+    }
+    const artifactFile = path.join(entry.directory, relative);
+    if (!await isFile(artifactFile)) {
+      throw new Error(`${key} is missing required supplemented artifact ${relative}`);
+    }
+    const actual = createHash("sha256").update(await readFile(artifactFile)).digest("hex");
+    if (actual !== required.sha256) {
+      throw new Error(
+        `${key} artifact ${relative} has SHA-256 ${actual}, expected ${required.sha256}`,
+      );
+    }
+  }
+  if (!Array.isArray(supplement.files) || supplement.files.length === 0) {
+    throw new Error(`${key} supplement must declare license files`);
+  }
+  return Promise.all(supplement.files.map(async (file) => {
+    assertSafeRelativePath(file.name, `${key} supplement`);
+    if (!await isFile(file.source)) {
+      throw new Error(`${key} is missing supplement source ${file.source}`);
+    }
+    return { name: `supplements/${file.name}`, source: file.source };
+  }));
+}
+
+async function assertSpdxExceptionsPresent(key, expression, files) {
+  if (!expression) return;
+  const exceptions = Array.from(collectSpdxExceptions(expression));
+  if (exceptions.length === 0) return;
+  const contents = (await Promise.all(files.map(async (file) => (
+    file.content ?? await readFile(file.source, "utf8")
+  )))).join("\n");
+  const normalizedContents = normalizeWords(contents);
+  for (const exception of exceptions) {
+    const label = exception.replace(/-\d+(?:\.\d+)*$/, "");
+    if (!normalizedContents.includes(normalizeWords(label))) {
+      throw new Error(`${key} is missing the ${exception} text`);
+    }
+  }
+}
+
+function collectSpdxExceptions(expression, exceptions = new Set()) {
+  if (expression.exception) exceptions.add(expression.exception);
+  if (expression.left) collectSpdxExceptions(expression.left, exceptions);
+  if (expression.right) collectSpdxExceptions(expression.right, exceptions);
+  return exceptions;
+}
+
+function normalizeWords(value) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function assertSafeRelativePath(value, label) {
+  if (
+    typeof value !== "string"
+    || value.length === 0
+    || path.isAbsolute(value)
+    || value.split(/[\\/]/).includes("..")
+  ) {
+    throw new Error(`${label} path must stay within its package directory`);
+  }
 }
 
 function safePackageDirectory(name, version) {
@@ -228,6 +326,14 @@ function safePackageDirectory(name, version) {
 async function isDirectory(directory) {
   try {
     return (await readdir(directory)).length >= 0;
+  } catch {
+    return false;
+  }
+}
+
+async function isFile(file) {
+  try {
+    return (await stat(file)).isFile();
   } catch {
     return false;
   }

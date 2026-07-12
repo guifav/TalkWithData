@@ -14,6 +14,14 @@ inventory, the project license, and generated package license bundles under
 `/app/licenses`. The packaged thumbnail function carries the same records under
 its `licenses` directory.
 
+The thumbnail function also redistributes compressed Chromium, SwiftShader,
+Open Sans, and Amazon Linux runtime payloads through
+`@sparticuz/chromium@149.0.0`. Their exact checksums, upstream sources, Chromium
+license, generated Chromium third-party credits, and the additional OFL, MPL,
+and MIT texts are bundled under that package's `supplements` directory. The
+source record is maintained in
+`third_party/chromium-149.0.7827.22/BINARY-PAYLOAD-NOTICES.md`.
+
 ## Lucide favicon and icons
 
 `app/public/favicon.svg` is derived from Lucide's `layout-dashboard` icon. The
