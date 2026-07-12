@@ -83,7 +83,8 @@ files listed above.
 ## Dependency and notice evidence
 
 - [docs/THIRD-PARTY-LICENSES.md](docs/THIRD-PARTY-LICENSES.md) is generated from
-  all three committed npm lockfiles and includes their SHA-256 values.
+  every committed npm lockfile discovered through Git and includes their
+  SHA-256 values. The repository currently has three such lockfiles.
 - [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) records notices for direct
   assets and locked packages whose license or upstream notice calls for
   attribution or preservation.

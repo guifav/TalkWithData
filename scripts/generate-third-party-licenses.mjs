@@ -1,30 +1,29 @@
 #!/usr/bin/env node
 
 import { createHash } from "node:crypto";
+import { execFile } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 
-const DEFAULT_LOCKFILES = [
-  "app/package-lock.json",
-  "app/migrator/package-lock.json",
-  "functions/generate-thumbnail/package-lock.json",
-];
 const DEFAULT_OVERRIDES = "scripts/third-party-license-overrides.json";
 const DEFAULT_OUTPUT = "docs/THIRD-PARTY-LICENSES.md";
+const execFileAsync = promisify(execFile);
 
 export async function collectInventory({
   rootDir,
-  lockfiles = DEFAULT_LOCKFILES,
+  lockfiles,
   overridesFile = DEFAULT_OVERRIDES,
 }) {
+  const selectedLockfiles = lockfiles ?? await discoverCommittedLockfiles(rootDir);
   const overrides = JSON.parse(
     await readFile(path.join(rootDir, overridesFile), "utf8"),
   );
   const packages = new Map();
   const lockfileHashes = [];
 
-  for (const lockfile of lockfiles) {
+  for (const lockfile of selectedLockfiles) {
     const absolute = path.join(rootDir, lockfile);
     const raw = await readFile(absolute, "utf8");
     const lock = JSON.parse(raw);
@@ -94,6 +93,27 @@ export async function collectInventory({
       .filter((entry) => entry.license === "UNKNOWN")
       .map((entry) => `${entry.name}@${entry.version}`),
   };
+}
+
+export async function discoverCommittedLockfiles(rootDir) {
+  const { stdout } = await execFileAsync(
+    "git",
+    [
+      "-C",
+      rootDir,
+      "ls-files",
+      "-z",
+      "--",
+      ":(glob)**/package-lock.json",
+      "package-lock.json",
+    ],
+    { encoding: "utf8" },
+  );
+  const lockfiles = stdout.split("\0").filter(Boolean).sort();
+  if (lockfiles.length === 0) {
+    throw new Error("no committed npm lockfiles found");
+  }
+  return lockfiles;
 }
 
 export function renderInventory(inventory) {

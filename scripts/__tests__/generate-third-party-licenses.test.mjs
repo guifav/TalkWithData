@@ -6,8 +6,23 @@ import test from "node:test";
 
 import {
   collectInventory,
+  discoverCommittedLockfiles,
   renderInventory,
 } from "../generate-third-party-licenses.mjs";
+
+test("discovers the committed npm lockfile graphs", async () => {
+  const root = path.resolve(import.meta.dirname, "../..");
+  const lockfiles = await discoverCommittedLockfiles(root);
+
+  assert.deepEqual(lockfiles, [...lockfiles].sort());
+  assert.deepEqual(
+    lockfiles.filter((file) => file.endsWith("package-lock.json")),
+    lockfiles,
+  );
+  assert.ok(lockfiles.includes("app/package-lock.json"));
+  assert.ok(lockfiles.includes("app/migrator/package-lock.json"));
+  assert.ok(lockfiles.includes("functions/generate-thumbnail/package-lock.json"));
+});
 
 test("collects and merges locked package versions deterministically", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "twd-licenses-"));
