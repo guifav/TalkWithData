@@ -42,9 +42,11 @@ export async function GET(request: NextRequest) {
       getUserDepartmentIds(auth.uid),
     ]);
 
+    const activeOnly = request.nextUrl.searchParams.get("scope") === "active-ids";
     const visibilityResults = await Promise.all(
       snapshot.docs.map(async (doc) => {
         const data = doc.data();
+        if (activeOnly && data.archivedAt) return null;
         const directAccess = canViewDashboard(
           {
             createdBy: data.createdBy,
@@ -55,7 +57,7 @@ export async function GET(request: NextRequest) {
           auth,
           userDepartmentIds
         );
-        const folderAccess = directAccess
+        const folderAccess = directAccess || activeOnly
           ? false
           : (await canViewDashboardViaSharedFolder(doc.id, auth, adminDb)).allowed;
 
@@ -68,6 +70,10 @@ export async function GET(request: NextRequest) {
     const dashboards = visibilityResults.filter(
       (dashboard): dashboard is NonNullable<typeof dashboard> => Boolean(dashboard)
     );
+
+    if (activeOnly) {
+      return NextResponse.json({ ids: dashboards.map((dashboard) => dashboard.id) });
+    }
 
     return NextResponse.json({ dashboards });
   } catch (error) {

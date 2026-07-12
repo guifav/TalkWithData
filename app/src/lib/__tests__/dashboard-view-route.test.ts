@@ -10,6 +10,8 @@ const mockGetHtmlFile = vi.fn();
 const mockGetDashboardAsset = vi.fn();
 const mockDashboardGet = vi.fn();
 const mockVersionGet = vi.fn();
+const mockCreateDashSessionToken = vi.fn().mockReturnValue("session-token");
+const mockVerifyDashSessionToken = vi.fn().mockReturnValue(false);
 
 function snapshot(exists: boolean, data: Record<string, unknown> = {}) {
   return {
@@ -36,8 +38,8 @@ vi.mock("@/lib/storage", () => ({
 }));
 
 vi.mock("@/lib/dash-session", () => ({
-  createDashSessionToken: vi.fn().mockReturnValue("session-token"),
-  verifyDashSessionToken: vi.fn().mockReturnValue(false),
+  createDashSessionToken: mockCreateDashSessionToken,
+  verifyDashSessionToken: mockVerifyDashSessionToken,
 }));
 
 // Passthrough: o shim de compat nao importa para os asserts de headers
@@ -138,6 +140,46 @@ beforeEach(() => {
 // garante origem opaca tambem quando a URL da rota e aberta direto no browser,
 // em paridade com o sandbox="allow-scripts" dos iframes da UI.
 describe("GET /api/dashboards/[id]/view security headers", () => {
+  it("mints write data scope only for the dashboard owner", async () => {
+    await getView(viewRequest(), viewParams);
+
+    expect(mockCreateDashSessionToken).toHaveBeenNthCalledWith(1, "dash-id", "write");
+    expect(mockCreateDashSessionToken).toHaveBeenNthCalledWith(2, "dash-id", "write");
+
+    mockCreateDashSessionToken.mockClear();
+    mockVerifyRequest.mockResolvedValue({
+      uid: "viewer-uid",
+      email: "viewer@example.com",
+      name: "Viewer",
+    });
+    mockDashboardGet.mockResolvedValue(
+      snapshot(true, {
+        createdBy: "owner-uid",
+        visibility: "team",
+        allowedEmails: [],
+        allowedDepartments: [],
+        storagePath: "dashboards/owner-uid/dash-id/index.html",
+      })
+    );
+
+    await getView(viewRequest(), viewParams);
+
+    expect(mockCreateDashSessionToken).toHaveBeenNthCalledWith(1, "dash-id", "read");
+    expect(mockCreateDashSessionToken).toHaveBeenNthCalledWith(2, "dash-id", "read");
+  });
+
+  it("mints read data scope for token embeds", async () => {
+    mockVerifyRequest.mockResolvedValue(null);
+    mockVerifyEmbedToken.mockResolvedValue(true);
+
+    await getView(
+      new NextRequest("http://localhost/api/dashboards/dash-id/view?embed_token=tok"),
+      viewParams
+    );
+
+    expect(mockCreateDashSessionToken).toHaveBeenCalledWith("dash-id", "read");
+  });
+
   it("serves dashboard HTML with CSP sandbox and nosniff headers", async () => {
     const response = await getView(viewRequest(), viewParams);
 
@@ -200,6 +242,112 @@ describe("GET /api/dashboards/[id]/versions/[versionId]/view security headers", 
 });
 
 describe("GET /api/dashboards/[id]/view/[...path] security headers", () => {
+  it("mints read data scope for a viewer sub-page", async () => {
+    mockVerifyRequest.mockResolvedValue({
+      uid: "viewer-uid",
+      email: "viewer@example.com",
+      name: "Viewer",
+    });
+    mockDashboardGet.mockResolvedValue(
+      snapshot(true, {
+        createdBy: "owner-uid",
+        visibility: "team",
+        allowedEmails: [],
+        allowedDepartments: [],
+        storagePath: "dashboards/owner-uid/dash-id/index.html",
+      })
+    );
+    mockGetDashboardAsset.mockResolvedValue({
+      buffer: Buffer.from("<html><head></head><body>page</body></html>"),
+      contentType: "text/html",
+    });
+
+    await getAsset(assetRequest("pages/detail.html"), assetParams("pages/detail.html"));
+
+    expect(mockCreateDashSessionToken).toHaveBeenCalledWith("dash-id", "read");
+  });
+
+  it("preserves owner write scope for a cookie-authenticated sub-page", async () => {
+    mockVerifyRequest.mockResolvedValue(null);
+    mockVerifyDashSessionToken.mockImplementation(
+      (_dashboardId: string, _token: string, scope?: string) => scope === "write"
+    );
+    mockGetDashboardAsset.mockResolvedValue({
+      buffer: Buffer.from("<html><head></head><body>page</body></html>"),
+      contentType: "text/html",
+    });
+
+    await getAsset(
+      new NextRequest(
+        "http://localhost/api/dashboards/dash-id/view/pages/detail.html",
+        { headers: { Cookie: "dash_session_dash-id=owner-session" } }
+      ),
+      assetParams("pages/detail.html")
+    );
+
+    expect(mockCreateDashSessionToken).toHaveBeenCalledWith("dash-id", "write");
+  });
+
+  it("serves a read-only sub-page inherited through a shared folder", async () => {
+    mockVerifyRequest.mockResolvedValue({
+      uid: "folder-viewer-uid",
+      email: "folder-viewer@example.com",
+      name: "Folder Viewer",
+    });
+    mockCanViewViaSharedFolder.mockResolvedValue({ allowed: true });
+    mockDashboardGet.mockResolvedValue(
+      snapshot(true, {
+        createdBy: "owner-uid",
+        visibility: "specific",
+        allowedEmails: [],
+        allowedDepartments: [],
+        storagePath: "dashboards/owner-uid/dash-id/index.html",
+      })
+    );
+    mockGetDashboardAsset.mockResolvedValue({
+      buffer: Buffer.from("<html><head></head><body>page</body></html>"),
+      contentType: "text/html",
+    });
+
+    const response = await getAsset(
+      assetRequest("pages/detail.html"),
+      assetParams("pages/detail.html")
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockCreateDashSessionToken).toHaveBeenCalledWith("dash-id", "read");
+  });
+
+  it("rejects a sub-page when direct and shared-folder access are denied", async () => {
+    mockVerifyRequest.mockResolvedValue({
+      uid: "denied-viewer-uid",
+      email: "denied-viewer@example.com",
+      name: "Denied Viewer",
+    });
+    mockDashboardGet.mockResolvedValue(
+      snapshot(true, {
+        createdBy: "owner-uid",
+        visibility: "specific",
+        allowedEmails: [],
+        allowedDepartments: [],
+        storagePath: "dashboards/owner-uid/dash-id/index.html",
+      })
+    );
+
+    const response = await getAsset(
+      assetRequest("pages/detail.html"),
+      assetParams("pages/detail.html")
+    );
+
+    expect(response.status).toBe(403);
+    expect(mockCanViewViaSharedFolder).toHaveBeenCalledWith(
+      "dash-id",
+      expect.objectContaining({ uid: "denied-viewer-uid" }),
+      expect.anything()
+    );
+    expect(mockCreateDashSessionToken).not.toHaveBeenCalled();
+  });
+
   it("serves sub-page HTML with CSP sandbox and nosniff headers", async () => {
     mockGetDashboardAsset.mockResolvedValue({
       buffer: Buffer.from("<html><head></head><body>page</body></html>"),

@@ -110,6 +110,20 @@ npm run lint
 npm run build
 ```
 
+Para rodar as jornadas principais no navegador a partir de `app`, com Docker e
+Java 21 ou superior disponiveis:
+
+```bash
+npx playwright install --with-deps chromium
+npm run test:e2e
+```
+
+O comando provisiona um container PostgreSQL 16 isolado, emuladores Firebase
+Auth e Firestore, storage local para dashboards e uma fixture CSV local neutra.
+Ele nao usa credenciais de producao do Firebase ou GCP. Traces e screenshots
+so sao mantidos quando um teste falha, com valores de sessao e credenciais
+redigidos antes que os artefatos possam ser enviados.
+
 ## Deploy
 
 Docker e o caminho portavel recomendado. Use `app/Dockerfile`, forneca as variaveis de ambiente e exponha a porta `8080` do container.

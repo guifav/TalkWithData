@@ -99,6 +99,14 @@ describe("verifyDataApiRequest", () => {
     expect(result).toEqual({ dashboardId, instance: makeInstance() });
   });
 
+  it("authorizes a GET with a Bearer read-scope token", async () => {
+    const token = createDashSessionToken(dashboardId, "read");
+
+    const result = await verifyDataApiRequest(requestWithBearer("GET", token), dashboardId);
+
+    expect(result).toEqual({ dashboardId, instance: makeInstance() });
+  });
+
   it("does not authorize a write with a Bearer read-scope token", async () => {
     const token = createDashSessionToken(dashboardId, "read");
     mockVerifyRequest.mockResolvedValue(null);

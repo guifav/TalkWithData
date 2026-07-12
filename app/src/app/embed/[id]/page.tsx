@@ -12,12 +12,9 @@ import type { Dashboard } from "@/lib/types";
  * view API with embed_token — no client Firestore read needed.
  */
 function TokenEmbed({ id, token }: { id: string; token: string }) {
-  // Cache-bust: Date.now() per mount ensures fresh HTML after replace/restore.
-  // The server already sends no-store, but this defends against intermediate caches.
-  const [bust] = useState(() => Date.now());
   return (
     <iframe
-      src={`/api/dashboards/${id}/view?embed_token=${token}&v=${bust}`}
+      src={`/api/dashboards/${id}/view?embed_token=${token}`}
       sandbox="allow-scripts"
       className="h-screen w-screen border-0"
       title="Dashboard"

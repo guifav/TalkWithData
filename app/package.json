@@ -28,6 +28,8 @@
     "test:firestore-rules": "REQUIRE_FIRESTORE_EMULATOR=1 vitest run src/lib/__tests__/firestore-rules.test.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "../scripts/run-e2e.sh",
+    "test:e2e:run": "playwright test",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate deploy",
@@ -61,6 +63,7 @@
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.1",
+    "@playwright/test": "1.61.1",
     "@tailwindcss/postcss": "^4",
     "@types/adm-zip": "^0.5.8",
     "@types/node": "^26",

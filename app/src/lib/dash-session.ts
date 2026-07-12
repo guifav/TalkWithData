@@ -2,6 +2,8 @@ import { createHmac, randomUUID } from "crypto";
 
 export type DashSessionScope = "read" | "write";
 
+const DASH_SESSION_TTL_SECONDS = 10 * 60;
+
 /**
  * Server-side secret for HMAC-based dashboard session cookies.
  * MUST be set via DASHBOARD_SESSION_SECRET env var (shared across all instances).
@@ -41,9 +43,11 @@ export function createDashSessionToken(
   dashboardId: string,
   scope: DashSessionScope = "read"
 ): string {
-  return createHmac("sha256", getDashSessionSecret())
-    .update(`${dashboardId}:${scope}`)
+  const expiresAt = Math.floor(Date.now() / 1000) + DASH_SESSION_TTL_SECONDS;
+  const signature = createHmac("sha256", getDashSessionSecret())
+    .update(`${dashboardId}:${scope}:${expiresAt}`)
     .digest("hex");
+  return `v1.${expiresAt}.${signature}`;
 }
 
 /**
@@ -54,12 +58,23 @@ export function verifyDashSessionToken(
   token: string,
   scope: DashSessionScope = "read"
 ): boolean {
-  const expected = createDashSessionToken(dashboardId, scope);
+  const match = /^v1\.(\d+)\.([a-f0-9]{64})$/.exec(token);
+  if (!match) return false;
+
+  const expiresAt = Number(match[1]);
+  if (!Number.isSafeInteger(expiresAt) || expiresAt <= Math.floor(Date.now() / 1000)) {
+    return false;
+  }
+
+  const expected = createHmac("sha256", getDashSessionSecret())
+    .update(`${dashboardId}:${scope}:${expiresAt}`)
+    .digest("hex");
+  const signature = match[2];
   // Constant-time comparison to prevent timing attacks
-  if (expected.length !== token.length) return false;
+  if (expected.length !== signature.length) return false;
   let mismatch = 0;
   for (let i = 0; i < expected.length; i++) {
-    mismatch |= expected.charCodeAt(i) ^ token.charCodeAt(i);
+    mismatch |= expected.charCodeAt(i) ^ signature.charCodeAt(i);
   }
   return mismatch === 0;
 }

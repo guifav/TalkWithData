@@ -19,7 +19,6 @@ import { useCategories } from "@/hooks/use-categories";
 import { useFolders } from "@/hooks/use-folders";
 import { useSharedFolders } from "@/hooks/use-shared-folders";
 import { useMcpAccess } from "@/hooks/mcp-access-context";
-import { useUserDepartmentIds } from "@/hooks/use-departments";
 import {
   subscribeToDashboards,
   subscribeToArchivedDashboards,
@@ -114,18 +113,14 @@ export default function HomePage() {
     }
   }, [isAuthenticated, loading, router]);
 
-  const { departmentIds: userDepartmentIds, loading: deptsLoading } = useUserDepartmentIds();
-
   useEffect(() => {
-    if (!firebaseUser || deptsLoading) return;
+    if (!firebaseUser) return;
     const unsub = subscribeToDashboards(
       firebaseUser.uid,
-      firebaseUser.email || "",
       (d: Dashboard[]) => { setDirectDashboards(d); setDashboardsLoaded(true); },
-      userDepartmentIds
     );
     return unsub;
-  }, [firebaseUser, userDepartmentIds, deptsLoading]);
+  }, [firebaseUser]);
 
   useEffect(() => {
     if (!firebaseUser) return;

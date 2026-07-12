@@ -132,6 +132,20 @@ npm run lint
 npm run build
 ```
 
+Run the primary browser journeys from `app` with Docker and Java 21 or newer
+available:
+
+```bash
+npx playwright install --with-deps chromium
+npm run test:e2e
+```
+
+The command provisions an isolated PostgreSQL 16 container, Firebase Auth and
+Firestore emulators, local dashboard storage, and a neutral local CSV fixture.
+It never uses production Firebase or GCP credentials. Traces and screenshots
+are retained only when a test fails, then session and credential values are
+redacted before artifacts can be uploaded.
+
 ## Deployment
 
 Docker is the recommended portable runtime. Build from `app/Dockerfile`, provide the same variables from `app/.env.example`, and expose container port `8080` through your platform.

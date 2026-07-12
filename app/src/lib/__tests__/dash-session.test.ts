@@ -6,6 +6,7 @@ async function loadDashSession() {
 }
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllEnvs();
 });
 
@@ -36,8 +37,8 @@ describe("dash session secret resolution", () => {
     vi.stubEnv("DASHBOARD_SESSION_SECRET", undefined);
     const { createDashSessionToken, verifyDashSessionToken } = await loadDashSession();
     const a = createDashSessionToken("dash1");
-    expect(createDashSessionToken("dash1")).toBe(a);
     expect(verifyDashSessionToken("dash1", a)).toBe(true);
+    expect(verifyDashSessionToken("dash1", createDashSessionToken("dash1"))).toBe(true);
   });
 
   it("rejects tokens presented for a different scope", async () => {
@@ -45,5 +46,17 @@ describe("dash session secret resolution", () => {
     const { createDashSessionToken, verifyDashSessionToken } = await loadDashSession();
     const readToken = createDashSessionToken("dash1", "read");
     expect(verifyDashSessionToken("dash1", readToken, "write")).toBe(false);
+  });
+
+  it("rejects an expired token", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+    vi.stubEnv("DASHBOARD_SESSION_SECRET", "s3cret");
+    const { createDashSessionToken, verifyDashSessionToken } = await loadDashSession();
+    const token = createDashSessionToken("dash1", "read");
+
+    vi.advanceTimersByTime(10 * 60 * 1000 + 1);
+
+    expect(verifyDashSessionToken("dash1", token, "read")).toBe(false);
   });
 });

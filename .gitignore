@@ -58,3 +58,8 @@ application_default_credentials.json
 
 # Test coverage
 coverage/
+
+# Browser test artifacts
+.tmp/
+test-results/
+playwright-report/
