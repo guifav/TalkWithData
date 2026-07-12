@@ -8,9 +8,11 @@ RUN_ID="$$"
 TMP_DIR="$(mktemp -d)"
 CONTAINERS=()
 BUILD_COMMAND=(docker build)
+MIGRATOR_BUILD_COMMAND=(docker build)
 
 if [[ "${TWD_RUNTIME_CONFIG_NO_CACHE:-0}" == "1" ]]; then
   BUILD_COMMAND+=(--no-cache)
+  MIGRATOR_BUILD_COMMAND+=(--no-cache)
 fi
 
 cleanup() {
@@ -74,7 +76,7 @@ docker run --rm --entrypoint sh "$IMAGE" -c '
 docker run --rm --entrypoint node "$IMAGE" -e '
   const manifest = require("/app/licenses/npm/manifest.json");
   const names = new Set(manifest.packages.map((entry) => entry.name));
-  for (const name of ["firebase-admin", "@duckdb/node-api", "@duckdb/node-bindings", "exceljs", "unzipper"]) {
+  for (const name of ["firebase-admin", "@duckdb/node-api", "@duckdb/node-bindings", "exceljs", "unzipper", "lucide-react", "radix-ui", "recharts", "sonner"]) {
     if (!names.has(name)) throw new Error(`missing runner license bundle for ${name}`);
   }
   if (manifest.packages.some((entry) => entry.files.length === 0)) {
@@ -82,8 +84,11 @@ docker run --rm --entrypoint node "$IMAGE" -e '
   }
 '
 
-docker build -t "$MIGRATOR_IMAGE" --target migrator \
+MIGRATOR_BUILD_COMMAND+=(
+  -t "$MIGRATOR_IMAGE" --target migrator
   -f "$ROOT_DIR/app/Dockerfile" "$ROOT_DIR"
+)
+"${MIGRATOR_BUILD_COMMAND[@]}"
 docker run --rm --entrypoint sh "$MIGRATOR_IMAGE" -c '
   test -s /app/licenses/LICENSE
   test -s /app/licenses/THIRD_PARTY_NOTICES.md

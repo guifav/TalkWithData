@@ -180,6 +180,7 @@ function createSpdxLicenseFiles(entry, parseSpdxExpression, spdxLicenses) {
   } catch {
     return [];
   }
+  if (hasSpdxException(expression)) return [];
   const ids = Array.from(collectLicenseIds(expression)).sort();
   const files = [];
   for (const id of ids) {
@@ -203,6 +204,14 @@ function createSpdxLicenseFiles(entry, parseSpdxExpression, spdxLicenses) {
     }, null, 2)}\n`,
   });
   return files;
+}
+
+function hasSpdxException(expression) {
+  return Boolean(
+    expression.exception
+      || (expression.left && hasSpdxException(expression.left))
+      || (expression.right && hasSpdxException(expression.right)),
+  );
 }
 
 function collectLicenseIds(expression, ids = new Set()) {

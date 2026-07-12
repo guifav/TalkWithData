@@ -21,8 +21,9 @@ Successful authenticated requests emit redacted JSON lifecycle events. The funct
 
 ```bash
 cd functions/generate-thumbnail
-npm install && npm run build
+npm ci && npm run build && npm run package:release
 gcloud functions deploy generateThumbnail \
+  --source .release \
   --gen2 \
   --runtime nodejs22 \
   --trigger-http \
@@ -33,6 +34,10 @@ gcloud functions deploy generateThumbnail \
   --project <firebase-project-id> \
   --set-env-vars THUMBNAIL_SECRET=<secret>,STORAGE_BUCKET_NAME=<storage-bucket>
 ```
+
+The packaging step copies only tracked function sources plus the canonical
+project notices and a generated license bundle for the installed dependency
+graph. Do not deploy directly from the working directory.
 
 After deploying, set the function URL on Cloud Run:
 

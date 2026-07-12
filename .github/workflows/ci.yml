@@ -127,6 +127,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Package release with licenses
+        run: npm run package:release
+
   browser-e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 15

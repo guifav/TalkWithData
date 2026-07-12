@@ -18,7 +18,7 @@ ENV NEXT_PUBLIC_GIT_COMMIT=$GIT_COMMIT
 ENV NEXT_PUBLIC_BUILD_TIME=$BUILD_TIME
 RUN npm run build \
     && node scripts/collect-artifact-licenses.mjs \
-      .next/standalone node_modules .next/standalone/licenses/npm
+      . node_modules .next/standalone/licenses/npm
 
 # Disposable image used by the Docker Compose local-storage contract test.
 FROM deps AS storage-smoke

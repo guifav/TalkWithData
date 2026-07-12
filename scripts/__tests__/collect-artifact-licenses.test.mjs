@@ -97,6 +97,29 @@ test("rejects an artifact package without a distributable license source", async
   );
 });
 
+test("rejects a WITH expression when the package ships no exception text", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "twd-artifact-licenses-"));
+  const artifact = path.join(root, "artifact");
+  const source = path.join(root, "source");
+  const metadata = {
+    name: "example",
+    version: "1.0.0",
+    license: "GPL-2.0-only WITH Classpath-exception-2.0",
+  };
+  await writePackage(path.join(artifact, "node_modules/example"), metadata);
+  await writePackage(path.join(source, "example"), metadata);
+
+  await assert.rejects(
+    collectArtifactLicenses({
+      artifactDir: artifact,
+      sourceNodeModules: source,
+      outputDir: path.join(root, "output"),
+      toolPackageFile,
+    }),
+    /example@1\.0\.0 has no LICENSE, NOTICE, or COPYING file/,
+  );
+});
+
 async function writePackage(directory, metadata) {
   await mkdir(directory, { recursive: true });
   await writeFile(path.join(directory, "package.json"), `${JSON.stringify(metadata)}\n`);

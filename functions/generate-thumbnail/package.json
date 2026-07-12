@@ -12,16 +12,19 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
+    "package:release": "node ../../scripts/package-thumbnail-function.mjs",
     "test": "npm run build && node --test observability.test.cjs"
   },
   "dependencies": {
+    "@google-cloud/firestore": "^8",
     "@google-cloud/functions-framework": "^5",
     "@google-cloud/storage": "^7",
-    "@google-cloud/firestore": "^8",
     "@sparticuz/chromium": "^149",
     "puppeteer-core": "^25"
   },
   "devDependencies": {
+    "spdx-expression-parse": "4.0.0",
+    "spdx-license-list": "6.11.0",
     "typescript": "^6"
   }
 }

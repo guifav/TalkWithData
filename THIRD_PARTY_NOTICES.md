@@ -10,8 +10,9 @@ publishers remain responsible for confirming that the licenses and notices in
 the actual artifact are complete.
 
 The production application and migration containers store this file, the locked
-inventory, the project license, and generated per-artifact package license
-bundles under `/app/licenses`.
+inventory, the project license, and generated package license bundles under
+`/app/licenses`. The packaged thumbnail function carries the same records under
+its `licenses` directory.
 
 ## Lucide favicon and icons
 
