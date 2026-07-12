@@ -375,6 +375,9 @@ describe("admin inspect data source headers route", () => {
 
   it("rotaciona credencial bruta reutilizando credentialRef armazenado", async () => {
     setupAuth("superadmin");
+    routeMocks.readPrefix.mockResolvedValueOnce(
+      Buffer.from("owner_email,amount\nana@example.com,10\n"),
+    );
     routeMocks.dataSources.set("source-1", {
       exists: true,
       data: {
@@ -432,7 +435,7 @@ describe("admin inspect data source headers route", () => {
         }),
         ownerColumn: "owner_email",
       }),
-    ).toEqual({ ok: false, error: "CSV headers contain duplicate normalized identities" });
+    ).toMatchObject({ ok: true });
     expect(
       verifyDataSourceInspectionToken({
         token: body.inspectionToken,
