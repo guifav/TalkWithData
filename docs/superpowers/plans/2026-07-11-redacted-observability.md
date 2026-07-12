@@ -34,9 +34,9 @@
 
 ## Task 6: Validate and review
 
-- [ ] Run app lint, typecheck, tests, coverage, migrations, and build.
-- [ ] Run function tests and build.
-- [ ] Prove a representative secret/key never appears in captured output.
+- [x] Run app lint, typecheck, tests, coverage, migrations, and build.
+- [x] Run function tests and build.
+- [x] Prove a representative secret/key never appears in captured output.
 - [ ] Open a ready PR closing issue #56.
 - [ ] Run fresh GPT-5.6 Sol max, Claude Opus 4.8 max, and Kimi k2.7-code reviews on one pinned SHA.
 - [ ] Resolve or technically adjudicate every P0/P1/P2 before merge.
