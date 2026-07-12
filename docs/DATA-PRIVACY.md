@@ -62,10 +62,12 @@ the linked source before applying a destructive production operation.
 | `departments/{id}` | Name, description, member UIDs, creator, timestamps | Personal membership and authorization metadata. | Indefinite until a superadmin deletes it. Department deletion updates affected users according to the admin route. |
 | `shared-folders/{id}` | Dashboard IDs, owner identity, shared email and department lists, timestamps | Personal sharing metadata. Server-only collection; routes apply owner and recipient checks. | Indefinite until the folder owner deletes it. Dashboard deletion does not currently remove IDs from server-side shared folders. |
 | `data_sources/{id}` | External bucket and prefix, encrypted credential material or reference, owner column, grants, creator, configuration version | Credential material, access policy, and external location metadata. Firestore rules deny all client access; superadmin routes mediate access. | Indefinite until a superadmin deletes the data source. Deletion removes the Firestore configuration, not objects in the external bucket. |
-| `ai_config_secrets/{uid}` | AES-256-GCM encrypted custom-provider API key | Credential. Client access is denied by Firestore rules. The encryption key comes from deployment secrets and is not stored with the ciphertext. | Indefinite while configured. Deleted when the custom key is cleared or replaced by a provider that does not use it. Losing the encryption key makes ciphertext unrecoverable. |
+| `ai_config_secrets/{uid}` | AES-256-GCM encrypted custom-provider API key | Credential. Client access is denied by Firestore rules. In production, the encryption key must come from deployment secrets and is not stored with the ciphertext. Non-production mode falls back to a public development key when the environment key is unset and must never contain real credentials. | Indefinite while configured. Deleted when the custom key is cleared or replaced by a provider that does not use it. Losing the encryption key makes ciphertext unrecoverable. |
 | `mcp_servers/{id}` and `mcp_access/{serverId}` | MCP endpoint, tool metadata, status, user and department grants, updater identity | Endpoint configuration and personal authorization metadata. Server routes are superadmin-only. | Indefinite until changed or deleted through admin controls. Deleting an MCP server does not delete the corresponding access-grant document. Remote MCP systems have their own retention policies. |
 | `app_prompts/{key}` and `app_prompts/{key}/versions/{versionId}` | Active and draft prompt text, immutable versions, change summaries, author identity, timestamps | Potentially confidential instructions and personal author metadata. Server-only collection. | Indefinite. Publishing and restoring preserve history; no automatic pruning is implemented. Deleting a prompt parent document would not recursively delete its version subcollection. |
-| `settings/categories`, `pendingRoles/{id}`, `slugs/{slug}` | Category list, bootstrap role assignments, and dashboard slug reservations | Configuration and authorization metadata. Server writes only. | Indefinite unless changed by an admin or released by dashboard deletion. Pending-role records have no automatic TTL. |
+| `settings/categories` | Category list | Configuration metadata. Authenticated users can read it; server-side admin routes write it. | Indefinite until changed by a superadmin. |
+| `pendingRoles/{id}` | Bootstrap role assignment | Authorization metadata. Authorized users can read; only the server writes. | Deleted when the role is consumed during the user's first successful initialization. Unused records have no automatic TTL. |
+| `slugs/{slug}` | Dashboard slug reservation | Server-only routing metadata. | Released after successful dashboard deletion and when slug-management code replaces a reservation. Failed best-effort release can leave an orphan. |
 
 Firestore document deletion does not delete subcollections. Operators that need
 complete erasure must explicitly enumerate and delete child collections, verify
@@ -85,14 +87,19 @@ Prisma migrations are forward-only. Database restoration is an operator-owned,
 separately authorized disaster-recovery procedure, as described in
 [Deployment](DEPLOYMENT.md).
 
-### Dashboard and external object storage
+### Dashboard, thumbnail, and external object storage
 
-Dashboard HTML, ZIP package assets, thumbnails, and saved versions are stored
-through the selected adapter:
+Dashboard HTML, ZIP package assets, and saved versions are stored through the
+selected adapter:
 
 - `gcs` stores objects in the configured Google Cloud Storage bucket.
 - `local` stores files below `LOCAL_STORAGE_ROOT`. Docker Compose mounts
   `/data` from the persistent `app_data` volume.
+
+Thumbnails do not use this adapter. Both the thumbnail API route and the
+optional thumbnail Cloud Function read and write the configured GCS bucket.
+A deployment using `STORAGE_PROVIDER=local` still needs
+`STORAGE_BUCKET_NAME` and GCS credentials for thumbnail generation and storage.
 
 Active dashboard deletion attempts to remove its current file or package
 prefix. Cleanup is best-effort after the authoritative Firestore document is
@@ -100,7 +107,9 @@ deleted. Single-file historical versions under `versions/<dashboardId>/` are
 not deleted by the dashboard delete route. Version creation keeps at most 10
 versions by deleting the oldest version object and metadata when a later
 version is created. Thumbnail replacement best-effort deletes the previous
-thumbnail.
+thumbnail. Dashboard deletion does not delete the current
+`thumbnailStoragePath`, so that GCS object remains orphaned until an operator
+removes it or a bucket lifecycle rule expires it.
 
 External CSV objects remain in the operator's external bucket. Talk With Data
 reads them but does not delete or change them. Deleting a `data_sources`
@@ -160,9 +169,12 @@ enforce a region across those systems.
   trust a client-supplied role or sharing decision.
 - GCS and local dashboard storage are server-side resources. Firebase Storage
   rules do not protect them. Use IAM or filesystem permissions.
-- `TWD_AI_CONFIG_ENC_KEY` and `TWD_CREDENTIAL_ENC_KEY` protect stored
-  ciphertext. Keep keys in the platform secret service, back them up under the
-  operator's key-management policy, and rotate exposed provider credentials.
+- In production, `TWD_AI_CONFIG_ENC_KEY` and `TWD_CREDENTIAL_ENC_KEY` protect
+  stored ciphertext and must be explicitly configured. Non-production fallback
+  keys are public development fixtures and provide no protection for real
+  credentials. Keep production keys in the platform secret service, back them
+  up under the operator's key-management policy, and rotate exposed provider
+  credentials.
 - Database and object-store backups contain the same data classifications as
   the live stores and need equivalent access control and deletion procedures.
 
