@@ -38,7 +38,20 @@ test("migration verification emits a sanitized failure event", async () => {
   }
 });
 
-function runMigrationScript(commandDir) {
+test("migration verification honors the configured minimum log level", async () => {
+  const commandDir = await createMockCommands({ npmExitCode: 7 });
+  try {
+    const result = runMigrationScript(commandDir, { TWD_LOG_LEVEL: "error" });
+
+    assert.equal(result.status, 7);
+    assert.doesNotMatch(result.stdout, /"level":"info"/);
+    assert.match(result.stderr, /"event":"migration\.verification\.failed"/);
+  } finally {
+    await rm(commandDir, { recursive: true, force: true });
+  }
+});
+
+function runMigrationScript(commandDir, envOverrides = {}) {
   return spawnSync("sh", [scriptPath], {
     cwd: path.join(repoRoot, "app"),
     encoding: "utf8",
@@ -46,6 +59,7 @@ function runMigrationScript(commandDir) {
       ...process.env,
       DATABASE_URL: secretDatabaseUrl,
       PATH: `${commandDir}:${process.env.PATH}`,
+      ...envOverrides,
     },
   });
 }

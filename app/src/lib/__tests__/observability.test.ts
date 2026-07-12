@@ -20,6 +20,13 @@ const sensitiveMetadata = {
   uploadedDocumentContents: "private document text",
   storagePath: "dashboards/private/index.html",
   databaseUrl: "postgresql://operator:database-secret@private-db/app",
+  connectionString: "postgresql://operator:connection-secret@connection-db/app",
+  pgUrl: "postgresql://operator:pg-secret@pg-db/app",
+  password: "password-secret",
+  passwd: "passwd-secret",
+  pwd: "pwd-secret",
+  passphrase: "passphrase-secret",
+  saKeyJson: "service-account-json-secret",
   fallbackBucketAlias: "private-bucket",
   requestBody: { title: "private request title" },
   ownerEmail: "person@example.com",
@@ -45,6 +52,7 @@ describe("serializeOperationalEvent", () => {
         nested: sensitiveMetadata,
         list: [sensitiveMetadata],
         rowCount: 3,
+        keyCount: 4,
       },
     }, { now: () => new Date("2026-07-11T21:00:00.000Z") });
 
@@ -57,6 +65,7 @@ describe("serializeOperationalEvent", () => {
       nested: {},
       list: [{}],
       rowCount: 3,
+      keyCount: 4,
     });
 
     for (const forbidden of [
@@ -71,6 +80,13 @@ describe("serializeOperationalEvent", () => {
       "private document text",
       "person@example.com",
       "private-db",
+      "connection-db",
+      "pg-db",
+      "password-secret",
+      "passwd-secret",
+      "pwd-secret",
+      "passphrase-secret",
+      "service-account-json-secret",
       "private-bucket",
       "spoofed",
     ]) {

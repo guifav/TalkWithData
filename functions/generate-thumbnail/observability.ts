@@ -53,6 +53,15 @@ const SENSITIVE_KEYS = new Set([
   "bucketname",
   "databaseurl",
   "dburl",
+  "connectionstring",
+  "pgurl",
+  "password",
+  "passwd",
+  "pwd",
+  "passphrase",
+  "sakeyjson",
+  "buffer",
+  "buffers",
 ]);
 
 export function createFunctionCorrelationId(
@@ -141,7 +150,8 @@ function isSensitiveKey(key: string): boolean {
     normalized.includes("email") ||
     normalized.includes("path") ||
     normalized.includes("bucket") ||
-    normalized.endsWith("key")
+    normalized.includes("buffer") ||
+    (normalized.endsWith("key") && normalized !== "keycount")
   );
 }
 

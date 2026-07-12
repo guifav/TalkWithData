@@ -5,11 +5,25 @@ set -eu
 correlation_id="migration-$(date -u +%s)-$$"
 stage="preflight"
 
+configured_log_level="$(printf '%s' "${TWD_LOG_LEVEL:-info}" | tr '[:upper:]' '[:lower:]')"
+case "$configured_log_level" in
+  info|warn|error) ;;
+  *) configured_log_level="info" ;;
+esac
+
+should_log() {
+  case "$configured_log_level:$1" in
+    info:*|warn:warn|warn:error|error:error) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 log_event() {
   level="$1"
   event="$2"
   outcome="$3"
   event_stage="$4"
+  should_log "$level" || return 0
   timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   printf '{"timestamp":"%s","level":"%s","event":"%s","correlationId":"%s","outcome":"%s","operation":"verify_migrations","stage":"%s"}\n' \
     "$timestamp" "$level" "$event" "$correlation_id" "$outcome" "$event_stage"

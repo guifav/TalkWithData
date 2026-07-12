@@ -28,8 +28,17 @@ test("thumbnail events omit sensitive names and values", () => {
       htmlContent: "private uploaded HTML",
       documentContents: "private document contents",
       databaseUrl: "postgresql://operator:database-secret@private-db/app",
+      connectionString: "postgresql://operator:connection-secret@connection-db/app",
+      pgUrl: "postgresql://operator:pg-secret@pg-db/app",
+      password: "password-secret",
+      passwd: "passwd-secret",
+      pwd: "pwd-secret",
+      passphrase: "passphrase-secret",
+      saKeyJson: "service-account-json-secret",
       fallbackBucketAlias: "private-bucket",
       storagePath: "dashboards/private/index.html",
+      buffer: Buffer.from("private-buffer"),
+      keyCount: 4,
       error: new Error("gs://private-bucket/private-file"),
     },
   }, {
@@ -46,6 +55,7 @@ test("thumbnail events omit sensitive names and values", () => {
     event: "thumbnail.generation.failed",
     correlationId: "thumbnail-request-123",
     outcome: "failed",
+    keyCount: 4,
     error: { name: "Error" },
   });
 
@@ -65,6 +75,14 @@ test("thumbnail events omit sensitive names and values", () => {
     "request-secret",
     "private-bucket",
     "private-db",
+    "connection-db",
+    "pg-db",
+    "password-secret",
+    "passwd-secret",
+    "pwd-secret",
+    "passphrase-secret",
+    "service-account-json-secret",
+    "private-buffer",
     "spoofed",
   ]) {
     assert.equal(serialized.toLowerCase().includes(forbidden.toLowerCase()), false);

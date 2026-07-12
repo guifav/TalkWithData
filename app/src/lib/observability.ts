@@ -80,8 +80,16 @@ const EXACT_SENSITIVE_KEYS = new Set([
   "bucket",
   "bucketname",
   "buffer",
+  "buffers",
   "databaseurl",
   "dburl",
+  "connectionstring",
+  "pgurl",
+  "password",
+  "passwd",
+  "pwd",
+  "passphrase",
+  "sakeyjson",
 ]);
 
 export function createCorrelationId(
