@@ -14,6 +14,10 @@ test("thumbnail events omit sensitive names and values", () => {
     correlationId: "thumbnail-request-123",
     metadata: {
       outcome: "failed",
+      timestamp: "spoofed",
+      level: "info",
+      event: "thumbnail.generation.succeeded",
+      correlationId: "spoofed",
       authorization: "Bearer request-secret",
       cookie: "session=cookie-secret",
       internalKey: "internal-secret",
@@ -22,6 +26,9 @@ test("thumbnail events omit sensitive names and values", () => {
       prompt: "private prompt",
       rows: [{ value: "private row" }],
       htmlContent: "private uploaded HTML",
+      documentContents: "private document contents",
+      databaseUrl: "postgresql://operator:database-secret@private-db/app",
+      fallbackBucketAlias: "private-bucket",
       storagePath: "dashboards/private/index.html",
       error: new Error("gs://private-bucket/private-file"),
     },
@@ -52,8 +59,13 @@ test("thumbnail events omit sensitive names and values", () => {
     "rows",
     "htmlContent",
     "storagePath",
+    "documentContents",
+    "databaseUrl",
+    "fallbackBucketAlias",
     "request-secret",
     "private-bucket",
+    "private-db",
+    "spoofed",
   ]) {
     assert.equal(serialized.toLowerCase().includes(forbidden.toLowerCase()), false);
   }

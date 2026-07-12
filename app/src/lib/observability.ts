@@ -80,6 +80,8 @@ const EXACT_SENSITIVE_KEYS = new Set([
   "bucket",
   "bucketname",
   "buffer",
+  "databaseurl",
+  "dburl",
 ]);
 
 export function createCorrelationId(
@@ -150,11 +152,11 @@ export function serializeOperationalEvent(
   const safeMetadata = isRecord(metadata) ? metadata : {};
 
   return JSON.stringify({
+    ...safeMetadata,
     timestamp: (options.now ?? (() => new Date()))().toISOString(),
     level: input.level,
     event: input.event,
     correlationId: input.correlationId,
-    ...safeMetadata,
   });
 }
 
@@ -254,6 +256,8 @@ function isSensitiveKey(key: string): boolean {
     normalized.includes("privatekey") ||
     normalized.includes("token") ||
     normalized.includes("email") ||
+    normalized.includes("path") ||
+    normalized.includes("bucket") ||
     (normalized.endsWith("key") && normalized !== "keycount")
   );
 }

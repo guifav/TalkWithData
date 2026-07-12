@@ -42,10 +42,17 @@ const SENSITIVE_KEYS = new Set([
   "filecontent",
   "uploadedcontent",
   "uploadeddocumentcontent",
+  "uploadeddocumentcontents",
+  "uploadeddocument",
+  "documentcontent",
+  "documentcontents",
+  "content",
   "storagepath",
   "thumbnailstoragepath",
   "bucket",
   "bucketname",
+  "databaseurl",
+  "dburl",
 ]);
 
 export function createFunctionCorrelationId(
@@ -64,11 +71,11 @@ export function writeThumbnailEvent(
   const metadata = sanitizeValue(input.metadata ?? {}, 0, new WeakSet());
 
   sink[input.level](JSON.stringify({
+    ...(isRecord(metadata) ? metadata : {}),
     timestamp: now().toISOString(),
     level: input.level,
     event: input.event,
     correlationId: input.correlationId,
-    ...(isRecord(metadata) ? metadata : {}),
   }));
 }
 
@@ -132,7 +139,8 @@ function isSensitiveKey(key: string): boolean {
     normalized.includes("internalkey") ||
     normalized.includes("token") ||
     normalized.includes("email") ||
-    normalized.endsWith("path") ||
+    normalized.includes("path") ||
+    normalized.includes("bucket") ||
     normalized.endsWith("key")
   );
 }

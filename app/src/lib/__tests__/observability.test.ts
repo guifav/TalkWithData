@@ -18,6 +18,9 @@ const sensitiveMetadata = {
   prompt: "private prompt text",
   rows: [{ customer: "private row value" }],
   uploadedDocumentContents: "private document text",
+  storagePath: "dashboards/private/index.html",
+  databaseUrl: "postgresql://operator:database-secret@private-db/app",
+  fallbackBucketAlias: "private-bucket",
   requestBody: { title: "private request title" },
   ownerEmail: "person@example.com",
 };
@@ -34,6 +37,10 @@ describe("serializeOperationalEvent", () => {
       event: "request.upload.failed",
       correlationId: "request-12345678",
       metadata: {
+        timestamp: "spoofed",
+        level: "info",
+        event: "storage.operation.succeeded",
+        correlationId: "spoofed",
         operation: "upload",
         nested: sensitiveMetadata,
         list: [sensitiveMetadata],
@@ -63,6 +70,9 @@ describe("serializeOperationalEvent", () => {
       "private row value",
       "private document text",
       "person@example.com",
+      "private-db",
+      "private-bucket",
+      "spoofed",
     ]) {
       expect(serialized.toLowerCase()).not.toContain(forbidden.toLowerCase());
     }
