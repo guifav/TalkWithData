@@ -73,6 +73,7 @@ docker run --rm --entrypoint sh "$IMAGE" -c '
   test -s /app/licenses/THIRD_PARTY_NOTICES.md
   test -s /app/licenses/docs/THIRD-PARTY-LICENSES.md
   test -s /app/licenses/base/manifest.json
+  test -s /app/licenses/base/runtime/docker-node-LICENSE.txt
 '
 docker run --rm --entrypoint node "$IMAGE" -e '
   const fs = require("node:fs");
@@ -109,6 +110,12 @@ docker run --rm --entrypoint node "$IMAGE" -e '
       throw new Error(`missing base image inventory entry ${name}`);
     }
   }
+  const entrypoint = base.reviewedFiles.find(
+    (entry) => entry.source === "usr/local/bin/docker-entrypoint.sh",
+  );
+  if (entrypoint?.sha256 !== "a15ac9589c04baf9da95b08e0e79b5cf1d75ab8dc64e06a5e68e4ceb0ad7c8ea") {
+    throw new Error("base image entrypoint is not bound to the reviewed docker-node source");
+  }
 '
 
 MIGRATOR_BUILD_COMMAND+=(
@@ -121,6 +128,7 @@ docker run --rm --entrypoint sh "$MIGRATOR_IMAGE" -c '
   test -s /app/licenses/THIRD_PARTY_NOTICES.md
   test -s /app/licenses/docs/THIRD-PARTY-LICENSES.md
   test -s /app/licenses/base/manifest.json
+  test -s /app/licenses/base/runtime/docker-node-LICENSE.txt
 '
 docker run --rm --entrypoint node "$MIGRATOR_IMAGE" -e '
   const manifest = require("/app/licenses/npm/manifest.json");

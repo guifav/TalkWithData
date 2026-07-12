@@ -131,6 +131,8 @@ inventory changes. They preserve the Node, Yarn, npm, and Corepack notices and
 generate the applicable SPDX texts for every declared Alpine license under
 `/app/licenses/base`. GPL and LGPL entries also record the exact Alpine aports
 commit that provides the build recipe and upstream corresponding-source URLs.
+The inherited `nodejs/docker-node` entrypoint is checksum-bound to its reviewed
+upstream revision and its separate MIT notice is included in the base bundle.
 
 The thumbnail package additionally binds the four binary archives in
 `@sparticuz/chromium@149.0.0` to reviewed SHA-256 values. It carries the exact
@@ -138,6 +140,8 @@ Chromium `149.0.7827.22` license and generated third-party credits, plus the
 Open Sans, Amazon Linux NSS, NSPR, and Expat license texts documented in
 `third_party/chromium-149.0.7827.22/BINARY-PAYLOAD-NOTICES.md`. A payload hash
 or dependency version change blocks packaging until those notices are reviewed.
+The NSS and NSPR files are byte-matched to exact Amazon Linux binary RPMs, which
+are in turn linked to an immutable, checksum-pinned corresponding source RPM.
 CI validates all three release artifacts.
 
 ## Procedure for future additions

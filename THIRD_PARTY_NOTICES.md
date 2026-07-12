@@ -243,3 +243,11 @@ the preserved Node.js, Yarn, npm, and Corepack notices under
 commits for packages under GPL or LGPL terms. A digest, runtime version, package
 version, or declared license change fails the build until the policy is reviewed
 and updated.
+
+The base image also includes `docker-entrypoint.sh` from the
+[`nodejs/docker-node`](https://github.com/nodejs/docker-node) project. The build
+checks the inherited script against SHA-256
+`a15ac9589c04baf9da95b08e0e79b5cf1d75ab8dc64e06a5e68e4ceb0ad7c8ea`,
+which matches the file at upstream commit
+`3101ce6b5b3a0308b58d464eef141e0043c3bf5b`. Its MIT license is preserved as
+`/app/licenses/base/runtime/docker-node-LICENSE.txt`.

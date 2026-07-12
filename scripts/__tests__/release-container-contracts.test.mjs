@@ -69,8 +69,26 @@ test("CI and Docker builds enforce all release license contracts", async () => {
 
   assert.match(workflow, /node --test \.\.\/scripts\/__tests__\/\*\.test\.mjs/);
   assert.match(dockerfile, /collect-base-image-licenses\.mjs/);
+  assert.match(dockerfile, /third_party\/nodejs-docker-node\/LICENSE\.txt/);
   assert.match(dockerfile, /artifact-license-supplements\.json/);
   assert.match(dockerfile, /COPY --from=base-license-builder \/base-licenses \.\/licenses\/base/g);
+});
+
+test("binary release sources are bound to immutable upstream evidence", async () => {
+  const policy = JSON.parse(
+    await readFile(path.join(root, "scripts/base-image-policy.json"), "utf8"),
+  );
+  const chromium = await readFile(
+    path.join(root, "third_party/chromium-149.0.7827.22/BINARY-PAYLOAD-NOTICES.md"),
+    "utf8",
+  );
+
+  assert.deepEqual(policy.reviewedFiles, [{
+    source: "usr/local/bin/docker-entrypoint.sh",
+    sha256: "a15ac9589c04baf9da95b08e0e79b5cf1d75ab8dc64e06a5e68e4ceb0ad7c8ea",
+  }]);
+  assert.match(chromium, /nss-3\.90\.0-7\.amzn2023\.0\.1\.src\.rpm/);
+  assert.match(chromium, /a30b86aa61b0b4afd66c3b3cad93bdd10c5cb04d313c50be857a32536841f2e0/);
 });
 
 function escapeRegExp(value) {

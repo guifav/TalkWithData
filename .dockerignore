@@ -28,6 +28,8 @@ app/**
 !scripts/collect-base-image-licenses.mjs
 !scripts/artifact-license-supplements.json
 !scripts/base-image-policy.json
+!third_party/nodejs-docker-node
+!third_party/nodejs-docker-node/LICENSE.txt
 
 app/.env*
 app/**/.env*

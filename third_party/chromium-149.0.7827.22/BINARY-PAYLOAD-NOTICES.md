@@ -31,6 +31,35 @@ libraries in Brotli archives.
   `libnspr4`, `libplc4`, and `libplds4`.
 - `MIT.txt` covers the Expat library in `al2023.tar.br`.
 
+## Amazon Linux NSS and NSPR source mapping
+
+Every NSS and NSPR file in the checksum-pinned `al2023.tar.br` is byte-identical
+to the corresponding file in these immutable x86_64 RPMs indexed by Amazon
+Linux 2023 release `2023.11.20260526`:
+
+| Binary RPM | SHA-256 |
+| --- | --- |
+| `nspr-4.35.0-7.amzn2023.0.1.x86_64.rpm` | `88c71810bd10fbc18eb36d3e09af66688fe3dc4dbb9ea89e0be06288aef1fbd6` |
+| `nss-3.90.0-7.amzn2023.0.1.x86_64.rpm` | `022f66f7f3ef96747a462f3344d6ee792ebb33e0a740591dc3895078bf29e07c` |
+| `nss-softokn-3.90.0-7.amzn2023.0.1.x86_64.rpm` | `8bfb9efa21d957f1418fc73097f48f984f7a5bacdeb3ac64930250ec977698af` |
+| `nss-softokn-freebl-3.90.0-7.amzn2023.0.1.x86_64.rpm` | `85fde1a8bac535e89a61e7532c18a2d1e25f12c279babd328fcf3cc1bf86091c` |
+| `nss-util-3.90.0-7.amzn2023.0.1.x86_64.rpm` | `88de82dbc60633ce9df38c54af644c04fe8e6fd2d18238037660c6e08ec6ead8` |
+
+Amazon Linux builds both NSS and NSPR from the combined source RPM below. It
+is the corresponding Source Code Form for those binary RPMs and is available
+from Amazon's immutable, content-addressed package store:
+
+- Source RPM: `nss-3.90.0-7.amzn2023.0.1.src.rpm`
+- SHA-256: `a30b86aa61b0b4afd66c3b3cad93bdd10c5cb04d313c50be857a32536841f2e0`
+- Download: <https://cdn.amazonlinux.com/al2023/blobstore/a30b86aa61b0b4afd66c3b3cad93bdd10c5cb04d313c50be857a32536841f2e0/nss-3.90.0-7.amzn2023.0.1.src.rpm>
+- Release package index: <https://docs.aws.amazon.com/linux/al2023/release-notes/all-packages-AL2023.11.html>
+- Sparticuz packaging script: <https://github.com/Sparticuz/chromium/blob/3dbad602c0229d0bcfbccd3e9474536d5353a2fd/_/ec2/build-x64.sh>
+
+The immutable binary RPMs use the same content-addressed URL pattern, with the
+table SHA-256 as both the `blobstore` directory and the integrity value. This
+mapping ties the reviewed `al2023.tar.br` hash to exact redistributable binaries
+and to their corresponding source package.
+
 The three SPDX-named standard texts are generated from the locked
 `spdx-license-list@6.11.0` development dependency while packaging the function.
 
@@ -43,8 +72,7 @@ The three SPDX-named standard texts are generated from the locked
 - Sparticuz Chromium release:
   <https://github.com/Sparticuz/chromium/releases/tag/v149.0.0>
 - Open Sans source: <https://github.com/googlefonts/opensans>
-- NSS source: <https://hg.mozilla.org/projects/nss/>
-- NSPR source: <https://hg.mozilla.org/projects/nspr/>
+- Exact Amazon Linux NSS and NSPR source RPM: see the mapping above.
 - Expat source: <https://github.com/libexpat/libexpat>
 
 The Chromium credits file is compressed only to avoid adding roughly 19 MB of

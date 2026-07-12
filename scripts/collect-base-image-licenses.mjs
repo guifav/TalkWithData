@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { createHash } from "node:crypto";
 import { copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
@@ -71,10 +72,34 @@ export async function collectBaseImageLicenses({
   for (const notice of notices) {
     const source = path.join(filesystemRoot, notice.source);
     const destination = path.join(outputDir, "runtime", notice.name);
-    await copyFile(source, destination).catch(() => {
+    const contents = await readFile(source).catch(() => {
       throw new Error(`base image is missing required notice /${notice.source}`);
     });
+    if (notice.sha256) {
+      const sha256 = createHash("sha256").update(contents).digest("hex");
+      if (sha256 !== notice.sha256) {
+        throw new Error(
+          `base image notice /${notice.source} has SHA-256 ${sha256}, expected ${notice.sha256}`,
+        );
+      }
+    }
+    await copyFile(source, destination);
     licenseFiles.push(`runtime/${notice.name}`);
+  }
+
+  const reviewedFiles = [];
+  for (const reviewed of policy.reviewedFiles ?? []) {
+    const source = path.join(filesystemRoot, reviewed.source);
+    const contents = await readFile(source).catch(() => {
+      throw new Error(`base image is missing reviewed file /${reviewed.source}`);
+    });
+    const sha256 = createHash("sha256").update(contents).digest("hex");
+    if (sha256 !== reviewed.sha256) {
+      throw new Error(
+        `base image reviewed file /${reviewed.source} has SHA-256 ${sha256}, expected ${reviewed.sha256}`,
+      );
+    }
+    reviewedFiles.push({ source: reviewed.source, sha256 });
   }
 
   const sourceEntries = new Map();
@@ -108,6 +133,7 @@ export async function collectBaseImageLicenses({
     nodeVersion,
     yarnVersion,
     alpinePackages,
+    reviewedFiles,
     licenseFiles: licenseFiles.sort(),
   };
   await writeFile(path.join(outputDir, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);

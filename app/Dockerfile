@@ -12,6 +12,7 @@ FROM deps AS base-license-builder
 ARG NODE_IMAGE
 ENV TWD_BASE_IMAGE=$NODE_IMAGE
 COPY scripts/collect-base-image-licenses.mjs scripts/base-image-policy.json /app/scripts/
+COPY third_party/nodejs-docker-node/LICENSE.txt /base-license-supplements/docker-node-LICENSE.txt
 RUN node /app/scripts/collect-base-image-licenses.mjs \
       /base-licenses /app/scripts/base-image-policy.json /app/package.json
 
