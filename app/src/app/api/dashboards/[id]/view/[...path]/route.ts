@@ -3,6 +3,7 @@ import { verifyRequest } from "@/lib/api-auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { getDashboardAsset } from "@/lib/storage";
 import { verifyEmbedToken } from "@/lib/embed-tokens";
+import { canViewDashboardViaSharedFolder } from "@/lib/permissions";
 import { prepareDashboardHtmlForRender } from "@/lib/dashboard-html";
 import { verifyDashSessionToken, createDashSessionToken } from "@/lib/dash-session";
 import {
@@ -114,7 +115,10 @@ export async function GET(
           );
         }
         if (!hasDeptAccess) {
-          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+          const folderAccess = await canViewDashboardViaSharedFolder(id, auth, adminDb);
+          if (!folderAccess.allowed) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+          }
         }
       }
     }
