@@ -18,8 +18,8 @@ export function HomeHeader({
   search: string;
   onSearchChange: (value: string) => void;
   categories: string[];
-  categoryFilter: string;
-  onCategoryChange: (value: string) => void;
+  categoryFilter: string | null;
+  onCategoryChange: (value: string | null) => void;
   hasMcpAccess: boolean;
 }) {
   return (
@@ -28,7 +28,7 @@ export function HomeHeader({
         <div className="relative w-full sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar dashboards..."
+            placeholder="Search dashboards..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             className="pl-9"
@@ -40,20 +40,27 @@ export function HomeHeader({
       </div>
 
       <div className="flex items-center gap-1 overflow-x-auto pb-1 [scrollbar-width:thin]">
-        {(categories.length > 0 ? ["Todas", ...categories] : []).map((cat) => {
-          const value = cat === "Todas" ? "All" : cat;
-          return (
-            <Button
-              key={cat}
-              variant={categoryFilter === value ? "default" : "outline"}
-              size="sm"
-              onClick={() => onCategoryChange(value)}
-              className="text-xs shrink-0"
-            >
-              {cat}
-            </Button>
-          );
-        })}
+        {categories.length > 0 && (
+          <Button
+            variant={categoryFilter === null ? "default" : "outline"}
+            size="sm"
+            onClick={() => onCategoryChange(null)}
+            className="text-xs shrink-0"
+          >
+            All
+          </Button>
+        )}
+        {categories.map((category) => (
+          <Button
+            key={category}
+            variant={categoryFilter === category ? "default" : "outline"}
+            size="sm"
+            onClick={() => onCategoryChange(category)}
+            className="text-xs shrink-0"
+          >
+            {category}
+          </Button>
+        ))}
       </div>
     </div>
   );

@@ -26,12 +26,12 @@ export function CreateMenu({ hasMcpAccess }: { hasMcpAccess: boolean }) {
       <DropdownMenuTrigger asChild>
         <Button>
           <Plus className="size-4" />
-          Novo dashboard
+          New dashboard
           <ChevronDown className="size-4 opacity-70" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72">
-        <DropdownMenuLabel>Como você quer começar?</DropdownMenuLabel>
+        <DropdownMenuLabel>How would you like to start?</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {hasMcpAccess && (
           <DropdownMenuItem asChild className="py-2">
@@ -40,13 +40,13 @@ export function CreateMenu({ hasMcpAccess }: { hasMcpAccess: boolean }) {
                 <Sparkles className="size-4 mt-0.5 shrink-0" />
                 <div className="flex flex-col">
                   <span className="font-medium flex items-center gap-1.5">
-                    Criar com IA
+                    Create with AI
                     <span className="inline-flex items-center rounded-full bg-purple-100 px-1.5 py-0 text-[10px] font-medium uppercase tracking-wide text-purple-800 dark:bg-purple-900/40 dark:text-purple-300">
                       Beta
                     </span>
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    Gere um dashboard a partir de um briefing · em testes
+                    Generate a dashboard from a brief, currently in beta
                   </span>
                 </div>
               </div>
@@ -60,9 +60,9 @@ export function CreateMenu({ hasMcpAccess }: { hasMcpAccess: boolean }) {
                 <div className="flex items-start gap-3">
                   <MessageSquare className="size-4 mt-0.5 shrink-0" />
                   <div className="flex flex-col">
-                    <span className="font-medium">Conversar com dados</span>
+                    <span className="font-medium">Chat with data</span>
                     <span className="text-xs text-muted-foreground">
-                      Explore e construa em um chat iterativo
+                      Explore and build in an interactive chat
                     </span>
                   </div>
                 </div>
@@ -73,9 +73,9 @@ export function CreateMenu({ hasMcpAccess }: { hasMcpAccess: boolean }) {
                 <div className="flex items-start gap-3">
                   <Compass className="size-4 mt-0.5 shrink-0" />
                   <div className="flex flex-col">
-                    <span className="font-medium">Explorar dados</span>
+                    <span className="font-medium">Explore data</span>
                     <span className="text-xs text-muted-foreground">
-                      Veja o que os MCPs autorizados oferecem
+                      See what your authorized MCP servers provide
                     </span>
                   </div>
                 </div>
@@ -89,9 +89,9 @@ export function CreateMenu({ hasMcpAccess }: { hasMcpAccess: boolean }) {
             <div className="flex items-start gap-3">
               <Upload className="size-4 mt-0.5 shrink-0" />
               <div className="flex flex-col">
-                <span className="font-medium">Upload de arquivo</span>
+                <span className="font-medium">Upload a file</span>
                 <span className="text-xs text-muted-foreground">
-                  Publique um HTML ou ZIP pronto
+                  Publish a ready HTML or ZIP file
                 </span>
               </div>
             </div>

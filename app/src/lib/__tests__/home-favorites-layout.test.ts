@@ -12,6 +12,7 @@ const homePageSource = readFileSync(
 describe("home favorites layout", () => {
   it("shows favorites as a main dashboard tab without a top favorites strip", () => {
     expect(homePageSource).not.toContain('title="Favoritos"');
+    expect(homePageSource).not.toContain('title="Favorites"');
     expect(homePageSource).toContain('value="favorites"');
   });
 });

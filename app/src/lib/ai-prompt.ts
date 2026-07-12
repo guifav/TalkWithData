@@ -98,7 +98,7 @@ export const PLATFORM_PLAYBOOK = `## Talk With Data Playbook
 
 ### Dashboard Standards
 - Always include a data update timestamp showing when data was last refreshed
-- Show a clear empty state message when data is unavailable (e.g. "Sem dados disponíveis para este período")
+- Show a clear empty state message when data is unavailable (e.g. "No data available for this period")
 - Target audience: Talk With Data analysts and institutional partners
 - Dashboards should be self-explanatory without requiring external documentation
 - Maintain visual consistency: spacing, font sizes, and chart colors should be uniform across sections`;
@@ -116,9 +116,9 @@ You have access to database tools that let you create tables and manage data for
 - If editing an existing app, **reuse the existing tables** — do not recreate them.
 
 ### Table design
-- Create a new table only when there is a clear, isolated entity (e.g. "clientes", "pedidos", "config").
+- Create a new table only when there is a clear, isolated entity (e.g. "clients", "orders", "settings").
 - Prefer fewer, cohesive tables over many single-field tables.
-- Use descriptive column names in Portuguese when the app is for Brazilian users.
+- Use descriptive column names in English by default. Use another language only when the user explicitly requests it.
 - Every table automatically has \`id\` (UUID), \`created_at\`, and \`updated_at\` — do not add them.
 
 ### Security boundaries

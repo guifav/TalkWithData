@@ -146,7 +146,7 @@ function SidebarNav({
 export default function GuidePage() {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
-  const [lang, setLang] = useState<Lang>("pt");
+  const [lang, setLang] = useState<Lang>("en");
   const [activeSection, setActiveSection] = useState(GUIDE_SECTIONS[0].id);
 
   useEffect(() => {
