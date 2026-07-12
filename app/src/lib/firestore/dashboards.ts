@@ -8,8 +8,6 @@ import {
   query,
   where,
   orderBy,
-  or,
-  and,
   type Query,
   type DocumentData,
 } from "firebase/firestore";
@@ -69,41 +67,34 @@ function dashboardsRef() {
 
 export function subscribeToDashboards(
   userId: string,
-  userEmail: string,
   callback: (dashboards: Dashboard[]) => void,
-  userDepartmentIds?: string[]
 ): () => void {
-  // Primary query: owner, team, or email-based access
-  const primaryQuery = query(
-    dashboardsRef(),
-    and(
+  // Firestore rules can prove owner and team list queries. Dynamic email and
+  // department membership cannot be proven safely for list queries, so those
+  // IDs are resolved by the authenticated server and read back individually.
+  const accessQueries = [
+    query(
+      dashboardsRef(),
       where("archivedAt", "==", null),
-      or(
-        where("createdBy", "==", userId),
-        where("visibility", "==", "team"),
-        where("allowedEmails", "array-contains", userEmail)
-      )
+      where("createdBy", "==", userId),
+      orderBy("createdAt", "desc"),
     ),
-    orderBy("createdAt", "desc")
-  );
+    query(
+      dashboardsRef(),
+      where("archivedAt", "==", null),
+      where("visibility", "==", "team"),
+      orderBy("createdAt", "desc"),
+    ),
+  ];
 
-  // If user has no departments, just use the primary query
-  if (!userDepartmentIds || userDepartmentIds.length === 0) {
-    return resilientSnapshot(
-      primaryQuery,
-      (docs) => callback(docs as Dashboard[]),
-      "subscribeToDashboards"
-    );
-  }
-
-  // Merge results from primary + department query
-  let primaryDocs: Dashboard[] = [];
-  let deptDocs: Dashboard[] = [];
+  const docsByQuery: Dashboard[][] = [...accessQueries.map(() => []), []];
+  const serverIndex = docsByQuery.length - 1;
+  let cancelled = false;
 
   function emitMerged() {
     const seen = new Set<string>();
     const merged: Dashboard[] = [];
-    for (const d of [...primaryDocs, ...deptDocs]) {
+    for (const d of docsByQuery.flat()) {
       if (!seen.has(d.id)) {
         seen.add(d.id);
         merged.push(d);
@@ -118,37 +109,40 @@ export function subscribeToDashboards(
     callback(merged);
   }
 
-  const unsubPrimary = resilientSnapshot(
-    primaryQuery,
-    (docs) => {
-      primaryDocs = docs as Dashboard[];
-      emitMerged();
-    },
-    "subscribeToDashboards:primary"
-  );
-
-  // Firestore array-contains-any supports up to 30 values
-  const deptSlice = userDepartmentIds.slice(0, 30);
-  const deptQuery = query(
-    dashboardsRef(),
-    and(
-      where("archivedAt", "==", null),
-      where("allowedDepartments", "array-contains-any", deptSlice)
+  const unsubscribers = accessQueries.map((accessQuery, index) =>
+    resilientSnapshot(
+      accessQuery,
+      (docs) => {
+        docsByQuery[index] = docs as Dashboard[];
+        emitMerged();
+      },
+      `subscribeToDashboards:${index}`,
     )
   );
 
-  const unsubDept = resilientSnapshot(
-    deptQuery,
-    (docs) => {
-      deptDocs = docs as Dashboard[];
+  void authFetch("/api/dashboards?scope=active-ids")
+    .then(async (response) => {
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const payload = (await response.json()) as { ids?: unknown };
+      const ids = Array.isArray(payload.ids)
+        ? payload.ids.filter((id): id is string => typeof id === "string")
+        : [];
+      const results = await Promise.allSettled(ids.map((id) => getDashboard(id)));
+      if (cancelled) return;
+      docsByQuery[serverIndex] = results.flatMap((result) =>
+        result.status === "fulfilled" && result.value ? [result.value] : []
+      );
       emitMerged();
-    },
-    "subscribeToDashboards:departments"
-  );
+    })
+    .catch((error: unknown) => {
+      if (!cancelled) {
+        console.warn("[subscribeToDashboards:accessible-ids] request failed", error);
+      }
+    });
 
   return () => {
-    unsubPrimary();
-    unsubDept();
+    cancelled = true;
+    for (const unsubscribe of unsubscribers) unsubscribe();
   };
 }
 

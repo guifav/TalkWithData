@@ -7,11 +7,16 @@ service cloud.firestore {
     }
 
     function userDepartment() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department;
+      let userPath = /databases/$(database)/documents/users/$(request.auth.uid);
+      return exists(userPath) &&
+        get(userPath).data.keys().hasAny(['department'])
+          ? get(userPath).data.department
+          : null;
     }
 
     function hasLegacyAiConfigSecretMaterial(data) {
-      return ('aiConfig' in data) &&
+      return data != null &&
+        ('aiConfig' in data) &&
         data.aiConfig is map &&
         (
           ('apiKey' in data.aiConfig) ||
@@ -23,10 +28,11 @@ service cloud.firestore {
     // Dashboards collection
     match /dashboards/{dashboardId} {
       allow read: if isAuthorizedUser() && (
-        request.auth.uid == resource.data.createdBy ||
-        resource.data.visibility == "team" ||
-        (('allowedEmails' in resource.data) && resource.data.allowedEmails is list && request.auth.token.email in resource.data.allowedEmails) ||
+        (('createdBy' in resource.data) && request.auth.uid == resource.data.createdBy) ||
+        (('visibility' in resource.data) && resource.data.visibility == "team") ||
+        (('allowedEmails' in resource.data) && resource.data.allowedEmails is list && resource.data.allowedEmails.hasAny([request.auth.token.email])) ||
         (
+          ('allowedDepartments' in resource.data) &&
           resource.data.allowedDepartments is list &&
           userDepartment() != null &&
           resource.data.allowedDepartments.hasAny([userDepartment()])
@@ -64,7 +70,7 @@ service cloud.firestore {
     // Users collection — all access requires authorized email domain
     match /users/{userId} {
       allow read: if isAuthorizedUser() && request.auth.uid == userId
-        && !hasLegacyAiConfigSecretMaterial(resource.data);
+        && (resource == null || !hasLegacyAiConfigSecretMaterial(resource.data));
       // Authorized users can create their own doc — role field BLOCKED (set server-side via Admin SDK)
       allow create: if isAuthorizedUser() && request.auth.uid == userId
         && !request.resource.data.keys().hasAny(['role', 'department', 'aiConfig']);

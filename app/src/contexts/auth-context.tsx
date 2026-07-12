@@ -61,7 +61,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         // Assign role server-side via Admin SDK (idempotent — skips if already set)
-        authFetch("/api/auth/init", { method: "POST" }).catch(() => {});
+        try {
+          await authFetch("/api/auth/init", { method: "POST" });
+        } catch {
+          // Authentication remains valid when role initialization is temporarily unavailable.
+          // The server defaults missing roles to least privilege.
+        }
       }
 
       setLoading(false);

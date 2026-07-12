@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
+    environment:
+      POSTGRES_USER: talkwithdata
+      POSTGRES_PASSWORD: talkwithdata
+      POSTGRES_DB: talkwithdata
+    ports:
+      - "127.0.0.1:${TWD_E2E_POSTGRES_PORT:-55556}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U talkwithdata -d talkwithdata"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+      start_period: 5s

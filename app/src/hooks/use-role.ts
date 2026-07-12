@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 
 export type UserRole = "user" | "admin" | "superadmin";
@@ -22,22 +22,21 @@ export function useRole() {
       return;
     }
 
-    async function fetchRole() {
-      try {
-        const userDoc = await getDoc(doc(db, "users", firebaseUser!.uid));
+    return onSnapshot(
+      doc(db, "users", firebaseUser.uid),
+      (userDoc) => {
         const data = userDoc.data();
         const r = data?.role as UserRole | undefined;
         setRole(r || "user");
         setDepartment(data?.department as string | undefined);
-      } catch {
+        setLoading(false);
+      },
+      () => {
         setRole("user");
         setDepartment(undefined);
-      } finally {
         setLoading(false);
-      }
-    }
-
-    fetchRole();
+      },
+    );
   }, [firebaseUser, isAuthenticated, authLoading]);
 
   return {

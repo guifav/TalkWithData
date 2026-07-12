@@ -7,7 +7,16 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  setDoc,
+  where,
+} from "firebase/firestore";
 
 const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST;
 const requireEmulator = process.env.REQUIRE_FIRESTORE_EMULATOR === "1";
@@ -58,6 +67,76 @@ describeWithEmulator("Firestore rules for AI config secrets", () => {
     const db = testEnv.authenticatedContext("uid-a", { email: "user@example.com" }).firestore();
 
     await assertSucceeds(getDoc(doc(db, "users", "uid-a")));
+  });
+
+  it("allows first login to check its own missing user document", async () => {
+    const db = testEnv.authenticatedContext("uid-new", { email: "new@example.com" }).firestore();
+
+    const snapshot = await assertSucceeds(getDoc(doc(db, "users", "uid-new")));
+
+    expect(snapshot.exists()).toBe(false);
+  });
+
+  it("allows rule-provable home queries and direct reads for email access", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "users", "uid-a"), {
+        email: "user@example.com",
+      });
+      await setDoc(doc(context.firestore(), "dashboards", "dash-owner-team"), {
+        createdBy: "uid-a",
+        visibility: "team",
+        allowedEmails: [],
+        allowedDepartments: [],
+        archivedAt: null,
+        createdAt: new Date("2026-01-01T00:00:00.000Z"),
+      });
+      await setDoc(doc(context.firestore(), "dashboards", "dash-email"), {
+        createdBy: "uid-b",
+        visibility: "specific",
+        allowedEmails: ["user@example.com"],
+        allowedDepartments: [],
+        archivedAt: null,
+        createdAt: new Date("2026-01-01T00:00:00.000Z"),
+      });
+    });
+    const db = testEnv.authenticatedContext("uid-a", { email: "user@example.com" }).firestore();
+    const homeQueries = [
+      query(
+        collection(db, "dashboards"),
+        where("archivedAt", "==", null),
+        where("createdBy", "==", "uid-a"),
+        orderBy("createdAt", "desc"),
+      ),
+      query(
+        collection(db, "dashboards"),
+        where("archivedAt", "==", null),
+        where("visibility", "==", "team"),
+        orderBy("createdAt", "desc"),
+      ),
+    ];
+
+    const results = [
+      await assertSucceeds(getDocs(homeQueries[0])),
+      await assertSucceeds(getDocs(homeQueries[1])),
+    ];
+
+    expect(results.flatMap((result) => result.docs.map((item) => item.id))).toEqual([
+      "dash-owner-team",
+      "dash-owner-team",
+    ]);
+    await assertSucceeds(getDoc(doc(db, "dashboards", "dash-email")));
+  });
+
+  it("rejects an email-filtered list query that rules cannot prove", async () => {
+    const db = testEnv.authenticatedContext("uid-a", { email: "user@example.com" }).firestore();
+    const emailQuery = query(
+      collection(db, "dashboards"),
+      where("archivedAt", "==", null),
+      where("allowedEmails", "array-contains", "user@example.com"),
+      orderBy("createdAt", "desc"),
+    );
+
+    await assertFails(getDocs(emailQuery));
   });
 
   it("denies a user document that still contains legacy secret material", async () => {
