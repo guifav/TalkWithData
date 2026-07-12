@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { createHash } from "crypto";
 
 process.env.ALLOWED_AUTH_DOMAIN = "example.com";
 
@@ -16,7 +17,14 @@ const routeMocks = vi.hoisted(() => {
   const readPrefix = vi.fn(async () =>
     Buffer.from("owner_email,owner email,amount\nana@example.com,ana@example.com,10\n"),
   );
-  const resolve = vi.fn(async () => ({ project_id: "test-project" }));
+  const resolve = vi.fn(async (ref?: unknown) => {
+    void ref;
+    return { project_id: "test-project" };
+  });
+  const encrypt = vi.fn((value: object) => {
+    void value;
+    return Buffer.from("generated-ciphertext");
+  });
 
   return {
     dataSources,
@@ -25,6 +33,7 @@ const routeMocks = vi.hoisted(() => {
     list,
     readPrefix,
     resolve,
+    encrypt,
     reset: () => {
       dataSources.clear();
       users.clear();
@@ -32,6 +41,7 @@ const routeMocks = vi.hoisted(() => {
       list.mockClear();
       readPrefix.mockClear();
       resolve.mockClear();
+      encrypt.mockClear();
     },
   };
 });
@@ -71,8 +81,16 @@ vi.mock("@/lib/firebase/admin", () => ({
 vi.mock("@/lib/data-sources/credentials", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/data-sources/credentials")>();
   class SecretService {
-    async resolve() {
-      return routeMocks.resolve();
+    constructor(opts?: unknown) {
+      void opts;
+    }
+
+    encrypt(value: object) {
+      return routeMocks.encrypt(value);
+    }
+
+    async resolve(ref: unknown) {
+      return routeMocks.resolve(ref);
     }
   }
   return { ...actual, SecretService };
@@ -85,6 +103,10 @@ vi.mock("@/lib/data-sources/storage", () => ({
   })),
 }));
 
+const { CredentialConfigError } = await import("@/lib/data-sources/credentials");
+const { credentialEncProof, verifyDataSourceInspectionToken } = await import(
+  "@/lib/data-sources/inspection-token"
+);
 const { POST: inspectHeaders } = await import(
   "@/app/api/admin/data-sources/inspect-headers/route"
 );
@@ -116,6 +138,13 @@ beforeEach(() => {
 });
 
 describe("admin inspect data source headers route", () => {
+  const rawCredential = {
+    type: "service_account",
+    project_id: "external-project",
+    client_email: "source@example.test",
+    private_key: "private-key-material",
+  };
+
   it("bloqueia admin comum", async () => {
     setupAuth("admin");
 
@@ -161,6 +190,160 @@ describe("admin inspect data source headers route", () => {
     expect(routeMocks.readPrefix).toHaveBeenCalledWith("exports/sample.csv", 64 * 1024);
   });
 
+  it("criptografa credencial bruta durante inspeção sem retornar plaintext", async () => {
+    setupAuth("superadmin");
+
+    const response = await inspectHeaders(
+      request("token", {
+        bucket: "external-bucket",
+        prefix: "exports",
+        credentialRef: { kind: "encryptedBlob", ref: "credential-a" },
+        credential: rawCredential,
+      }),
+    );
+    const body = (await response.json()) as Record<string, unknown>;
+
+    expect(response.status).toBe(200);
+    expect(routeMocks.encrypt).toHaveBeenCalledWith(rawCredential);
+    expect(body.credentialEnc).toBe(Buffer.from("generated-ciphertext").toString("base64"));
+    expect(JSON.stringify(body)).not.toContain(rawCredential.private_key);
+    expect(JSON.stringify(body)).not.toContain(rawCredential.client_email);
+    expect(typeof body.inspectionToken).toBe("string");
+  });
+
+  it("não inclui credencial em logs quando a inspeção falha", async () => {
+    setupAuth("superadmin");
+    routeMocks.resolve.mockRejectedValueOnce(
+      new Error(`dependency failure: ${rawCredential.private_key}`),
+    );
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const response = await inspectHeaders(
+      request("token", {
+        bucket: "external-bucket",
+        prefix: "exports",
+        credentialRef: { kind: "encryptedBlob", ref: "credential-a" },
+        credential: rawCredential,
+      }),
+    );
+    const body = await response.json();
+    const logged = errorSpy.mock.calls.flat().map(String).join("\n");
+    errorSpy.mockRestore();
+
+    expect(response.status).toBe(503);
+    expect(body).toEqual({ error: "Failed to inspect headers" });
+    expect(logged).not.toContain(rawCredential.private_key);
+    expect(logged).not.toContain(rawCredential.client_email);
+    expect(logged).not.toContain(Buffer.from("generated-ciphertext").toString("base64"));
+  });
+
+  it("retorna erro explícito quando chave de criptografia está ausente", async () => {
+    setupAuth("superadmin");
+    routeMocks.encrypt.mockImplementationOnce(() => {
+      throw new CredentialConfigError(
+        "TWD_CREDENTIAL_ENC_KEY e obrigatorio em producao",
+      );
+    });
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const response = await inspectHeaders(
+      request("token", {
+        bucket: "external-bucket",
+        prefix: "exports",
+        credentialRef: { kind: "encryptedBlob", ref: "credential-a" },
+        credential: rawCredential,
+      }),
+    );
+    const body = await response.json();
+    const logged = errorSpy.mock.calls.flat().map(String).join("\n");
+    errorSpy.mockRestore();
+
+    expect(response.status).toBe(503);
+    expect(body).toEqual({
+      error: "TWD_CREDENTIAL_ENC_KEY e obrigatorio em producao",
+    });
+    expect(logged).toBe("Inspect data source headers configuration failed");
+    expect(logged).not.toContain(rawCredential.private_key);
+  });
+
+  it.each([
+    ["array", []],
+    ["tipo inválido", { ...rawCredential, type: "user" }],
+    ["project_id ausente", { ...rawCredential, project_id: "" }],
+    ["client_email ausente", { ...rawCredential, client_email: "" }],
+    ["private_key ausente", { ...rawCredential, private_key: "" }],
+  ])("rejeita credencial bruta com formato inválido: %s", async (_label, credential) => {
+    setupAuth("superadmin");
+
+    const response = await inspectHeaders(
+      request("token", {
+        bucket: "external-bucket",
+        prefix: "exports",
+        credentialRef: { kind: "encryptedBlob", ref: "credential-a" },
+        credential,
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error).toBe("credential must be a valid service account JSON object");
+    expect(routeMocks.encrypt).not.toHaveBeenCalled();
+  });
+
+  it("rejeita credencial bruta maior que 64 KiB", async () => {
+    setupAuth("superadmin");
+
+    const response = await inspectHeaders(
+      request("token", {
+        bucket: "external-bucket",
+        prefix: "exports",
+        credentialRef: { kind: "encryptedBlob", ref: "credential-a" },
+        credential: { ...rawCredential, private_key: "x".repeat(64 * 1024) },
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error).toBe("credential exceeds the 64 KiB limit");
+    expect(routeMocks.encrypt).not.toHaveBeenCalled();
+  });
+
+  it("rejeita credencial bruta junto com ciphertext", async () => {
+    setupAuth("superadmin");
+
+    const response = await inspectHeaders(
+      request("token", {
+        bucket: "external-bucket",
+        prefix: "exports",
+        credentialRef: { kind: "encryptedBlob", ref: "credential-a" },
+        credential: rawCredential,
+        credentialEnc: "existing-ciphertext",
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error).toBe("credential and credentialEnc are mutually exclusive");
+    expect(routeMocks.encrypt).not.toHaveBeenCalled();
+  });
+
+  it("valida configuração da fonte antes de criptografar credencial", async () => {
+    setupAuth("superadmin");
+
+    const response = await inspectHeaders(
+      request("token", {
+        prefix: "exports",
+        credentialRef: { kind: "encryptedBlob", ref: "credential-a" },
+        credential: rawCredential,
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error).toBe("bucket is required");
+    expect(routeMocks.encrypt).not.toHaveBeenCalled();
+  });
+
   it("usa credencial server-only de uma fonte existente", async () => {
     setupAuth("superadmin");
     routeMocks.dataSources.set("source-1", {
@@ -188,6 +371,87 @@ describe("admin inspect data source headers route", () => {
     expect(body.headers).toEqual(["owner_email", "owner email", "amount"]);
     expect(JSON.stringify(body)).not.toContain("stored-secret-base64");
     expect(routeMocks.list).toHaveBeenCalledWith("daily/", { maxResults: 25 });
+  });
+
+  it("rotaciona credencial bruta reutilizando credentialRef armazenado", async () => {
+    setupAuth("superadmin");
+    routeMocks.readPrefix.mockResolvedValueOnce(
+      Buffer.from("owner_email,amount\nana@example.com,10\n"),
+    );
+    routeMocks.dataSources.set("source-1", {
+      exists: true,
+      data: {
+        id: "source-1",
+        kind: "csv",
+        orgId: "",
+        bucket: "external-bucket",
+        prefix: "daily/",
+        credentialRef: { kind: "encryptedBlob", ref: "credential-existing" },
+        credentialEnc: "stored-secret-base64",
+        ownerColumn: "owner_email",
+        accessGrants: { assignedUsers: [], assignedDepartments: [] },
+        configVersion: 7,
+        createdBy: "uid-superadmin",
+        updatedAt: "2026-07-01T00:00:00.000Z",
+      },
+    });
+
+    const response = await inspectHeaders(
+      request("token", {
+        dataSourceId: "source-1",
+        bucket: "external-bucket",
+        prefix: "daily",
+        credentialRef: { kind: "encryptedBlob", ref: "" },
+        credential: rawCredential,
+      }),
+    );
+    const body = await response.json();
+    const decodedTokenPayload = JSON.parse(
+      Buffer.from(String(body.inspectionToken).split(".")[0], "base64url").toString("utf8"),
+    );
+
+    expect(response.status).toBe(200);
+    expect(routeMocks.encrypt).toHaveBeenCalledWith(rawCredential);
+    expect(body.credentialEnc).toBe(Buffer.from("generated-ciphertext").toString("base64"));
+    expect(routeMocks.resolve).toHaveBeenCalledWith({
+      kind: "encryptedBlob",
+      ref: "credential-existing",
+    });
+    expect(decodedTokenPayload.credentialProof).toMatchObject({
+      kind: "inline",
+      sha256: createHash("sha256").update(body.credentialEnc, "utf8").digest("hex"),
+      dataSourceId: "source-1",
+      configVersion: 7,
+    });
+    expect(
+      verifyDataSourceInspectionToken({
+        token: body.inspectionToken,
+        bucket: "external-bucket",
+        prefix: "daily",
+        credentialRef: { kind: "encryptedBlob", ref: "credential-existing" },
+        credentialProof: credentialEncProof(body.credentialEnc, {
+          dataSourceId: "source-1",
+          configVersion: 7,
+        }),
+        ownerColumn: "owner_email",
+      }),
+    ).toMatchObject({ ok: true });
+    expect(
+      verifyDataSourceInspectionToken({
+        token: body.inspectionToken,
+        bucket: "external-bucket",
+        prefix: "daily",
+        credentialRef: { kind: "encryptedBlob", ref: "credential-existing" },
+        credentialProof: credentialEncProof(`${body.credentialEnc}-modified`, {
+          dataSourceId: "source-1",
+          configVersion: 7,
+        }),
+        ownerColumn: "owner_email",
+      }),
+    ).toEqual({ ok: false, error: "inspectionToken does not match data source inputs" });
+    expect(JSON.stringify(decodedTokenPayload)).not.toContain("credential-existing");
+    expect(JSON.stringify(body)).not.toContain(rawCredential.private_key);
+    expect(JSON.stringify(body)).not.toContain(rawCredential.client_email);
   });
 
   it("emite token inline versionado ao inspecionar edição com credencial nova", async () => {

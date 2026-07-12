@@ -322,6 +322,28 @@ Use `app/.env.example` as the source template. The table below describes deploym
 | `TWD_ORG_ID` | Optional | id | Organization id tagged onto data sources created through the admin UI. |
 | `TWD_QUERY_TIMEOUT_MS`, `TWD_MAX_ROWS`, `TWD_ENGINE_LRU_BYTES` | Optional | `10000`, `1000`, `67108864` | Data-source query guardrails (timeout, row cap, engine cache bytes). |
 
+### External data-source credential onboarding
+
+Generate a dedicated 32-byte encryption key before registering a credentialed CSV data source:
+
+```bash
+openssl rand -base64 32
+```
+
+Store the generated value in your deployment secret store as `TWD_CREDENTIAL_ENC_KEY`. Keep the same value available for the lifetime of every credential encrypted by the instance. Changing or losing this key makes existing data-source credentials unreadable. Back it up through your platform's protected secret-management process, never in the repository or an `.env` file committed to source control.
+
+Serve the admin UI only over HTTPS. During onboarding, the raw service-account JSON travels from the authenticated browser to a superadmin-only server route, is encrypted in request memory, and is never stored as plaintext. The browser receives opaque ciphertext and submits only that ciphertext to Firestore through the existing admin create or update route.
+
+To register a CSV data source:
+
+1. Sign in as a superadmin and open the Data Sources admin tab.
+2. Enter the GCS bucket, object prefix, credential reference, and access grants.
+3. Paste the Google service-account JSON into `Service account JSON`.
+4. Select `Inspect headers`. The server validates and encrypts the credential, checks the bucket, and returns the available CSV headers.
+5. Select the owner column and save the source. The plaintext field is cleared after successful inspection.
+
+To rotate a service-account credential, edit the existing source, paste the replacement JSON, inspect headers again, and save. Leaving the credential field empty keeps the stored credential. Reuse the same `TWD_CREDENTIAL_ENC_KEY` unless you are intentionally rebuilding every stored credential from its source secret.
+
 ## Firebase setup
 
 ### 1. Create a Firebase project

@@ -1,4 +1,4 @@
-import { createDecipheriv } from "crypto";
+import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 
 const DEFAULT_CREDENTIAL_TTL_MS = 5 * 60 * 1000;
 const IV_BYTES = 12;
@@ -47,6 +47,21 @@ export class SecretService {
     this.now = opts.now ?? Date.now;
     this.blobLoader = opts.loadEncryptedBlob ?? loadEncryptedBlob;
     this.encryptionKeyBase64 = opts.encryptionKeyBase64;
+  }
+
+  encrypt(value: object): Buffer {
+    const iv = randomBytes(IV_BYTES);
+    const cipher = createCipheriv(
+      "aes-256-gcm",
+      getEncryptionKey(this.encryptionKeyBase64),
+      iv,
+    );
+    const ciphertext = Buffer.concat([
+      cipher.update(JSON.stringify(value), "utf8"),
+      cipher.final(),
+    ]);
+
+    return Buffer.concat([iv, cipher.getAuthTag(), ciphertext]);
   }
 
   async resolve(ref: CredentialRef): Promise<object> {
