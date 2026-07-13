@@ -106,6 +106,8 @@ test("release readiness detects incomplete checklist items", () => {
   assert.throws(() => assertCompleteChecklist(`${completeChecklist}+ [ ] Newly added mandatory release gate\n`), /unchecked/);
   assert.throws(() => assertCompleteChecklist(`${completeChecklist}1. [ ] Newly added mandatory release gate\n`), /unchecked/);
   assert.throws(() => assertCompleteChecklist(`${completeChecklist}> - [ ] Newly added mandatory release gate\n`), /unchecked/);
+  assert.throws(() => assertCompleteChecklist(`\`\`\`md\n${completeChecklist}\n\`\`\`\n`), /no checklist items/);
+  assert.throws(() => assertCompleteChecklist(`<!--\n${completeChecklist}\n-->\n`), /no checklist items/);
 });
 
 test("release readiness parses checklist continuations", () => {
@@ -159,6 +161,10 @@ test("release readiness validates owner authorization comment payloads", () => {
     () => assertOwnerAuthorizationCommentPayload({ ...validComment, body: "I approve" }),
     /required authorization statement/,
   );
+  assert.throws(
+    () => assertOwnerAuthorizationCommentPayload({ ...validComment, body: `I do not agree. Quote: ${REQUIRED_OWNER_STATEMENT}` }),
+    /required authorization statement/,
+  );
 });
 
 test("release readiness resolves remote commit and annotated tag refs", () => {
@@ -180,6 +186,8 @@ test("release readiness distinguishes not-found from indeterminate API failures"
 test("release workflow serializes publication and only cleans confirmed drafts", () => {
   assert.match(releaseWorkflow, /concurrency:\n\s+group: release-\$\{\{ github\.repository \}\}\n\s+cancel-in-progress: false/);
   assert.match(releaseWorkflow, /issues: read/);
+  assert.match(releaseWorkflow, /permissions:\n\s+actions: read\n\s+contents: read\n\s+issues: read/);
+  assert.match(releaseWorkflow, /publish:[\s\S]*permissions:\n\s+actions: read\n\s+contents: write\n\s+issues: read/);
   assert.match(releaseWorkflow, /gh release view "\$TAG" --json isDraft --jq \.isDraft/);
   assert.match(releaseWorkflow, /if \[ "\$is_draft" = "true" \]; then/);
   assert.match(releaseWorkflow, /git ls-remote origin "refs\/tags\/\$TAG\^\{\}"/);

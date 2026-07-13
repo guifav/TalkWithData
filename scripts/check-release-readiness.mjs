@@ -76,7 +76,22 @@ function normalizeText(value) {
 export function parseChecklistItems(markdown) {
   const items = [];
   let current = null;
+  let inFence = false;
+  let inHtmlComment = false;
   for (const line of markdown.split(/\r?\n/)) {
+    if (/^\s*(```|~~~)/.test(line)) {
+      inFence = !inFence;
+      current = null;
+      continue;
+    }
+    if (!inFence && line.includes("<!--")) {
+      inHtmlComment = true;
+      current = null;
+    }
+    if (inFence || inHtmlComment) {
+      if (inHtmlComment && line.includes("-->")) inHtmlComment = false;
+      continue;
+    }
     const match = line.match(/^\s*(?:>\s*)*(?:[-*+]|\d+[.)])\s+\[([ xX])\]\s+(.*)$/);
     if (match) {
       current = {
@@ -330,7 +345,7 @@ export function assertOwnerAuthorizationCommentPayload(comment) {
   if (comment.author_association !== "OWNER" || comment.user?.login !== "guifav") {
     throw new Error("Owner authorization comment must be authored by the repository owner");
   }
-  if (!normalizeText(comment.body ?? "").includes(normalizeText(REQUIRED_OWNER_STATEMENT))) {
+  if (normalizeText(comment.body ?? "") !== normalizeText(REQUIRED_OWNER_STATEMENT)) {
     throw new Error("Owner authorization comment does not contain the required authorization statement");
   }
 }
