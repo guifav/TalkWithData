@@ -145,10 +145,12 @@ jobs:
             fi
 
             if [ "$CREATED_DRAFT_RELEASE" = "true" ] && [ "$PUBLISHED_RELEASE" != "true" ]; then
+              remote_tag_commit="$(git ls-remote origin "refs/tags/$TAG^{}" | awk '{print $1}' || true)"
               if [ "$is_draft" = "true" ]; then
-                gh release delete "$TAG" --yes --cleanup-tag >/dev/null 2>&1 || true
+                if [ "$remote_tag_commit" = "$GITHUB_SHA" ]; then
+                  gh release delete "$TAG" --yes --cleanup-tag >/dev/null 2>&1 || true
+                fi
               elif [ -z "$is_draft" ] && [ "$CREATED_REMOTE_TAG" = "true" ]; then
-                remote_tag_commit="$(git ls-remote origin "refs/tags/$TAG^{}" | awk '{print $1}' || true)"
                 if [ "$remote_tag_commit" = "$GITHUB_SHA" ]; then
                   git push --delete origin "$TAG" >/dev/null 2>&1 || true
                 fi

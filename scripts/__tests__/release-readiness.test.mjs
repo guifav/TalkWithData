@@ -98,6 +98,8 @@ test("release readiness detects incomplete checklist items", () => {
   assert.deepEqual(uncheckedChecklistItems("+ [ ] missing\n"), ["+ [ ] missing"]);
   assert.deepEqual(uncheckedChecklistItems("1. [ ] missing\n"), ["1. [ ] missing"]);
   assert.deepEqual(uncheckedChecklistItems("> - [ ] missing\n"), ["> - [ ] missing"]);
+  assert.deepEqual(uncheckedChecklistItems("- [ ] missing <!-- note -->\n"), ["- [ ] missing "]);
+  assert.deepEqual(uncheckedChecklistItems("    - [ ] code example\n"), []);
   assert.doesNotThrow(() => assertCompleteChecklist(completeChecklist));
   assert.throws(() => assertCompleteChecklist(""), /no checklist items/);
   assert.throws(() => assertCompleteChecklist(completeChecklist.replace("- [x] GitHub CI", "- [ ] GitHub CI")), /unchecked/);
@@ -163,6 +165,14 @@ test("release readiness validates owner authorization comment payloads", () => {
   );
   assert.throws(
     () => assertOwnerAuthorizationCommentPayload({ ...validComment, body: `I do not agree. Quote: ${REQUIRED_OWNER_STATEMENT}` }),
+    /required authorization statement/,
+  );
+  assert.throws(
+    () => assertOwnerAuthorizationCommentPayload({ ...validComment, body: `\`${REQUIRED_OWNER_STATEMENT}\`` }),
+    /required authorization statement/,
+  );
+  assert.throws(
+    () => assertOwnerAuthorizationCommentPayload({ ...validComment, body: REQUIRED_OWNER_STATEMENT.replace("confirm", "con_firm") }),
     /required authorization statement/,
   );
 });

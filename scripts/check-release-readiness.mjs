@@ -73,37 +73,59 @@ function normalizeText(value) {
     .trim();
 }
 
+function normalizeStatement(value) {
+  return value.replace(/\s+/g, " ").trim();
+}
+
 export function parseChecklistItems(markdown) {
   const items = [];
   let current = null;
   let inFence = false;
   let inHtmlComment = false;
   for (const line of markdown.split(/\r?\n/)) {
-    if (/^\s*(```|~~~)/.test(line)) {
+    let visibleLine = line;
+    if (/^\s*(```|~~~)/.test(visibleLine)) {
       inFence = !inFence;
       current = null;
       continue;
     }
-    if (!inFence && line.includes("<!--")) {
-      inHtmlComment = true;
-      current = null;
+    if (inFence) continue;
+    if (inHtmlComment) {
+      const commentEnd = visibleLine.indexOf("-->");
+      if (commentEnd === -1) continue;
+      visibleLine = visibleLine.slice(commentEnd + 3);
+      inHtmlComment = false;
     }
-    if (inFence || inHtmlComment) {
-      if (inHtmlComment && line.includes("-->")) inHtmlComment = false;
+    while (visibleLine.includes("<!--")) {
+      const commentStart = visibleLine.indexOf("<!--");
+      const commentEnd = visibleLine.indexOf("-->", commentStart + 4);
+      if (commentEnd === -1) {
+        visibleLine = visibleLine.slice(0, commentStart);
+        inHtmlComment = true;
+        break;
+      }
+      visibleLine = `${visibleLine.slice(0, commentStart)}${visibleLine.slice(commentEnd + 3)}`;
+    }
+    if (/^( {4,}|\t)/.test(visibleLine)) {
+      current = null;
       continue;
     }
-    const match = line.match(/^\s*(?:>\s*)*(?:[-*+]|\d+[.)])\s+\[([ xX])\]\s+(.*)$/);
+    if (visibleLine.trim() === "") {
+      if (line.trim() !== "") current = null;
+      continue;
+    }
+    const match = visibleLine.match(/^\s*(?:>\s*)*(?:[-*+]|\d+[.)])\s+\[([ xX])\]\s+(.*)$/);
     if (match) {
       current = {
         checked: match[1].toLowerCase() === "x",
-        raw: line,
+        raw: visibleLine,
         text: match[2],
       };
       items.push(current);
-    } else if (current && /^\s{2,}\S/.test(line)) {
-      current.text += ` ${line.trim()}`;
-      current.raw += `\n${line}`;
-    } else if (line.trim() !== "") {
+    } else if (current && /^\s{2,}\S/.test(visibleLine)) {
+      current.text += ` ${visibleLine.trim()}`;
+      current.raw += `\n${visibleLine}`;
+    } else if (visibleLine.trim() !== "") {
       current = null;
     }
   }
@@ -345,7 +367,7 @@ export function assertOwnerAuthorizationCommentPayload(comment) {
   if (comment.author_association !== "OWNER" || comment.user?.login !== "guifav") {
     throw new Error("Owner authorization comment must be authored by the repository owner");
   }
-  if (normalizeText(comment.body ?? "") !== normalizeText(REQUIRED_OWNER_STATEMENT)) {
+  if (normalizeStatement(comment.body ?? "") !== normalizeStatement(REQUIRED_OWNER_STATEMENT)) {
     throw new Error("Owner authorization comment does not contain the required authorization statement");
   }
 }
