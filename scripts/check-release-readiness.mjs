@@ -248,7 +248,7 @@ function assertRemoteTagAbsent(version) {
 }
 
 function assertNewerThanTags(version) {
-  const refs = run("gh", ["api", "/repos/guifav/TalkWithData/git/matching-refs/tags/v", "--jq", ".[].ref"])
+  const refs = run("gh", ["api", "--paginate", "/repos/guifav/TalkWithData/git/matching-refs/tags/v", "--jq", ".[].ref"])
       .split(/\r?\n/)
       .filter(Boolean)
       .map((ref) => ref.replace(/^refs\/tags\//, ""));

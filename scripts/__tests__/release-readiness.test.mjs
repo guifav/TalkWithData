@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -13,6 +14,8 @@ import {
   parseChecklistItems,
   uncheckedChecklistItems,
 } from "../check-release-readiness.mjs";
+
+const releaseWorkflow = readFileSync(new URL("../../.github/workflows/release.yml", import.meta.url), "utf8");
 
 const completeChecklist = `\
 - [x] Owner authorization is recorded in \`PROVENANCE.md\` with a permanent
@@ -121,6 +124,17 @@ test("release readiness compares release versions against existing tags", () => 
   assert.equal(compareSemver("0.1.0", "0.2.0"), -1);
   assert.equal(compareSemver("0.2.0", "0.2.0"), 0);
   assert.equal(highestSemverTag(["v0.1.0", "not-a-version", "v0.10.0", "v0.2.0"]), "0.10.0");
+});
+
+test("release workflow serializes publication and only cleans confirmed drafts", () => {
+  assert.match(releaseWorkflow, /concurrency:\n\s+group: release-\$\{\{ github\.repository \}\}\n\s+cancel-in-progress: false/);
+  assert.match(releaseWorkflow, /gh release view "\$TAG" --json isDraft --jq \.isDraft/);
+  assert.match(releaseWorkflow, /if \[ "\$is_draft" = "true" \]; then/);
+});
+
+test("release readiness paginates remote tag refs", () => {
+  const readinessScript = readFileSync(new URL("../check-release-readiness.mjs", import.meta.url), "utf8");
+  assert.match(readinessScript, /"gh", \["api", "--paginate", "\/repos\/guifav\/TalkWithData\/git\/matching-refs\/tags\/v"/);
 });
 
 test("release readiness requires all package versions to match", () => {

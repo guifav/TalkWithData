@@ -25,6 +25,9 @@ jobs:
   release:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    concurrency:
+      group: release-${{ github.repository }}
+      cancel-in-progress: false
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -101,7 +104,10 @@ jobs:
 
           cleanup_draft_release() {
             if [ "$CREATED_DRAFT_RELEASE" = "true" ] && [ "$PUBLISHED_RELEASE" != "true" ]; then
-              gh release delete "$TAG" --yes --cleanup-tag >/dev/null 2>&1 || true
+              is_draft="$(gh release view "$TAG" --json isDraft --jq .isDraft 2>/dev/null || true)"
+              if [ "$is_draft" = "true" ]; then
+                gh release delete "$TAG" --yes --cleanup-tag >/dev/null 2>&1 || true
+              fi
             fi
           }
           trap cleanup_draft_release ERR
