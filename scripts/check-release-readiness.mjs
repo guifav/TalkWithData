@@ -113,11 +113,10 @@ export function assertCompleteChecklist(markdown) {
     text: normalizeText(item.text),
   }));
   const missingItems = [];
-  const uncheckedItems = [];
+  const uncheckedItems = normalizedItems.filter((item) => !item.checked).map((item) => item.raw);
   for (const required of REQUIRED_CHECKLIST_ITEMS) {
     const match = normalizedItems.find((item) => item.text.includes(required));
     if (!match) missingItems.push(required);
-    else if (!match.checked) uncheckedItems.push(match.raw);
   }
 
   if (missingItems.length > 0) {
@@ -160,8 +159,16 @@ export function assertChangelogEntry(version, changelog, options = {}) {
   if (!heading) {
     throw new Error(`CHANGELOG.md does not contain a ${version} entry`);
   }
-  if (options.requireFinalized && !/^\d{4}-\d{2}-\d{2}$/.test(heading[1])) {
-    throw new Error(`CHANGELOG.md ${version} entry must use a finalized YYYY-MM-DD release date`);
+  if (options.requireFinalized) {
+    const date = heading[1];
+    const parsed = new Date(`${date}T00:00:00.000Z`);
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+      Number.isNaN(parsed.getTime()) ||
+      parsed.toISOString().slice(0, 10) !== date
+    ) {
+      throw new Error(`CHANGELOG.md ${version} entry must use a finalized valid YYYY-MM-DD release date`);
+    }
   }
 }
 
@@ -204,29 +211,50 @@ function assertMergedMain() {
   }
 }
 
-function assertTag(version) {
+function remoteTagRef(version) {
+  return runJson("gh", ["api", `/repos/guifav/TalkWithData/git/ref/tags/v${version}`]);
+}
+
+function remoteTagCommitSha(version) {
+  const ref = remoteTagRef(version);
+  if (ref.object?.type === "commit") return ref.object.sha;
+  if (ref.object?.type === "tag") {
+    const tag = runJson("gh", ["api", `/repos/guifav/TalkWithData/git/tags/${ref.object.sha}`]);
+    if (tag.object?.type === "commit") return tag.object.sha;
+  }
+  throw new Error(`Remote tag v${version} does not resolve to a commit`);
+}
+
+function isNotFound(error) {
+  const stderr = error && typeof error === "object" && "stderr" in error ? String(error.stderr) : "";
+  const stdout = error && typeof error === "object" && "stdout" in error ? String(error.stdout) : "";
+  return /HTTP 404|Not Found/i.test(`${stderr}\n${stdout}`);
+}
+
+function assertRemoteTag(version) {
   const head = run("git", ["rev-parse", "HEAD"]);
-  const tag = run("git", ["rev-parse", `refs/tags/v${version}^{}`]);
+  const tag = remoteTagCommitSha(version);
   if (head !== tag) throw new Error(`Tag v${version} does not point to HEAD`);
 }
 
-function assertTagAbsent(version) {
+function assertRemoteTagAbsent(version) {
   try {
-    run("git", ["rev-parse", "--verify", "--quiet", `refs/tags/v${version}`]);
-  } catch {
-    return;
+    remoteTagRef(version);
+  } catch (error) {
+    if (isNotFound(error)) return;
+    throw new Error(`Could not verify remote tag absence for v${version}: ${error}`);
   }
-  throw new Error(`Tag v${version} already exists`);
+  throw new Error(`Remote tag v${version} already exists`);
 }
 
 function assertNewerThanTags(version) {
-  const highest = highestSemverTag(
-    run("git", ["tag", "--list", "v[0-9]*.[0-9]*.[0-9]*"])
+  const refs = run("gh", ["api", "/repos/guifav/TalkWithData/git/matching-refs/tags/v", "--jq", ".[].ref"])
       .split(/\r?\n/)
-      .filter(Boolean),
-  );
+      .filter(Boolean)
+      .map((ref) => ref.replace(/^refs\/tags\//, ""));
+  const highest = highestSemverTag(refs);
   if (highest && compareSemver(version, highest) <= 0) {
-    throw new Error(`Release version ${version} must be greater than existing tag v${highest}`);
+    throw new Error(`Release version ${version} must be greater than existing remote tag v${highest}`);
   }
 }
 
@@ -240,7 +268,7 @@ function assertGithubReleaseAbsent(version) {
   } catch (error) {
     const stderr = error && typeof error === "object" && "stderr" in error ? String(error.stderr) : "";
     const stdout = error && typeof error === "object" && "stdout" in error ? String(error.stdout) : "";
-    if (/HTTP 404|Not Found/i.test(`${stderr}\n${stdout}`)) return;
+    if (isNotFound(error)) return;
     throw new Error(`Could not verify GitHub Release absence for v${version}: ${stderr || stdout || error}`);
   }
   throw new Error(`GitHub Release v${version} already exists`);
@@ -322,9 +350,9 @@ export function runReadiness(options) {
   if (options.requireMergedMain) assertMergedMain();
   if (options.requireCiSuccess) assertCiSuccess(options.requiredWorkflows);
   if (options.requireNewerThanTags) assertNewerThanTags(options.version);
-  if (options.requireTagAbsent) assertTagAbsent(options.version);
+  if (options.requireTagAbsent) assertRemoteTagAbsent(options.version);
   if (options.requireGithubReleaseAbsent) assertGithubReleaseAbsent(options.version);
-  if (options.requireTag) assertTag(options.version);
+  if (options.requireTag) assertRemoteTag(options.version);
   if (options.requireGithubRelease) assertGithubRelease(options.version);
 }
 

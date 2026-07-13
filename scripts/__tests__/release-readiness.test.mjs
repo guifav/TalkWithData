@@ -90,6 +90,7 @@ test("release readiness detects incomplete checklist items", () => {
   assert.throws(() => assertCompleteChecklist(""), /no checklist items/);
   assert.throws(() => assertCompleteChecklist(completeChecklist.replace("- [x] GitHub CI", "- [ ] GitHub CI")), /unchecked/);
   assert.throws(() => assertCompleteChecklist(completeChecklist.replace(/- \[x\] Generated release notes.*\n/, "")), /missing/);
+  assert.throws(() => assertCompleteChecklist(`${completeChecklist}- [ ] Newly added mandatory release gate\n`), /unchecked/);
 });
 
 test("release readiness parses checklist continuations", () => {
@@ -108,6 +109,10 @@ test("release readiness validates final changelog entries", () => {
   assert.throws(
     () => assertChangelogEntry("0.2.0", "## [0.2.0] - Pending owner authorization\n", { requireFinalized: true }),
     /YYYY-MM-DD/,
+  );
+  assert.throws(
+    () => assertChangelogEntry("0.2.0", "## [0.2.0] - 2026-99-99\n", { requireFinalized: true }),
+    /valid YYYY-MM-DD/,
   );
 });
 

@@ -12,8 +12,7 @@ the same merged `main` commit.
 
 ## [0.2.0] - Pending owner authorization
 
-First automated public release candidate. The earlier `v0.1.0` tag remains
-part of public history and must not be reused.
+Automated public release candidate.
 
 ### Added
 
@@ -42,7 +41,7 @@ part of public history and must not be reused.
 3. Keep the version in `app/package.json`,
    `app/migrator/package.json`,
    `functions/generate-thumbnail/package.json`, their lockfiles, the Git tag,
-   and the GitHub Release aligned. Never reuse an existing `v*` tag.
+   and the GitHub Release aligned. Never reuse an existing remote `v*` tag.
 4. Run `node scripts/check-release-readiness.mjs --version <version>
    --require-complete-checklist --require-owner-authorization
    --owner-authorization-url <url>` before publishing.

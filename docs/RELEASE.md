@@ -1,8 +1,7 @@
 # Release Process
 
 Talk With Data releases are source-controlled, versioned, and provenance-gated.
-The first automated public release version is `0.2.0`. The earlier `v0.1.0`
-tag already exists in public history and must not be reused.
+The current automated public release candidate version is `0.2.0`.
 
 ## Versioning Policy
 
@@ -15,8 +14,8 @@ tag already exists in public history and must not be reused.
   version.
 - The Git tag and GitHub Release must point to the exact same merged `main`
   commit.
-- Existing `v*` tags are immutable release history. Publish a new version
-  instead of reusing or moving an existing tag.
+- Existing remote `v*` tags are immutable release history. Publish a new
+  version instead of reusing or moving an existing tag.
 - Release candidates can be prepared before publication, but publication is
   blocked until the owner authorization gate and checklist are complete.
 
@@ -35,7 +34,8 @@ these are true:
    present in `PROVENANCE.md`. The comment must be on issue #58, authored by
    the repository owner, and contain the required authorization statement.
 7. `CHANGELOG.md` uses a final `YYYY-MM-DD` date for the requested version.
-8. The requested version is greater than the highest existing `v*` SemVer tag.
+8. The requested version is greater than the highest existing remote `v*`
+   SemVer tag.
 9. The requested Git tag and GitHub Release do not already exist before
    publication.
 10. The generated release notes and checksums are attached to the GitHub
@@ -72,9 +72,9 @@ artifact, then only when `dry_run` is false:
 ## Reviewed History Notes
 
 `scripts/prepare-release.mjs` generates release notes from reviewed Git history.
-For `0.2.0`, the range starts after the existing `v0.1.0` tag. For later
-releases, the range starts after the previous `v*` tag. The full public history
-remains reviewable through Git history, `CHANGELOG.md`, and `PROVENANCE.md`.
+For releases after the first remote `v*` tag, the range starts after the
+previous remote release tag. When there is no previous remote release tag, the
+range is the full public history.
 
 Review generated notes before publishing. They are evidence for the release, not
 a replacement for the changelog.
