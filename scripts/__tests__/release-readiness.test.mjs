@@ -96,6 +96,7 @@ test("release readiness detects incomplete checklist items", () => {
   assert.deepEqual(uncheckedChecklistItems("* [ ] missing\n"), ["* [ ] missing"]);
   assert.deepEqual(uncheckedChecklistItems("+ [ ] missing\n"), ["+ [ ] missing"]);
   assert.deepEqual(uncheckedChecklistItems("1. [ ] missing\n"), ["1. [ ] missing"]);
+  assert.deepEqual(uncheckedChecklistItems("> - [ ] missing\n"), ["> - [ ] missing"]);
   assert.doesNotThrow(() => assertCompleteChecklist(completeChecklist));
   assert.throws(() => assertCompleteChecklist(""), /no checklist items/);
   assert.throws(() => assertCompleteChecklist(completeChecklist.replace("- [x] GitHub CI", "- [ ] GitHub CI")), /unchecked/);
@@ -103,6 +104,7 @@ test("release readiness detects incomplete checklist items", () => {
   assert.throws(() => assertCompleteChecklist(`${completeChecklist}- [ ] Newly added mandatory release gate\n`), /unchecked/);
   assert.throws(() => assertCompleteChecklist(`${completeChecklist}+ [ ] Newly added mandatory release gate\n`), /unchecked/);
   assert.throws(() => assertCompleteChecklist(`${completeChecklist}1. [ ] Newly added mandatory release gate\n`), /unchecked/);
+  assert.throws(() => assertCompleteChecklist(`${completeChecklist}> - [ ] Newly added mandatory release gate\n`), /unchecked/);
 });
 
 test("release readiness parses checklist continuations", () => {

@@ -77,7 +77,7 @@ export function parseChecklistItems(markdown) {
   const items = [];
   let current = null;
   for (const line of markdown.split(/\r?\n/)) {
-    const match = line.match(/^\s*(?:[-*+]|\d+[.)])\s+\[([ xX])\]\s+(.*)$/);
+    const match = line.match(/^\s*(?:>\s*)*(?:[-*+]|\d+[.)])\s+\[([ xX])\]\s+(.*)$/);
     if (match) {
       current = {
         checked: match[1].toLowerCase() === "x",

@@ -99,6 +99,10 @@ jobs:
             --required-workflow "CI" \
             --required-workflow "Dependency pin review"
 
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          CREATED_REMOTE_TAG=false
           CREATED_DRAFT_RELEASE=false
           PUBLISHED_RELEASE=false
 
@@ -107,13 +111,19 @@ jobs:
               is_draft="$(gh release view "$TAG" --json isDraft --jq .isDraft 2>/dev/null || true)"
               if [ "$is_draft" = "true" ]; then
                 gh release delete "$TAG" --yes --cleanup-tag >/dev/null 2>&1 || true
+              elif [ -z "$is_draft" ] && [ "$CREATED_REMOTE_TAG" = "true" ]; then
+                git push --delete origin "$TAG" >/dev/null 2>&1 || true
               fi
             fi
           }
           trap cleanup_draft_release ERR
 
+          git tag --annotate "$TAG" --message "Talk With Data $TAG"
+          git push origin "refs/tags/$TAG"
+          CREATED_REMOTE_TAG=true
+
           gh release create "$TAG" \
-            --target "$GITHUB_SHA" \
+            --verify-tag \
             --draft \
             --title "Talk With Data $TAG" \
             --notes-file "dist/release/$TAG/RELEASE_NOTES.md"
