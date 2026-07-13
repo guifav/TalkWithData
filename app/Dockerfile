@@ -1,25 +1,40 @@
-FROM node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2 AS base
+ARG NODE_IMAGE=node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2
+FROM ${NODE_IMAGE} AS base
 
 # Application build dependencies.
 FROM base AS deps
 WORKDIR /app
-COPY package.json package-lock.json ./
+COPY app/package.json app/package-lock.json ./
 RUN npm ci
+
+# Bind the pinned Node and Alpine base to a reviewed package and license policy.
+FROM deps AS base-license-builder
+ARG NODE_IMAGE
+ENV TWD_BASE_IMAGE=$NODE_IMAGE
+COPY scripts/collect-base-image-licenses.mjs scripts/base-image-policy.json /app/scripts/
+COPY third_party/nodejs-docker-node/LICENSE.txt /base-license-supplements/docker-node-LICENSE.txt
+RUN node /app/scripts/collect-base-image-licenses.mjs \
+      /base-licenses /app/scripts/base-image-policy.json /app/package.json
 
 # Build
 FROM deps AS builder
-COPY . .
+COPY app/. .
+COPY scripts/collect-artifact-licenses.mjs ./scripts/collect-artifact-licenses.mjs
+COPY scripts/artifact-license-supplements.json ./scripts/artifact-license-supplements.json
 RUN npx prisma generate
 ENV NEXT_TELEMETRY_DISABLED=1
 ARG GIT_COMMIT=dev
 ARG BUILD_TIME=
 ENV NEXT_PUBLIC_GIT_COMMIT=$GIT_COMMIT
 ENV NEXT_PUBLIC_BUILD_TIME=$BUILD_TIME
-RUN npm run build
+RUN npm run build \
+    && node scripts/collect-artifact-licenses.mjs \
+      . node_modules .next/standalone/licenses/npm package.json \
+      scripts/artifact-license-supplements.json
 
 # Disposable image used by the Docker Compose local-storage contract test.
 FROM deps AS storage-smoke
-COPY . .
+COPY app/. .
 RUN addgroup --system --gid 1001 nodejs \
     && adduser --system --uid 1001 --ingroup nodejs storage-smoke \
     && mkdir -p /data/uploads \
@@ -27,13 +42,26 @@ RUN addgroup --system --gid 1001 nodejs \
 USER storage-smoke
 ENTRYPOINT ["./node_modules/.bin/tsx", "scripts/local-storage-smoke.ts"]
 
+# Collect the exact licenses redistributed by the migration image.
+FROM deps AS migrator-builder
+WORKDIR /migrator
+COPY app/migrator/package.json app/migrator/package-lock.json ./
+RUN npm ci --omit=dev
+COPY scripts/collect-artifact-licenses.mjs /app/scripts/collect-artifact-licenses.mjs
+RUN node /app/scripts/collect-artifact-licenses.mjs \
+      /migrator /migrator/node_modules /migrator/licenses/npm /app/package.json
+
 # One-shot Prisma migrations for Docker Compose and other job runners.
 FROM base AS migrator
 WORKDIR /app
-COPY migrator/package.json migrator/package-lock.json ./
-RUN npm ci --omit=dev
-COPY prisma.config.ts ./
-COPY prisma ./prisma
+COPY --from=migrator-builder /migrator/package.json /migrator/package-lock.json ./
+COPY --from=migrator-builder /migrator/node_modules ./node_modules
+COPY --from=migrator-builder /migrator/licenses/npm ./licenses/npm
+COPY --from=base-license-builder /base-licenses ./licenses/base
+COPY LICENSE THIRD_PARTY_NOTICES.md ./licenses/
+COPY docs/THIRD-PARTY-LICENSES.md ./licenses/docs/THIRD-PARTY-LICENSES.md
+COPY app/prisma.config.ts ./
+COPY app/prisma ./prisma
 USER node
 CMD ["./node_modules/.bin/prisma", "migrate", "deploy"]
 
@@ -52,6 +80,9 @@ RUN mkdir -p /data/uploads && chown -R nextjs:nodejs /data
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=base-license-builder --chown=nextjs:nodejs /base-licenses ./licenses/base
+COPY --chown=nextjs:nodejs LICENSE THIRD_PARTY_NOTICES.md ./licenses/
+COPY --chown=nextjs:nodejs docs/THIRD-PARTY-LICENSES.md ./licenses/docs/THIRD-PARTY-LICENSES.md
 
 USER nextjs
 EXPOSE 8080

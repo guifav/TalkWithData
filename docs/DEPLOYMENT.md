@@ -20,9 +20,13 @@ The production container is built from `app/Dockerfile`. It exposes port `8080` 
 
 ```bash
 cp app/.env.example app/.env
-docker build -t talk-with-data -f app/Dockerfile app
+docker build -t talk-with-data -f app/Dockerfile .
 docker run --rm --env-file app/.env -p 3000:8080 talk-with-data
 ```
+
+Run these commands from the repository root. The root build context is required
+so the image can include the canonical project and third-party license records
+in `/app/licenses` without maintaining duplicate copies.
 
 Open http://localhost:3000.
 
@@ -101,6 +105,8 @@ starting the application container manually.
 - Ensure `DATABASE_URL` points to a persistent database.
 - For GCS storage, ensure `STORAGE_BUCKET_NAME` points to a persistent bucket.
 - For local storage, mount a persistent writable volume at `LOCAL_STORAGE_ROOT`.
+- Keep `/app/licenses` with exported images. It includes npm artifact notices and
+  the digest-bound Node and Alpine base inventory under `/app/licenses/base`.
 
 ## Google Cloud Run
 
@@ -160,8 +166,8 @@ flags to both commands when the database requires them.
 
 ```bash
 gcloud auth configure-docker "$REGION-docker.pkg.dev"
-docker build --pull --tag "$APP_IMAGE" --file app/Dockerfile app
-docker build --pull --target migrator --tag "$MIGRATOR_IMAGE" --file app/Dockerfile app
+docker build --pull --tag "$APP_IMAGE" --file app/Dockerfile .
+docker build --pull --target migrator --tag "$MIGRATOR_IMAGE" --file app/Dockerfile .
 docker push "$APP_IMAGE"
 docker push "$MIGRATOR_IMAGE"
 

@@ -63,3 +63,4 @@ coverage/
 .tmp/
 test-results/
 playwright-report/
+functions/generate-thumbnail/.release/

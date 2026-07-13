@@ -1,0 +1,16 @@
+{
+  "pako@1.0.11": {
+    "requiredArtifactFiles": [
+      {
+        "path": "lib/zlib/deflate.js",
+        "sha256": "4b9b71ae7f42e506fe1fb134f1c21b944ef2b7ef79667ba1fe59eb963c353d22"
+      }
+    ],
+    "files": [
+      {
+        "sourceRelative": "lib/zlib/README",
+        "name": "ZLIB-LICENSE.txt"
+      }
+    ]
+  }
+}

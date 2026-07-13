@@ -160,6 +160,8 @@ Consulte [Dados, privacidade e retencao](docs/DATA-PRIVACY.md) para o inventario
 
 Consulte o [walkthrough de CSV governado](docs/CSV-WALKTHROUGH.md) para a demonstracao canonica e neutra, em ingles, de onboarding da fonte, grants, escopo de linhas por viewer, falhas fechadas e a fronteira read-only do DuckDB.
 
+Consulte [Project provenance](PROVENANCE.md), [Third-party notices](THIRD_PARTY_NOTICES.md) e o [inventario gerado de licencas travadas](docs/THIRD-PARTY-LICENSES.md) para o status de autorizacao do release, origem de assets, licencas de dependencias e bloqueios ainda abertos.
+
 ## Como contribuir
 
 Leia [CONTRIBUTING.md](CONTRIBUTING.md) antes de abrir issues ou pull requests.

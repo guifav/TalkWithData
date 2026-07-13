@@ -3,13 +3,16 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 IMAGE="${TWD_RUNTIME_CONFIG_IMAGE:-talkwithdata-runtime-config-smoke}"
+MIGRATOR_IMAGE="${IMAGE}-migrator"
 RUN_ID="$$"
 TMP_DIR="$(mktemp -d)"
 CONTAINERS=()
-BUILD_ARGS=()
+BUILD_COMMAND=(docker build)
+MIGRATOR_BUILD_COMMAND=(docker build)
 
 if [[ "${TWD_RUNTIME_CONFIG_NO_CACHE:-0}" == "1" ]]; then
-  BUILD_ARGS+=(--no-cache)
+  BUILD_COMMAND+=(--no-cache)
+  MIGRATOR_BUILD_COMMAND+=(--no-cache)
 fi
 
 cleanup() {
@@ -62,8 +65,81 @@ wait_for_html() {
   return 1
 }
 
-docker build "${BUILD_ARGS[@]}" -t "$IMAGE" \
-  -f "$ROOT_DIR/app/Dockerfile" "$ROOT_DIR/app"
+BUILD_COMMAND+=(-t "$IMAGE" -f "$ROOT_DIR/app/Dockerfile" "$ROOT_DIR")
+"${BUILD_COMMAND[@]}"
+
+docker run --rm --entrypoint sh "$IMAGE" -c '
+  test -s /app/licenses/LICENSE
+  test -s /app/licenses/THIRD_PARTY_NOTICES.md
+  test -s /app/licenses/docs/THIRD-PARTY-LICENSES.md
+  test -s /app/licenses/base/manifest.json
+  test -s /app/licenses/base/runtime/docker-node-LICENSE.txt
+'
+docker run --rm --entrypoint node "$IMAGE" -e '
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const manifest = require("/app/licenses/npm/manifest.json");
+  const base = require("/app/licenses/base/manifest.json");
+  const names = new Set(manifest.packages.map((entry) => entry.name));
+  for (const name of ["firebase-admin", "@duckdb/node-api", "@duckdb/node-bindings", "exceljs", "unzipper", "lucide-react", "radix-ui", "recharts", "sonner"]) {
+    if (!names.has(name)) throw new Error(`missing runner license bundle for ${name}`);
+  }
+  if (manifest.packages.some((entry) => entry.files.length === 0)) {
+    throw new Error("runner license bundle contains an empty package entry");
+  }
+  function findSharp(directory) {
+    if (directory === "/app/licenses") return null;
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const child = path.join(directory, entry.name);
+      if (entry.name === "sharp" && path.basename(path.dirname(child)) === "node_modules") return child;
+      if (entry.name.startsWith("sharp-") && path.basename(path.dirname(child)) === "@img") return child;
+      const found = findSharp(child);
+      if (found) return found;
+    }
+    return null;
+  }
+  const leakedSharp = findSharp("/app");
+  if (leakedSharp) throw new Error(`unused native image optimizer leaked into runner: ${leakedSharp}`);
+  const pako = manifest.packages.find((entry) => entry.name === "pako");
+  for (const file of ["SPDX-MIT.txt", "SPDX-Zlib.txt", "supplements/ZLIB-LICENSE.txt"]) {
+    if (!pako?.files.includes(file)) throw new Error(`missing pako license material ${file}`);
+  }
+  for (const name of ["busybox", "musl", "zlib"]) {
+    if (!base.alpinePackages.some((entry) => entry.name === name)) {
+      throw new Error(`missing base image inventory entry ${name}`);
+    }
+  }
+  const entrypoint = base.reviewedFiles.find(
+    (entry) => entry.source === "usr/local/bin/docker-entrypoint.sh",
+  );
+  if (entrypoint?.sha256 !== "a15ac9589c04baf9da95b08e0e79b5cf1d75ab8dc64e06a5e68e4ceb0ad7c8ea") {
+    throw new Error("base image entrypoint is not bound to the reviewed docker-node source");
+  }
+'
+
+MIGRATOR_BUILD_COMMAND+=(
+  -t "$MIGRATOR_IMAGE" --target migrator
+  -f "$ROOT_DIR/app/Dockerfile" "$ROOT_DIR"
+)
+"${MIGRATOR_BUILD_COMMAND[@]}"
+docker run --rm --entrypoint sh "$MIGRATOR_IMAGE" -c '
+  test -s /app/licenses/LICENSE
+  test -s /app/licenses/THIRD_PARTY_NOTICES.md
+  test -s /app/licenses/docs/THIRD-PARTY-LICENSES.md
+  test -s /app/licenses/base/manifest.json
+  test -s /app/licenses/base/runtime/docker-node-LICENSE.txt
+'
+docker run --rm --entrypoint node "$MIGRATOR_IMAGE" -e '
+  const manifest = require("/app/licenses/npm/manifest.json");
+  const names = new Set(manifest.packages.map((entry) => entry.name));
+  for (const name of ["prisma", "dotenv"]) {
+    if (!names.has(name)) throw new Error(`missing migrator license bundle for ${name}`);
+  }
+  if (manifest.packages.some((entry) => entry.files.length === 0)) {
+    throw new Error("migrator license bundle contains an empty package entry");
+  }
+'
 
 for suffix in one two; do
   env_file="$TMP_DIR/${suffix}.env"

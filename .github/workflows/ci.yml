@@ -72,6 +72,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify third-party license inventory
+        run: |
+          node --test ../scripts/__tests__/*.test.mjs
+          node ../scripts/generate-third-party-licenses.mjs --check --fail-on-unknown
+
       - name: Generate Prisma client
         run: npx prisma generate
 
@@ -92,6 +97,9 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Test ExcelJS in standalone artifact
+        run: npm run test:exceljs-standalone
 
   functions-generate-thumbnail:
     runs-on: ubuntu-latest
@@ -117,6 +125,9 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Package release with licenses
+        run: npm run package:release
 
   browser-e2e:
     runs-on: ubuntu-latest
@@ -191,4 +202,6 @@ jobs:
         run: ./scripts/test-runtime-firebase-container.sh
 
       - name: Test bucketless local storage with Docker Compose
+        env:
+          TWD_RUNTIME_CONFIG_NO_CACHE: "1"
         run: ./scripts/test-local-storage-compose.sh
