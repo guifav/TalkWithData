@@ -20,6 +20,7 @@ on:
 permissions:
   actions: read
   contents: write
+  issues: read
 
 jobs:
   release:
@@ -112,6 +113,15 @@ jobs:
               if [ "$is_draft" = "true" ]; then
                 gh release delete "$TAG" --yes --cleanup-tag >/dev/null 2>&1 || true
               elif [ -z "$is_draft" ] && [ "$CREATED_REMOTE_TAG" = "true" ]; then
+                remote_tag_commit="$(git ls-remote origin "refs/tags/$TAG^{}" | awk '{print $1}' || true)"
+                if [ "$remote_tag_commit" = "$GITHUB_SHA" ]; then
+                  git push --delete origin "$TAG" >/dev/null 2>&1 || true
+                fi
+              fi
+            elif [ "$CREATED_REMOTE_TAG" = "true" ] && [ "$PUBLISHED_RELEASE" != "true" ]; then
+              release_state="$(gh release view "$TAG" --json isDraft --jq .isDraft 2>/dev/null || true)"
+              remote_tag_commit="$(git ls-remote origin "refs/tags/$TAG^{}" | awk '{print $1}' || true)"
+              if [ -z "$release_state" ] && [ "$remote_tag_commit" = "$GITHUB_SHA" ]; then
                 git push --delete origin "$TAG" >/dev/null 2>&1 || true
               fi
             fi

@@ -135,6 +135,18 @@ export function assertVersionManifest(version, manifest) {
   }
 }
 
+export function assertLatestWorkflowRunSucceeded(workflow, runs) {
+  const [latestRun] = runs;
+  if (!latestRun) {
+    throw new Error(`Required workflow did not run for this commit: ${workflow}`);
+  }
+  if (latestRun.status !== "completed" || latestRun.conclusion !== "success") {
+    throw new Error(
+      `Latest required workflow did not pass for this commit: ${workflow} status=${latestRun.status} conclusion=${latestRun.conclusion ?? ""}`,
+    );
+  }
+}
+
 export function compareSemver(left, right) {
   const leftParts = left.split(".").map(Number);
   const rightParts = right.split(".").map(Number);
@@ -298,16 +310,12 @@ function assertCiSuccess(requiredWorkflows) {
       workflow,
       "--commit",
       head,
-      "--status",
-      "completed",
       "--json",
-      "conclusion,databaseId",
+      "conclusion,createdAt,databaseId,status",
       "--limit",
       "10",
     ]);
-    if (!runs.some((runResult) => runResult.conclusion === "success")) {
-      throw new Error(`Required workflow did not pass for ${head}: ${workflow}`);
-    }
+    assertLatestWorkflowRunSucceeded(workflow, runs);
   }
 }
 

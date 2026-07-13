@@ -6,6 +6,7 @@ import {
   assertChangelogEntry,
   assertCompleteChecklist,
   assertGithubIssueCommentUrl,
+  assertLatestWorkflowRunSucceeded,
   assertOwnerAuthorizationCommentPayload,
   assertSemver,
   assertVersionManifest,
@@ -178,13 +179,33 @@ test("release readiness distinguishes not-found from indeterminate API failures"
 
 test("release workflow serializes publication and only cleans confirmed drafts", () => {
   assert.match(releaseWorkflow, /concurrency:\n\s+group: release-\$\{\{ github\.repository \}\}\n\s+cancel-in-progress: false/);
+  assert.match(releaseWorkflow, /issues: read/);
   assert.match(releaseWorkflow, /gh release view "\$TAG" --json isDraft --jq \.isDraft/);
   assert.match(releaseWorkflow, /if \[ "\$is_draft" = "true" \]; then/);
+  assert.match(releaseWorkflow, /git ls-remote origin "refs\/tags\/\$TAG\^\{\}"/);
 });
 
 test("release readiness paginates remote tag refs", () => {
   const readinessScript = readFileSync(new URL("../check-release-readiness.mjs", import.meta.url), "utf8");
   assert.match(readinessScript, /"gh", \["api", "--paginate", "\/repos\/guifav\/TalkWithData\/git\/matching-refs\/tags\/v"/);
+});
+
+test("release readiness requires latest workflow run to pass", () => {
+  assert.doesNotThrow(() =>
+    assertLatestWorkflowRunSucceeded("CI", [{ status: "completed", conclusion: "success" }]),
+  );
+  assert.throws(
+    () =>
+      assertLatestWorkflowRunSucceeded("CI", [
+        { status: "in_progress", conclusion: "" },
+        { status: "completed", conclusion: "success" },
+      ]),
+    /Latest required workflow did not pass/,
+  );
+  assert.throws(
+    () => assertLatestWorkflowRunSucceeded("CI", []),
+    /did not run/,
+  );
 });
 
 test("release readiness requires all package versions to match", () => {
