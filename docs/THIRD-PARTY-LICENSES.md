@@ -6,15 +6,15 @@ It is an engineering inventory, not legal advice.
 
 ## Snapshot
 
-- Locked package versions: 1155
-- Unique package names: 1062
+- Locked package versions: 1150
+- Unique package names: 1061
 - Unresolved licenses: 0
 - Any `UNKNOWN` entry is a release blocker until evidence is reviewed and recorded.
 
 Lockfile SHA-256 values:
 
 - `app/migrator/package-lock.json`: `11ae535f69c102bb5f133096bb0b8c98bb92b18c6e714a0563a8a6edf6825c33`
-- `app/package-lock.json`: `7807d53b8674ef972488ba902ba611f907f7f2349028622807c59b4a5a04f61d`
+- `app/package-lock.json`: `042f9e1faaa732e000391e937b707780fbc7813f4687fbea40d12b7b39871ec4`
 - `functions/generate-thumbnail/package-lock.json`: `3b496bc2e9973ad6248611fc524fbd0f416e12a6a6e2db65e534d06295d0c48f`
 
 ## License summary
@@ -25,18 +25,18 @@ Lockfile SHA-256 values:
 | `(MIT OR CC0-1.0)` | 1 |
 | `(MIT OR GPL-3.0-or-later)` | 1 |
 | `0BSD` | 1 |
-| `Apache-2.0` | 178 |
+| `Apache-2.0` | 175 |
 | `Apache-2.0 AND LGPL-3.0-or-later` | 3 |
 | `Apache-2.0 AND LGPL-3.0-or-later AND MIT` | 1 |
-| `BlueOak-1.0.0` | 5 |
+| `BlueOak-1.0.0` | 6 |
 | `BSD-2-Clause` | 10 |
 | `BSD-3-Clause` | 24 |
 | `CC-BY-3.0` | 1 |
 | `CC-BY-4.0` | 1 |
 | `CC0-1.0` | 3 |
-| `ISC` | 58 |
+| `ISC` | 56 |
 | `LGPL-3.0-or-later` | 10 |
-| `MIT` | 840 |
+| `MIT` | 839 |
 | `MIT AND ISC` | 1 |
 | `MPL-2.0` | 13 |
 | `Python-2.0` | 1 |
@@ -175,8 +175,7 @@ reviewed metadata override.
 | `@floating-ui/dom` | `1.7.6` | `MIT` | app | runtime | lockfile |
 | `@floating-ui/react-dom` | `2.1.8` | `MIT` | app | runtime | lockfile |
 | `@floating-ui/utils` | `0.2.11` | `MIT` | app | runtime | lockfile |
-| `@google-cloud/firestore` | `7.11.6` | `Apache-2.0` | app | runtime | lockfile |
-| `@google-cloud/firestore` | `8.6.0` | `Apache-2.0` | functions/generate-thumbnail | runtime | lockfile |
+| `@google-cloud/firestore` | `8.6.0` | `Apache-2.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `@google-cloud/functions-framework` | `5.0.5` | `Apache-2.0` | functions/generate-thumbnail | runtime | lockfile |
 | `@google-cloud/paginator` | `5.0.2` | `Apache-2.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `@google-cloud/projectify` | `4.0.0` | `Apache-2.0` | app, functions/generate-thumbnail | runtime | lockfile |
@@ -217,7 +216,7 @@ reviewed metadata override.
 | `@img/sharp-win32-arm64` | `0.34.5` | `Apache-2.0 AND LGPL-3.0-or-later` | app | runtime | lockfile |
 | `@img/sharp-win32-ia32` | `0.34.5` | `Apache-2.0 AND LGPL-3.0-or-later` | app | runtime | lockfile |
 | `@img/sharp-win32-x64` | `0.34.5` | `Apache-2.0 AND LGPL-3.0-or-later` | app | runtime | lockfile |
-| `@isaacs/cliui` | `8.0.2` | `ISC` | functions/generate-thumbnail | runtime | lockfile |
+| `@isaacs/cliui` | `8.0.2` | `ISC` | app, functions/generate-thumbnail | runtime | lockfile |
 | `@jridgewell/gen-mapping` | `0.3.13` | `MIT` | app | development | lockfile |
 | `@jridgewell/remapping` | `2.3.5` | `MIT` | app | development | lockfile |
 | `@jridgewell/resolve-uri` | `3.1.2` | `MIT` | app | development | lockfile |
@@ -244,7 +243,7 @@ reviewed metadata override.
 | `@nolyfill/is-core-module` | `1.0.39` | `MIT` | app | development | lockfile |
 | `@opentelemetry/api` | `1.9.1` | `Apache-2.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `@oxc-project/types` | `0.138.0` | `MIT` | app | development | lockfile |
-| `@pkgjs/parseargs` | `0.11.0` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
+| `@pkgjs/parseargs` | `0.11.0` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `@playwright/test` | `1.61.1` | `Apache-2.0` | app | runtime | lockfile |
 | `@prisma/adapter-pg` | `7.8.0` | `Apache-2.0` | app | runtime | lockfile |
 | `@prisma/client` | `7.8.0` | `Apache-2.0` | app | runtime | lockfile |
@@ -403,7 +402,6 @@ reviewed metadata override.
 | `@types/json-schema` | `7.0.15` | `MIT` | app | development | lockfile |
 | `@types/json5` | `0.0.29` | `MIT` | app | development | lockfile |
 | `@types/jsonwebtoken` | `9.0.10` | `MIT` | app | runtime | lockfile |
-| `@types/long` | `4.0.2` | `MIT` | app | runtime | lockfile |
 | `@types/ms` | `2.1.0` | `MIT` | app | runtime | lockfile |
 | `@types/node` | `14.18.63` | `MIT` | app | runtime | lockfile |
 | `@types/node` | `26.1.1` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
@@ -490,9 +488,9 @@ reviewed metadata override.
 | `ajv` | `8.20.0` | `MIT` | app, app/migrator, functions/generate-thumbnail | runtime | lockfile |
 | `ajv-formats` | `2.1.1` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `ansi-regex` | `5.0.1` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
-| `ansi-regex` | `6.2.2` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
+| `ansi-regex` | `6.2.2` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `ansi-styles` | `4.3.0` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
-| `ansi-styles` | `6.2.3` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
+| `ansi-styles` | `6.2.3` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `anynum` | `1.0.1` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `archiver` | `5.3.2` | `MIT` | app | runtime | lockfile |
 | `archiver-utils` | `2.1.0` | `MIT` | app | runtime | lockfile |
@@ -538,7 +536,7 @@ reviewed metadata override.
 | `body-parser` | `2.3.0` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `brace-expansion` | `1.1.15` | `MIT` | app | runtime | lockfile |
 | `brace-expansion` | `2.1.1` | `MIT` | app | runtime | lockfile |
-| `brace-expansion` | `2.1.2` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
+| `brace-expansion` | `2.1.2` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `brace-expansion` | `5.0.7` | `MIT` | app | development | lockfile |
 | `braces` | `3.0.3` | `MIT` | app | development | lockfile |
 | `browserslist` | `4.28.4` | `MIT` | app | development | lockfile |
@@ -618,7 +616,7 @@ reviewed metadata override.
 | `dunder-proto` | `1.0.1` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `duplexer2` | `0.1.4` | `BSD-3-Clause` | app | runtime | lockfile |
 | `duplexify` | `4.1.3` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
-| `eastasianwidth` | `0.2.0` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
+| `eastasianwidth` | `0.2.0` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `ecdsa-sig-formatter` | `1.0.11` | `Apache-2.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `ee-first` | `1.1.1` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `effect` | `3.20.0` | `MIT` | app, app/migrator | runtime | lockfile |
@@ -695,7 +693,7 @@ reviewed metadata override.
 | `find-up` | `5.0.0` | `MIT` | app | development | lockfile |
 | `find-up-simple` | `1.0.1` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `firebase` | `12.15.0` | `Apache-2.0` | app | runtime | lockfile |
-| `firebase-admin` | `13.10.0` | `Apache-2.0` | app | runtime | lockfile |
+| `firebase-admin` | `14.1.0` | `Apache-2.0` | app | runtime | lockfile |
 | `flat-cache` | `4.0.1` | `MIT` | app | development | lockfile |
 | `flatted` | `3.4.2` | `ISC` | app | development | lockfile |
 | `for-each` | `0.3.5` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
@@ -714,12 +712,12 @@ reviewed metadata override.
 | `functional-red-black-tree` | `1.0.1` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `functions-have-names` | `1.2.3` | `MIT` | app | development | lockfile |
 | `gaxios` | `6.7.1` | `Apache-2.0` | app, functions/generate-thumbnail | runtime | lockfile |
-| `gaxios` | `7.1.3` | `Apache-2.0` | functions/generate-thumbnail | runtime | lockfile |
+| `gaxios` | `7.1.3` | `Apache-2.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `gaxios` | `7.1.5` | `Apache-2.0` | app | runtime | lockfile |
-| `gaxios` | `7.2.0` | `Apache-2.0` | functions/generate-thumbnail | runtime | lockfile |
+| `gaxios` | `7.2.0` | `Apache-2.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `gcp-metadata` | `6.1.1` | `Apache-2.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `gcp-metadata` | `8.1.2` | `Apache-2.0` | app | runtime | lockfile |
-| `gcp-metadata` | `8.1.3` | `Apache-2.0` | functions/generate-thumbnail | runtime | lockfile |
+| `gcp-metadata` | `8.1.3` | `Apache-2.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `generate-function` | `2.3.1` | `MIT` | app, app/migrator | runtime | lockfile |
 | `generator-function` | `2.0.1` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `gensync` | `1.0.0-beta.2` | `MIT` | app | development | lockfile |
@@ -732,18 +730,17 @@ reviewed metadata override.
 | `get-symbol-description` | `1.1.0` | `MIT` | app | development | lockfile |
 | `get-tsconfig` | `4.14.0` | `MIT` | app | development | lockfile |
 | `giget` | `3.3.0` | `MIT` | app, app/migrator | runtime | lockfile |
-| `glob` | `10.5.0` | `ISC` | functions/generate-thumbnail | runtime | lockfile |
+| `glob` | `10.5.0` | `ISC` | app, functions/generate-thumbnail | runtime | lockfile |
 | `glob` | `7.2.3` | `ISC` | app | runtime | lockfile |
 | `glob-parent` | `5.1.2` | `ISC` | app | development | lockfile |
 | `glob-parent` | `6.0.2` | `ISC` | app | development | lockfile |
 | `globals` | `14.0.0` | `MIT` | app | development | lockfile |
 | `globals` | `16.4.0` | `MIT` | app | development | lockfile |
 | `globalthis` | `1.0.4` | `MIT` | app | development | lockfile |
-| `google-auth-library` | `10.5.0` | `Apache-2.0` | functions/generate-thumbnail | runtime | lockfile |
+| `google-auth-library` | `10.5.0` | `Apache-2.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `google-auth-library` | `10.9.0` | `Apache-2.0` | app | runtime | lockfile |
 | `google-auth-library` | `9.15.1` | `Apache-2.0` | app, functions/generate-thumbnail | runtime | lockfile |
-| `google-gax` | `4.6.1` | `Apache-2.0` | app | runtime | lockfile |
-| `google-gax` | `5.0.7` | `Apache-2.0` | functions/generate-thumbnail | runtime | lockfile |
+| `google-gax` | `5.0.7` | `Apache-2.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `google-logging-utils` | `0.0.2` | `Apache-2.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `google-logging-utils` | `1.1.3` | `Apache-2.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `gopd` | `1.2.0` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
@@ -751,7 +748,7 @@ reviewed metadata override.
 | `grammex` | `3.1.12` | `MIT` | app, app/migrator | runtime | lockfile |
 | `graphmatch` | `1.1.1` | `MIT` | app, app/migrator | runtime | lockfile |
 | `gtoken` | `7.1.0` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
-| `gtoken` | `8.0.0` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
+| `gtoken` | `8.0.0` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `has-bigints` | `1.1.0` | `MIT` | app | development | lockfile |
 | `has-flag` | `4.0.0` | `MIT` | app | development | lockfile |
 | `has-property-descriptors` | `1.0.2` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
@@ -769,7 +766,7 @@ reviewed metadata override.
 | `http-errors` | `2.0.1` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `http-parser-js` | `0.5.10` | `MIT` | app | runtime | lockfile |
 | `http-proxy-agent` | `5.0.0` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
-| `http-proxy-agent` | `7.0.2` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
+| `http-proxy-agent` | `7.0.2` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `http-status-codes` | `2.3.0` | `MIT` | app, app/migrator | runtime | lockfile |
 | `https-proxy-agent` | `5.0.1` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `https-proxy-agent` | `7.0.6` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
@@ -828,9 +825,9 @@ reviewed metadata override.
 | `istanbul-lib-report` | `3.0.1` | `BSD-3-Clause` | app | development | lockfile |
 | `istanbul-reports` | `3.2.0` | `BSD-3-Clause` | app | development | lockfile |
 | `iterator.prototype` | `1.1.5` | `MIT` | app | development | lockfile |
-| `jackspeak` | `3.4.3` | `BlueOak-1.0.0` | functions/generate-thumbnail | runtime | lockfile |
+| `jackspeak` | `3.4.3` | `BlueOak-1.0.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `jiti` | `2.7.0` | `MIT` | app, app/migrator | runtime | lockfile |
-| `jose` | `4.15.9` | `MIT` | app | runtime | lockfile |
+| `jose` | `6.2.3` | `MIT` | app | runtime | lockfile |
 | `js-tokens` | `10.0.0` | `MIT` | app | development | lockfile |
 | `js-tokens` | `4.0.0` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `js-yaml` | `4.3.0` | `MIT` | app | development | lockfile |
@@ -847,7 +844,7 @@ reviewed metadata override.
 | `jsx-ast-utils` | `3.3.5` | `MIT` | app | development | lockfile |
 | `jszip` | `3.10.1` | `(MIT OR GPL-3.0-or-later)` | app | runtime | lockfile |
 | `jwa` | `2.0.1` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
-| `jwks-rsa` | `3.2.2` | `MIT` | app | runtime | lockfile |
+| `jwks-rsa` | `4.1.0` | `MIT` | app | runtime | lockfile |
 | `jws` | `4.0.1` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `keyv` | `4.5.4` | `MIT` | app | development | lockfile |
 | `language-subtag-registry` | `0.3.23` | `CC0-1.0` | app | development | lockfile |
@@ -892,10 +889,10 @@ reviewed metadata override.
 | `lodash.uniq` | `4.5.0` | `MIT` | app | runtime | lockfile |
 | `long` | `5.3.2` | `Apache-2.0` | app, app/migrator, functions/generate-thumbnail | runtime | lockfile |
 | `loose-envify` | `1.4.0` | `MIT` | app | development | lockfile |
-| `lru-cache` | `10.4.3` | `ISC` | functions/generate-thumbnail | runtime | lockfile |
+| `lru-cache` | `10.4.3` | `ISC` | app, functions/generate-thumbnail | runtime | lockfile |
+| `lru-cache` | `11.5.2` | `BlueOak-1.0.0` | app | runtime | lockfile |
 | `lru-cache` | `5.1.1` | `ISC` | app | development | lockfile |
-| `lru-cache` | `6.0.0` | `ISC` | app | runtime | lockfile |
-| `lru-memoizer` | `2.3.0` | `MIT` | app | runtime | lockfile |
+| `lru-memoizer` | `3.0.0` | `MIT` | app | runtime | lockfile |
 | `lru.min` | `1.1.4` | `MIT` | app, app/migrator | runtime | lockfile |
 | `lucide-react` | `1.23.0` | `ISC` | app | runtime | lockfile |
 | `magic-string` | `0.30.21` | `MIT` | app | development | lockfile |
@@ -914,9 +911,9 @@ reviewed metadata override.
 | `minimatch` | `10.2.5` | `BlueOak-1.0.0` | app | development | lockfile |
 | `minimatch` | `3.1.5` | `ISC` | app | runtime | lockfile |
 | `minimatch` | `5.1.9` | `ISC` | app | runtime | lockfile |
-| `minimatch` | `9.0.9` | `ISC` | functions/generate-thumbnail | runtime | lockfile |
+| `minimatch` | `9.0.9` | `ISC` | app, functions/generate-thumbnail | runtime | lockfile |
 | `minimist` | `1.2.8` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
-| `minipass` | `7.1.3` | `BlueOak-1.0.0` | functions/generate-thumbnail | runtime | lockfile |
+| `minipass` | `7.1.3` | `BlueOak-1.0.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `mitt` | `3.0.1` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `modern-tar` | `0.7.6` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `ms` | `2.1.3` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
@@ -954,7 +951,7 @@ reviewed metadata override.
 | `own-keys` | `1.0.1` | `MIT` | app | development | lockfile |
 | `p-limit` | `3.1.0` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `p-locate` | `5.0.0` | `MIT` | app | development | lockfile |
-| `package-json-from-dist` | `1.0.1` | `BlueOak-1.0.0` | functions/generate-thumbnail | runtime | lockfile |
+| `package-json-from-dist` | `1.0.1` | `BlueOak-1.0.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `pako` | `1.0.11` | `(MIT AND Zlib)` | app | runtime | lockfile |
 | `parent-module` | `1.0.1` | `MIT` | app | development | lockfile |
 | `parse-json` | `8.3.0` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
@@ -965,7 +962,7 @@ reviewed metadata override.
 | `path-is-absolute` | `1.0.1` | `MIT` | app | runtime | lockfile |
 | `path-key` | `3.1.1` | `MIT` | app, app/migrator, functions/generate-thumbnail | runtime | lockfile |
 | `path-parse` | `1.0.7` | `MIT` | app | development | lockfile |
-| `path-scurry` | `1.11.1` | `BlueOak-1.0.0` | functions/generate-thumbnail | runtime | lockfile |
+| `path-scurry` | `1.11.1` | `BlueOak-1.0.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `path-to-regexp` | `8.4.2` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `pathe` | `2.0.3` | `MIT` | app, app/migrator | runtime | lockfile |
 | `perfect-debounce` | `2.1.0` | `MIT` | app, app/migrator | runtime | lockfile |
@@ -997,8 +994,7 @@ reviewed metadata override.
 | `process-nextick-args` | `2.0.1` | `MIT` | app | runtime | lockfile |
 | `prop-types` | `15.8.1` | `MIT` | app | development | lockfile |
 | `proper-lockfile` | `4.1.2` | `MIT` | app, app/migrator | runtime | lockfile |
-| `proto3-json-serializer` | `2.0.2` | `Apache-2.0` | app | runtime | lockfile |
-| `proto3-json-serializer` | `3.0.4` | `Apache-2.0` | functions/generate-thumbnail | runtime | lockfile |
+| `proto3-json-serializer` | `3.0.4` | `Apache-2.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `protobufjs` | `7.6.5` | `BSD-3-Clause` | app, functions/generate-thumbnail | runtime | lockfile |
 | `proxy-addr` | `2.0.7` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `pump` | `3.0.4` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
@@ -1041,9 +1037,9 @@ reviewed metadata override.
 | `retry` | `0.12.0` | `MIT` | app, app/migrator | runtime | lockfile |
 | `retry` | `0.13.1` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `retry-request` | `7.0.2` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
-| `retry-request` | `8.0.3` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
+| `retry-request` | `8.0.3` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `reusify` | `1.1.0` | `MIT` | app | development | lockfile |
-| `rimraf` | `5.0.10` | `ISC` | functions/generate-thumbnail | runtime | lockfile |
+| `rimraf` | `5.0.10` | `ISC` | app, functions/generate-thumbnail | runtime | lockfile |
 | `rolldown` | `1.1.4` | `MIT` | app | development | lockfile |
 | `router` | `2.2.0` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `run-parallel` | `1.2.0` | `MIT` | app | development | lockfile |
@@ -1097,7 +1093,7 @@ reviewed metadata override.
 | `string_decoder` | `1.1.1` | `MIT` | app | runtime | lockfile |
 | `string_decoder` | `1.3.0` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `string-width` | `4.2.3` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
-| `string-width` | `5.1.2` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
+| `string-width` | `5.1.2` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `string-width` | `7.2.0` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `string.prototype.includes` | `2.0.1` | `MIT` | app | development | lockfile |
 | `string.prototype.matchall` | `4.0.12` | `MIT` | app | development | lockfile |
@@ -1106,7 +1102,7 @@ reviewed metadata override.
 | `string.prototype.trimend` | `1.0.10` | `MIT` | app | development | lockfile |
 | `string.prototype.trimstart` | `1.0.8` | `MIT` | app | development | lockfile |
 | `strip-ansi` | `6.0.1` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
-| `strip-ansi` | `7.2.0` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
+| `strip-ansi` | `7.2.0` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `strip-bom` | `3.0.0` | `MIT` | app | development | lockfile |
 | `strip-json-comments` | `3.1.1` | `MIT` | app | development | lockfile |
 | `strnum` | `2.4.1` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
@@ -1120,7 +1116,7 @@ reviewed metadata override.
 | `tar-fs` | `3.1.3` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `tar-stream` | `2.2.0` | `MIT` | app | runtime | lockfile |
 | `tar-stream` | `3.2.0` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
-| `teeny-request` | `10.1.3` | `Apache-2.0` | functions/generate-thumbnail | runtime | lockfile |
+| `teeny-request` | `10.1.3` | `Apache-2.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `teeny-request` | `9.0.0` | `Apache-2.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `teex` | `1.0.1` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `text-decoder` | `1.2.7` | `Apache-2.0` | functions/generate-thumbnail | runtime | lockfile |
@@ -1185,7 +1181,7 @@ reviewed metadata override.
 | `why-is-node-running` | `2.3.0` | `MIT` | app | development | lockfile |
 | `word-wrap` | `1.2.5` | `MIT` | app | development | lockfile |
 | `wrap-ansi` | `7.0.0` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
-| `wrap-ansi` | `8.1.0` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
+| `wrap-ansi` | `8.1.0` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `wrap-ansi` | `9.0.2` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `wrappy` | `1.0.2` | `ISC` | app, functions/generate-thumbnail | runtime | lockfile |
 | `ws` | `8.21.0` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
@@ -1194,7 +1190,6 @@ reviewed metadata override.
 | `xtend` | `4.0.2` | `MIT` | app | runtime | lockfile |
 | `y18n` | `5.0.8` | `ISC` | app, functions/generate-thumbnail | runtime | lockfile |
 | `yallist` | `3.1.1` | `ISC` | app | development | lockfile |
-| `yallist` | `4.0.0` | `ISC` | app | runtime | lockfile |
 | `yargs` | `17.7.3` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `yargs` | `18.0.0` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `yargs-parser` | `21.1.1` | `ISC` | app, functions/generate-thumbnail | runtime | lockfile |
