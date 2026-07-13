@@ -7,6 +7,26 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
+export const REQUIRED_OWNER_STATEMENT = [
+  "I confirm that I own or control the rights needed to publish the original",
+  "Talk With Data code and repository-authored assets, including material derived",
+  "from the prior internal application, or have permission from the relevant",
+  "rights holders. I authorize their release in this repository under the MIT",
+  "License. I also confirm the relationship of the historical Git identities",
+  "listed below to that authorization.",
+].join(" ");
+
+const REQUIRED_CHECKLIST_ITEMS = [
+  "Owner authorization is recorded in PROVENANCE.md with a permanent GitHub issue comment URL.",
+  "CHANGELOG.md has reviewed entries for the release version.",
+  "CHANGELOG.md uses a final YYYY-MM-DD date for the release version.",
+  "node scripts/check-release-readiness.mjs --version",
+  "GitHub CI is green on the exact main commit to release.",
+  "Generated release notes were reviewed against Git history.",
+  "CHECKSUMS.txt was generated from the release artifacts.",
+  "Rollback or revocation owner is identified before publication.",
+];
+
 export function parseArgs(argv) {
   const args = {
     requiredWorkflows: [],
@@ -22,6 +42,8 @@ export function parseArgs(argv) {
     else if (value === "--require-ci-success") args.requireCiSuccess = true;
     else if (value === "--require-complete-checklist") args.requireCompleteChecklist = true;
     else if (value === "--require-owner-authorization") args.requireOwnerAuthorization = true;
+    else if (value === "--require-final-changelog") args.requireFinalChangelog = true;
+    else if (value === "--require-newer-than-tags") args.requireNewerThanTags = true;
     else if (value === "--require-tag") args.requireTag = true;
     else if (value === "--require-tag-absent") args.requireTagAbsent = true;
     else if (value === "--require-github-release") args.requireGithubRelease = true;
@@ -38,16 +60,72 @@ export function assertSemver(version) {
 }
 
 export function assertGithubIssueCommentUrl(url) {
-  const pattern = /^https:\/\/github\.com\/guifav\/TalkWithData\/issues\/\d+#issuecomment-\d+$/;
+  const pattern = /^https:\/\/github\.com\/guifav\/TalkWithData\/issues\/58#issuecomment-\d+$/;
   if (!pattern.test(url ?? "")) {
-    throw new Error("Owner authorization URL must be a permanent TalkWithData GitHub issue comment URL");
+    throw new Error("Owner authorization URL must be a permanent TalkWithData issue #58 comment URL");
   }
 }
 
+function normalizeText(value) {
+  return value
+    .replace(/[`*_]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function parseChecklistItems(markdown) {
+  const items = [];
+  let current = null;
+  for (const line of markdown.split(/\r?\n/)) {
+    const match = line.match(/^\s*[-*]\s+\[([ xX])\]\s+(.*)$/);
+    if (match) {
+      current = {
+        checked: match[1].toLowerCase() === "x",
+        raw: line,
+        text: match[2],
+      };
+      items.push(current);
+    } else if (current && /^\s{2,}\S/.test(line)) {
+      current.text += ` ${line.trim()}`;
+      current.raw += `\n${line}`;
+    } else if (line.trim() !== "") {
+      current = null;
+    }
+  }
+  return items;
+}
+
 export function uncheckedChecklistItems(markdown) {
-  return markdown
-    .split(/\r?\n/)
-    .filter((line) => /^\s*-\s+\[\s\]\s+/.test(line));
+  return parseChecklistItems(markdown)
+    .filter((item) => !item.checked)
+    .map((item) => item.raw);
+}
+
+export function assertCompleteChecklist(markdown) {
+  const items = parseChecklistItems(markdown);
+  if (items.length === 0) {
+    throw new Error("Release checklist has no checklist items");
+  }
+
+  const normalizedItems = items.map((item) => ({
+    checked: item.checked,
+    raw: item.raw,
+    text: normalizeText(item.text),
+  }));
+  const missingItems = [];
+  const uncheckedItems = [];
+  for (const required of REQUIRED_CHECKLIST_ITEMS) {
+    const match = normalizedItems.find((item) => item.text.includes(required));
+    if (!match) missingItems.push(required);
+    else if (!match.checked) uncheckedItems.push(match.raw);
+  }
+
+  if (missingItems.length > 0) {
+    throw new Error(`Release checklist is missing required items:\n${missingItems.join("\n")}`);
+  }
+  if (uncheckedItems.length > 0) {
+    throw new Error(`Release checklist has unchecked items:\n${uncheckedItems.join("\n")}`);
+  }
 }
 
 export function assertVersionManifest(version, manifest) {
@@ -55,6 +133,35 @@ export function assertVersionManifest(version, manifest) {
   if (mismatches.length > 0) {
     const rendered = mismatches.map(([name, actual]) => `${name}=${actual}`).join(", ");
     throw new Error(`Package versions do not match ${version}: ${rendered}`);
+  }
+}
+
+export function compareSemver(left, right) {
+  const leftParts = left.split(".").map(Number);
+  const rightParts = right.split(".").map(Number);
+  for (let index = 0; index < 3; index += 1) {
+    if (leftParts[index] > rightParts[index]) return 1;
+    if (leftParts[index] < rightParts[index]) return -1;
+  }
+  return 0;
+}
+
+export function highestSemverTag(tags) {
+  return tags
+    .map((tag) => tag.match(/^v((0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*))$/)?.[1])
+    .filter(Boolean)
+    .sort(compareSemver)
+    .at(-1);
+}
+
+export function assertChangelogEntry(version, changelog, options = {}) {
+  const escapedVersion = version.replace(/\./g, "\\.");
+  const heading = changelog.match(new RegExp(`^## \\[${escapedVersion}\\] - (.+)$`, "m"));
+  if (!heading) {
+    throw new Error(`CHANGELOG.md does not contain a ${version} entry`);
+  }
+  if (options.requireFinalized && !/^\d{4}-\d{2}-\d{2}$/.test(heading[1])) {
+    throw new Error(`CHANGELOG.md ${version} entry must use a finalized YYYY-MM-DD release date`);
   }
 }
 
@@ -84,6 +191,10 @@ function run(command, args) {
   }).trim();
 }
 
+function runJson(command, args) {
+  return JSON.parse(run(command, args));
+}
+
 function assertMergedMain() {
   run("git", ["fetch", "--quiet", "origin", "main", "--tags"]);
   const head = run("git", ["rev-parse", "HEAD"]);
@@ -108,15 +219,29 @@ function assertTagAbsent(version) {
   throw new Error(`Tag v${version} already exists`);
 }
 
+function assertNewerThanTags(version) {
+  const highest = highestSemverTag(
+    run("git", ["tag", "--list", "v[0-9]*.[0-9]*.[0-9]*"])
+      .split(/\r?\n/)
+      .filter(Boolean),
+  );
+  if (highest && compareSemver(version, highest) <= 0) {
+    throw new Error(`Release version ${version} must be greater than existing tag v${highest}`);
+  }
+}
+
 function assertGithubRelease(version) {
   run("gh", ["release", "view", `v${version}`, "--json", "tagName,url"]);
 }
 
 function assertGithubReleaseAbsent(version) {
   try {
-    assertGithubRelease(version);
-  } catch {
-    return;
+    run("gh", ["api", `/repos/guifav/TalkWithData/releases/tags/v${version}`, "--jq", ".tag_name"]);
+  } catch (error) {
+    const stderr = error && typeof error === "object" && "stderr" in error ? String(error.stderr) : "";
+    const stdout = error && typeof error === "object" && "stdout" in error ? String(error.stdout) : "";
+    if (/HTTP 404|Not Found/i.test(`${stderr}\n${stdout}`)) return;
+    throw new Error(`Could not verify GitHub Release absence for v${version}: ${stderr || stdout || error}`);
   }
   throw new Error(`GitHub Release v${version} already exists`);
 }
@@ -125,7 +250,7 @@ function assertCiSuccess(requiredWorkflows) {
   const workflows = requiredWorkflows.length > 0 ? requiredWorkflows : ["CI"];
   const head = run("git", ["rev-parse", "HEAD"]);
   for (const workflow of workflows) {
-    const result = run("gh", [
+    const runs = runJson("gh", [
       "run",
       "list",
       "--workflow",
@@ -139,10 +264,33 @@ function assertCiSuccess(requiredWorkflows) {
       "--limit",
       "10",
     ]);
-    const runs = JSON.parse(result);
     if (!runs.some((runResult) => runResult.conclusion === "success")) {
       throw new Error(`Required workflow did not pass for ${head}: ${workflow}`);
     }
+  }
+}
+
+function ownerCommentId(url) {
+  return url.match(/^https:\/\/github\.com\/guifav\/TalkWithData\/issues\/58#issuecomment-(\d+)$/)?.[1];
+}
+
+function assertOwnerAuthorizationComment(url) {
+  const commentId = ownerCommentId(url);
+  if (!commentId) assertGithubIssueCommentUrl(url);
+  const comment = runJson("gh", [
+    "api",
+    `/repos/guifav/TalkWithData/issues/comments/${commentId}`,
+    "--jq",
+    "{body,author_association,issue_url,user:{login:.user.login}}",
+  ]);
+  if (comment.issue_url !== "https://api.github.com/repos/guifav/TalkWithData/issues/58") {
+    throw new Error("Owner authorization URL must point to issue #58");
+  }
+  if (comment.author_association !== "OWNER" || comment.user?.login !== "guifav") {
+    throw new Error("Owner authorization comment must be authored by the repository owner");
+  }
+  if (!normalizeText(comment.body ?? "").includes(normalizeText(REQUIRED_OWNER_STATEMENT))) {
+    throw new Error("Owner authorization comment does not contain the required authorization statement");
   }
 }
 
@@ -151,20 +299,15 @@ export function runReadiness(options) {
   assertVersionManifest(options.version, packageVersionManifest());
 
   const changelog = readFileSync(path.join(root, "CHANGELOG.md"), "utf8");
-  if (!changelog.includes(`## [${options.version}]`)) {
-    throw new Error(`CHANGELOG.md does not contain a ${options.version} entry`);
-  }
+  assertChangelogEntry(options.version, changelog, { requireFinalized: options.requireFinalChangelog });
 
   if (options.requireCompleteChecklist) {
-    const checklist = readFileSync(path.join(root, options.checklist), "utf8");
-    const openItems = uncheckedChecklistItems(checklist);
-    if (openItems.length > 0) {
-      throw new Error(`Release checklist has unchecked items:\n${openItems.join("\n")}`);
-    }
+    assertCompleteChecklist(readFileSync(path.join(root, options.checklist), "utf8"));
   }
 
   if (options.requireOwnerAuthorization) {
     assertGithubIssueCommentUrl(options.ownerAuthorizationUrl);
+    assertOwnerAuthorizationComment(options.ownerAuthorizationUrl);
     const provenance = readFileSync(path.join(root, "PROVENANCE.md"), "utf8");
     if (provenance.includes("Status: **not yet received**")) {
       throw new Error("PROVENANCE.md still marks owner authorization as not received");
@@ -178,6 +321,7 @@ export function runReadiness(options) {
 
   if (options.requireMergedMain) assertMergedMain();
   if (options.requireCiSuccess) assertCiSuccess(options.requiredWorkflows);
+  if (options.requireNewerThanTags) assertNewerThanTags(options.version);
   if (options.requireTagAbsent) assertTagAbsent(options.version);
   if (options.requireGithubReleaseAbsent) assertGithubReleaseAbsent(options.version);
   if (options.requireTag) assertTag(options.version);

@@ -6,8 +6,10 @@ before running the first non-dry-run release.
 - [ ] Owner authorization is recorded in `PROVENANCE.md` with a permanent
   GitHub issue comment URL.
 - [ ] `CHANGELOG.md` has reviewed entries for the release version.
+- [ ] `CHANGELOG.md` uses a final `YYYY-MM-DD` date for the release version.
 - [ ] `node scripts/check-release-readiness.mjs --version 0.2.0
   --require-complete-checklist --require-owner-authorization
+  --require-final-changelog --require-newer-than-tags
   --owner-authorization-url <url>` passes locally.
 - [ ] GitHub CI is green on the exact `main` commit to release.
 - [ ] Generated release notes were reviewed against Git history.

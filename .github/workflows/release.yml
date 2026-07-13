@@ -87,6 +87,8 @@ jobs:
             --owner-authorization-url "$OWNER_AUTHORIZATION_URL" \
             --require-complete-checklist \
             --require-owner-authorization \
+            --require-final-changelog \
+            --require-newer-than-tags \
             --require-merged-main \
             --require-ci-success \
             --require-tag-absent \
@@ -94,17 +96,26 @@ jobs:
             --required-workflow "CI" \
             --required-workflow "Dependency pin review"
 
-          rollback_partial_release() {
-            gh release delete "$TAG" --yes --cleanup-tag >/dev/null 2>&1 || true
-            git push --delete origin "$TAG" >/dev/null 2>&1 || true
+          CREATED_DRAFT_RELEASE=false
+          PUBLISHED_RELEASE=false
+
+          cleanup_draft_release() {
+            if [ "$CREATED_DRAFT_RELEASE" = "true" ] && [ "$PUBLISHED_RELEASE" != "true" ]; then
+              gh release delete "$TAG" --yes --cleanup-tag >/dev/null 2>&1 || true
+            fi
           }
-          trap rollback_partial_release ERR
+          trap cleanup_draft_release ERR
 
           gh release create "$TAG" \
-            "dist/release/$TAG"/* \
             --target "$GITHUB_SHA" \
+            --draft \
             --title "Talk With Data $TAG" \
             --notes-file "dist/release/$TAG/RELEASE_NOTES.md"
+          CREATED_DRAFT_RELEASE=true
+
+          gh release upload "$TAG" "dist/release/$TAG"/*
+          gh release edit "$TAG" --draft=false
+          PUBLISHED_RELEASE=true
           trap - ERR
 
           node scripts/check-release-readiness.mjs \
@@ -112,6 +123,7 @@ jobs:
             --owner-authorization-url "$OWNER_AUTHORIZATION_URL" \
             --require-complete-checklist \
             --require-owner-authorization \
+            --require-final-changelog \
             --require-merged-main \
             --require-tag \
             --require-github-release

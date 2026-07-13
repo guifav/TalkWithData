@@ -2,12 +2,31 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  assertChangelogEntry,
+  assertCompleteChecklist,
   assertGithubIssueCommentUrl,
   assertSemver,
   assertVersionManifest,
+  compareSemver,
+  highestSemverTag,
   parseArgs,
+  parseChecklistItems,
   uncheckedChecklistItems,
 } from "../check-release-readiness.mjs";
+
+const completeChecklist = `\
+- [x] Owner authorization is recorded in \`PROVENANCE.md\` with a permanent
+  GitHub issue comment URL.
+- [x] \`CHANGELOG.md\` has reviewed entries for the release version.
+- [x] \`CHANGELOG.md\` uses a final \`YYYY-MM-DD\` date for the release version.
+- [x] \`node scripts/check-release-readiness.mjs --version 0.2.0
+  --require-complete-checklist --require-owner-authorization
+  --owner-authorization-url <url>\` passes locally.
+- [x] GitHub CI is green on the exact \`main\` commit to release.
+- [x] Generated release notes were reviewed against Git history.
+- [x] \`CHECKSUMS.txt\` was generated from the release artifacts.
+- [x] Rollback or revocation owner is identified before publication.
+`;
 
 test("release readiness parses explicit gate inputs", () => {
   assert.deepEqual(
@@ -22,6 +41,8 @@ test("release readiness parses explicit gate inputs", () => {
       "--require-ci-success",
       "--required-workflow",
       "CI",
+      "--require-final-changelog",
+      "--require-newer-than-tags",
       "--require-tag-absent",
       "--require-github-release-absent",
       "--require-complete-checklist",
@@ -36,6 +57,8 @@ test("release readiness parses explicit gate inputs", () => {
       requireMergedMain: true,
       requireCiSuccess: true,
       requiredWorkflows: ["CI"],
+      requireFinalChangelog: true,
+      requireNewerThanTags: true,
       requireTagAbsent: true,
       requireGithubReleaseAbsent: true,
       requireCompleteChecklist: true,
@@ -53,11 +76,46 @@ test("release readiness rejects invalid versions and authorization URLs", () => 
     assertGithubIssueCommentUrl("https://github.com/guifav/TalkWithData/issues/58#issuecomment-1"),
   );
   assert.throws(() => assertGithubIssueCommentUrl("https://github.com/guifav/TalkWithData/issues/58"), /comment/);
-  assert.throws(() => assertGithubIssueCommentUrl("https://example.com/issue/58"), /GitHub/);
+  assert.throws(() =>
+    assertGithubIssueCommentUrl("https://github.com/guifav/TalkWithData/issues/999#issuecomment-1"),
+    /issue #58/,
+  );
+  assert.throws(() => assertGithubIssueCommentUrl("https://example.com/issue/58"), /issue #58/);
 });
 
 test("release readiness detects incomplete checklist items", () => {
   assert.deepEqual(uncheckedChecklistItems("- [x] done\n- [ ] missing\n"), ["- [ ] missing"]);
+  assert.deepEqual(uncheckedChecklistItems("* [ ] missing\n"), ["* [ ] missing"]);
+  assert.doesNotThrow(() => assertCompleteChecklist(completeChecklist));
+  assert.throws(() => assertCompleteChecklist(""), /no checklist items/);
+  assert.throws(() => assertCompleteChecklist(completeChecklist.replace("- [x] GitHub CI", "- [ ] GitHub CI")), /unchecked/);
+  assert.throws(() => assertCompleteChecklist(completeChecklist.replace(/- \[x\] Generated release notes.*\n/, "")), /missing/);
+});
+
+test("release readiness parses checklist continuations", () => {
+  assert.deepEqual(parseChecklistItems("- [x] first line\n  second line\n")[0], {
+    checked: true,
+    raw: "- [x] first line\n  second line",
+    text: "first line second line",
+  });
+});
+
+test("release readiness validates final changelog entries", () => {
+  assert.doesNotThrow(() => assertChangelogEntry("0.2.0", "## [0.2.0] - Pending owner authorization\n"));
+  assert.doesNotThrow(() =>
+    assertChangelogEntry("0.2.0", "## [0.2.0] - 2026-07-13\n", { requireFinalized: true }),
+  );
+  assert.throws(
+    () => assertChangelogEntry("0.2.0", "## [0.2.0] - Pending owner authorization\n", { requireFinalized: true }),
+    /YYYY-MM-DD/,
+  );
+});
+
+test("release readiness compares release versions against existing tags", () => {
+  assert.equal(compareSemver("0.2.0", "0.1.0"), 1);
+  assert.equal(compareSemver("0.1.0", "0.2.0"), -1);
+  assert.equal(compareSemver("0.2.0", "0.2.0"), 0);
+  assert.equal(highestSemverTag(["v0.1.0", "not-a-version", "v0.10.0", "v0.2.0"]), "0.10.0");
 });
 
 test("release readiness requires all package versions to match", () => {

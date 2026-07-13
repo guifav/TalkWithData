@@ -6,6 +6,10 @@ This project uses SemVer. The application package version, release tag, and
 GitHub Release must all use the same `vMAJOR.MINOR.PATCH` version and point to
 the same merged `main` commit.
 
+## [Unreleased]
+
+- No unreleased changes yet.
+
 ## [0.2.0] - Pending owner authorization
 
 First automated public release candidate. The earlier `v0.1.0` tag remains

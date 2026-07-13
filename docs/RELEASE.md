@@ -32,10 +32,14 @@ these are true:
 4. `docs/RELEASE_CHECKLIST.md` contains no unchecked items.
 5. `PROVENANCE.md` no longer says `Status: **not yet received**`.
 6. The owner authorization URL is a permanent GitHub issue comment URL and is
-   present in `PROVENANCE.md`.
-7. The requested Git tag and GitHub Release do not already exist before
+   present in `PROVENANCE.md`. The comment must be on issue #58, authored by
+   the repository owner, and contain the required authorization statement.
+7. `CHANGELOG.md` uses a final `YYYY-MM-DD` date for the requested version.
+8. The requested version is greater than the highest existing `v*` SemVer tag.
+9. The requested Git tag and GitHub Release do not already exist before
    publication.
-8. The generated release notes and checksums are attached to the GitHub Release.
+10. The generated release notes and checksums are attached to the GitHub
+    Release.
 
 The gate is implemented by `scripts/check-release-readiness.mjs`. Release notes,
 the source archive, optional thumbnail function package archive, and
@@ -58,16 +62,19 @@ licenses, creates release notes and checksums, uploads a release candidate
 artifact, then only when `dry_run` is false:
 
 1. verifies the completed checklist and owner authorization URL;
-2. verifies that the requested tag and GitHub Release do not already exist;
-3. creates the GitHub Release from the checked-out `main` commit;
-4. attaches generated artifacts and `CHECKSUMS.txt`; and
-5. verifies that the tag and release exist for the same commit.
+2. verifies the final changelog date and monotonic version;
+3. verifies that the requested tag and GitHub Release do not already exist;
+4. creates a draft GitHub Release from the checked-out `main` commit;
+5. uploads generated artifacts and `CHECKSUMS.txt`;
+6. publishes the draft release; and
+7. verifies that the tag and release exist for the same commit.
 
 ## Reviewed History Notes
 
 `scripts/prepare-release.mjs` generates release notes from reviewed Git history.
-For the first release, the range is the full public history. For later releases,
-the range starts after the previous `v*` tag.
+For `0.2.0`, the range starts after the existing `v0.1.0` tag. For later
+releases, the range starts after the previous `v*` tag. The full public history
+remains reviewable through Git history, `CHANGELOG.md`, and `PROVENANCE.md`.
 
 Review generated notes before publishing. They are evidence for the release, not
 a replacement for the changelog.
@@ -88,11 +95,12 @@ If a bad release is published:
 Do not overwrite release assets in place. Publish a new version with a new
 checksum manifest.
 
-If the workflow fails after creating a tag or release, the publish step attempts
-to delete the partial GitHub Release and its tag before exiting. If automatic
-cleanup fails, delete the partial release with `gh release delete v<version>
---yes --cleanup-tag`, confirm `gh release view v<version>` and `git ls-remote
---tags origin v<version>` no longer find it, then rerun the same version only
-after the failed publication left no public artifact. If any artifact was
-downloaded or announced externally, treat it as published and ship a corrective
-new version instead.
+If the workflow fails after creating its draft release but before publication,
+the publish step attempts to delete only that draft release and its tag before
+exiting. If automatic draft cleanup fails, delete the draft release with
+`gh release delete v<version> --yes --cleanup-tag`, confirm `gh release view
+v<version>` and `git ls-remote --tags origin v<version>` no longer find it,
+then rerun the same version only after the failed draft left no public artifact.
+If failure happens after publication, or if any artifact was downloaded or
+announced externally, treat it as published and ship a corrective new version
+instead.
