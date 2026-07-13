@@ -77,7 +77,7 @@ export function parseChecklistItems(markdown) {
   const items = [];
   let current = null;
   for (const line of markdown.split(/\r?\n/)) {
-    const match = line.match(/^\s*[-*]\s+\[([ xX])\]\s+(.*)$/);
+    const match = line.match(/^\s*(?:[-*+]|\d+[.)])\s+\[([ xX])\]\s+(.*)$/);
     if (match) {
       current = {
         checked: match[1].toLowerCase() === "x",
@@ -215,17 +215,24 @@ function remoteTagRef(version) {
   return runJson("gh", ["api", `/repos/guifav/TalkWithData/git/ref/tags/v${version}`]);
 }
 
-function remoteTagCommitSha(version) {
-  const ref = remoteTagRef(version);
+export function remoteTagCommitShaFromRef(ref, loadTag) {
   if (ref.object?.type === "commit") return ref.object.sha;
   if (ref.object?.type === "tag") {
-    const tag = runJson("gh", ["api", `/repos/guifav/TalkWithData/git/tags/${ref.object.sha}`]);
+    const tag = loadTag(ref.object.sha);
     if (tag.object?.type === "commit") return tag.object.sha;
   }
+}
+
+function remoteTagCommitSha(version) {
+  const commit = remoteTagCommitShaFromRef(
+    remoteTagRef(version),
+    (sha) => runJson("gh", ["api", `/repos/guifav/TalkWithData/git/tags/${sha}`]),
+  );
+  if (commit) return commit;
   throw new Error(`Remote tag v${version} does not resolve to a commit`);
 }
 
-function isNotFound(error) {
+export function isNotFound(error) {
   const stderr = error && typeof error === "object" && "stderr" in error ? String(error.stderr) : "";
   const stdout = error && typeof error === "object" && "stdout" in error ? String(error.stdout) : "";
   return /HTTP 404|Not Found/i.test(`${stderr}\n${stdout}`);
@@ -247,11 +254,17 @@ function assertRemoteTagAbsent(version) {
   throw new Error(`Remote tag v${version} already exists`);
 }
 
-function assertNewerThanTags(version) {
-  const refs = run("gh", ["api", "--paginate", "/repos/guifav/TalkWithData/git/matching-refs/tags/v", "--jq", ".[].ref"])
+export function remoteTagNamesFromRefs(output) {
+  return output
       .split(/\r?\n/)
       .filter(Boolean)
       .map((ref) => ref.replace(/^refs\/tags\//, ""));
+}
+
+function assertNewerThanTags(version) {
+  const refs = remoteTagNamesFromRefs(
+    run("gh", ["api", "--paginate", "/repos/guifav/TalkWithData/git/matching-refs/tags/v", "--jq", ".[].ref"]),
+  );
   const highest = highestSemverTag(refs);
   if (highest && compareSemver(version, highest) <= 0) {
     throw new Error(`Release version ${version} must be greater than existing remote tag v${highest}`);
@@ -302,15 +315,7 @@ function ownerCommentId(url) {
   return url.match(/^https:\/\/github\.com\/guifav\/TalkWithData\/issues\/58#issuecomment-(\d+)$/)?.[1];
 }
 
-function assertOwnerAuthorizationComment(url) {
-  const commentId = ownerCommentId(url);
-  if (!commentId) assertGithubIssueCommentUrl(url);
-  const comment = runJson("gh", [
-    "api",
-    `/repos/guifav/TalkWithData/issues/comments/${commentId}`,
-    "--jq",
-    "{body,author_association,issue_url,user:{login:.user.login}}",
-  ]);
+export function assertOwnerAuthorizationCommentPayload(comment) {
   if (comment.issue_url !== "https://api.github.com/repos/guifav/TalkWithData/issues/58") {
     throw new Error("Owner authorization URL must point to issue #58");
   }
@@ -320,6 +325,17 @@ function assertOwnerAuthorizationComment(url) {
   if (!normalizeText(comment.body ?? "").includes(normalizeText(REQUIRED_OWNER_STATEMENT))) {
     throw new Error("Owner authorization comment does not contain the required authorization statement");
   }
+}
+
+function assertOwnerAuthorizationComment(url) {
+  const commentId = ownerCommentId(url);
+  if (!commentId) assertGithubIssueCommentUrl(url);
+  assertOwnerAuthorizationCommentPayload(runJson("gh", [
+    "api",
+    `/repos/guifav/TalkWithData/issues/comments/${commentId}`,
+    "--jq",
+    "{body,author_association,issue_url,user:{login:.user.login}}",
+  ]));
 }
 
 export function runReadiness(options) {

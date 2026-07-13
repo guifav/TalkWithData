@@ -6,12 +6,17 @@ import {
   assertChangelogEntry,
   assertCompleteChecklist,
   assertGithubIssueCommentUrl,
+  assertOwnerAuthorizationCommentPayload,
   assertSemver,
   assertVersionManifest,
   compareSemver,
   highestSemverTag,
+  isNotFound,
   parseArgs,
   parseChecklistItems,
+  remoteTagCommitShaFromRef,
+  remoteTagNamesFromRefs,
+  REQUIRED_OWNER_STATEMENT,
   uncheckedChecklistItems,
 } from "../check-release-readiness.mjs";
 
@@ -89,11 +94,15 @@ test("release readiness rejects invalid versions and authorization URLs", () => 
 test("release readiness detects incomplete checklist items", () => {
   assert.deepEqual(uncheckedChecklistItems("- [x] done\n- [ ] missing\n"), ["- [ ] missing"]);
   assert.deepEqual(uncheckedChecklistItems("* [ ] missing\n"), ["* [ ] missing"]);
+  assert.deepEqual(uncheckedChecklistItems("+ [ ] missing\n"), ["+ [ ] missing"]);
+  assert.deepEqual(uncheckedChecklistItems("1. [ ] missing\n"), ["1. [ ] missing"]);
   assert.doesNotThrow(() => assertCompleteChecklist(completeChecklist));
   assert.throws(() => assertCompleteChecklist(""), /no checklist items/);
   assert.throws(() => assertCompleteChecklist(completeChecklist.replace("- [x] GitHub CI", "- [ ] GitHub CI")), /unchecked/);
   assert.throws(() => assertCompleteChecklist(completeChecklist.replace(/- \[x\] Generated release notes.*\n/, "")), /missing/);
   assert.throws(() => assertCompleteChecklist(`${completeChecklist}- [ ] Newly added mandatory release gate\n`), /unchecked/);
+  assert.throws(() => assertCompleteChecklist(`${completeChecklist}+ [ ] Newly added mandatory release gate\n`), /unchecked/);
+  assert.throws(() => assertCompleteChecklist(`${completeChecklist}1. [ ] Newly added mandatory release gate\n`), /unchecked/);
 });
 
 test("release readiness parses checklist continuations", () => {
@@ -124,6 +133,45 @@ test("release readiness compares release versions against existing tags", () => 
   assert.equal(compareSemver("0.1.0", "0.2.0"), -1);
   assert.equal(compareSemver("0.2.0", "0.2.0"), 0);
   assert.equal(highestSemverTag(["v0.1.0", "not-a-version", "v0.10.0", "v0.2.0"]), "0.10.0");
+  assert.deepEqual(remoteTagNamesFromRefs("refs/tags/v0.1.0\nrefs/tags/v0.10.0\n"), ["v0.1.0", "v0.10.0"]);
+});
+
+test("release readiness validates owner authorization comment payloads", () => {
+  const validComment = {
+    body: REQUIRED_OWNER_STATEMENT,
+    author_association: "OWNER",
+    issue_url: "https://api.github.com/repos/guifav/TalkWithData/issues/58",
+    user: { login: "guifav" },
+  };
+  assert.doesNotThrow(() => assertOwnerAuthorizationCommentPayload(validComment));
+  assert.throws(
+    () => assertOwnerAuthorizationCommentPayload({ ...validComment, issue_url: "https://api.github.com/repos/guifav/TalkWithData/issues/59" }),
+    /issue #58/,
+  );
+  assert.throws(
+    () => assertOwnerAuthorizationCommentPayload({ ...validComment, author_association: "CONTRIBUTOR" }),
+    /repository owner/,
+  );
+  assert.throws(
+    () => assertOwnerAuthorizationCommentPayload({ ...validComment, body: "I approve" }),
+    /required authorization statement/,
+  );
+});
+
+test("release readiness resolves remote commit and annotated tag refs", () => {
+  assert.equal(remoteTagCommitShaFromRef({ object: { type: "commit", sha: "commit-sha" } }, () => null), "commit-sha");
+  assert.equal(
+    remoteTagCommitShaFromRef(
+      { object: { type: "tag", sha: "tag-sha" } },
+      (sha) => ({ object: { type: "commit", sha: `${sha}-commit` } }),
+    ),
+    "tag-sha-commit",
+  );
+});
+
+test("release readiness distinguishes not-found from indeterminate API failures", () => {
+  assert.equal(isNotFound({ stderr: "gh: Not Found (HTTP 404)" }), true);
+  assert.equal(isNotFound({ stderr: "gh: Internal Server Error (HTTP 500)" }), false);
 });
 
 test("release workflow serializes publication and only cleans confirmed drafts", () => {
