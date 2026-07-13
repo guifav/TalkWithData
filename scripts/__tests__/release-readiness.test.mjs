@@ -110,6 +110,8 @@ test("release readiness detects incomplete checklist items", () => {
   assert.throws(() => assertCompleteChecklist(`${completeChecklist}> - [ ] Newly added mandatory release gate\n`), /unchecked/);
   assert.throws(() => assertCompleteChecklist(`\`\`\`md\n${completeChecklist}\n\`\`\`\n`), /no checklist items/);
   assert.throws(() => assertCompleteChecklist(`<!--\n${completeChecklist}\n-->\n`), /no checklist items/);
+  assert.throws(() => assertCompleteChecklist(`    \`\`\`md\n- [ ] Visible blocker\n    \`\`\`\n${completeChecklist}`), /unchecked/);
+  assert.throws(() => assertCompleteChecklist(`    <!--\n- [ ] Visible blocker\n    -->\n${completeChecklist}`), /unchecked/);
 });
 
 test("release readiness parses checklist continuations", () => {

@@ -84,6 +84,10 @@ export function parseChecklistItems(markdown) {
   let inHtmlComment = false;
   for (const line of markdown.split(/\r?\n/)) {
     let visibleLine = line;
+    if (!inFence && !inHtmlComment && /^( {4,}|\t)/.test(visibleLine)) {
+      current = null;
+      continue;
+    }
     if (/^\s*(```|~~~)/.test(visibleLine)) {
       inFence = !inFence;
       current = null;
