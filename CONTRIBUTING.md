@@ -291,3 +291,8 @@ unsupported requests.
 
 Read [ROADMAP.md](ROADMAP.md) for committed release-readiness work and ideas
 that are not yet commitments.
+
+Release changes must also follow [docs/RELEASE.md](docs/RELEASE.md). The
+release gate requires aligned package versions, reviewed changelog entries,
+generated release notes, checksums, green required CI, a completed release
+checklist, and explicit owner authorization before publication.

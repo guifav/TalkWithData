@@ -13,9 +13,9 @@ It is an engineering inventory, not legal advice.
 
 Lockfile SHA-256 values:
 
-- `app/migrator/package-lock.json`: `d3761f1d249121526b3cb4f4a8672c35d8d497ab5dbc89e2deccd35cc048c613`
-- `app/package-lock.json`: `6bedb48d0d844b6e8d5c611bdda923b57f24911b79feec05aea9951b937ae67e`
-- `functions/generate-thumbnail/package-lock.json`: `b0545e5cdac4aa943039569086477032f801c5bb660cb1cd14f66b2e0814f925`
+- `app/migrator/package-lock.json`: `11ae535f69c102bb5f133096bb0b8c98bb92b18c6e714a0563a8a6edf6825c33`
+- `app/package-lock.json`: `cc51f9a82c158b2f308d9816ce825f3188e864937f7b3e1800757d7e2b388a38`
+- `functions/generate-thumbnail/package-lock.json`: `a67ef3d552daca2e5b8d805b69572c264260c94a8565eb84998fbf0b9a2c47ad`
 
 ## License summary
 
