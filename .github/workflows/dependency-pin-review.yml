@@ -5,8 +5,14 @@ on:
     paths:
       - ".github/workflows/ci.yml"
       - ".github/workflows/dependency-pin-review.yml"
+      - ".github/workflows/release.yml"
+      - "CHANGELOG.md"
       - "scripts/check-ci-image-pins.sh"
+      - "scripts/check-release-readiness.mjs"
+      - "scripts/prepare-release.mjs"
       - "CONTRIBUTING.md"
+      - "docs/RELEASE.md"
+      - "docs/RELEASE_CHECKLIST.md"
       - "docker-compose.yml"
       - "docs/DEPLOYMENT.md"
   schedule:

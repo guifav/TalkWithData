@@ -15,7 +15,7 @@ Lockfile SHA-256 values:
 
 - `app/migrator/package-lock.json`: `d3761f1d249121526b3cb4f4a8672c35d8d497ab5dbc89e2deccd35cc048c613`
 - `app/package-lock.json`: `6bedb48d0d844b6e8d5c611bdda923b57f24911b79feec05aea9951b937ae67e`
-- `functions/generate-thumbnail/package-lock.json`: `b0545e5cdac4aa943039569086477032f801c5bb660cb1cd14f66b2e0814f925`
+- `functions/generate-thumbnail/package-lock.json`: `407f4fca576c5279e80bb599cd43e7aae4437d12048acb55573adfc291f42e44`
 
 ## License summary
 

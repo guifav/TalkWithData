@@ -184,6 +184,10 @@ See the [Governed CSV walkthrough](docs/CSV-WALKTHROUGH.md) for a neutral, as-bu
 
 See [Project provenance](PROVENANCE.md), [Third-party notices](THIRD_PARTY_NOTICES.md), and the generated [locked license inventory](docs/THIRD-PARTY-LICENSES.md) for release authorization status, asset origins, dependency licenses, and unresolved release blockers.
 
+See [Release process](docs/RELEASE.md) and [Changelog](CHANGELOG.md) for the
+versioning policy, release gates, generated notes, checksums, rollback, and
+revocation process.
+
 Firestore security rules and indexes are deployed separately with the Firebase CLI, and `firestore.rules` requires your `ALLOWED_AUTH_DOMAIN` in place of the placeholder domain. See [Deploy Firestore rules and indexes](docs/DEPLOYMENT.md#4-deploy-firestore-rules-and-indexes).
 
 ## Contributing
