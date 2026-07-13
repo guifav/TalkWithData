@@ -6,8 +6,8 @@ It is an engineering inventory, not legal advice.
 
 ## Snapshot
 
-- Locked package versions: 1134
-- Unique package names: 1042
+- Locked package versions: 1155
+- Unique package names: 1062
 - Unresolved licenses: 0
 - Any `UNKNOWN` entry is a release blocker until evidence is reviewed and recorded.
 
@@ -15,7 +15,7 @@ Lockfile SHA-256 values:
 
 - `app/migrator/package-lock.json`: `11ae535f69c102bb5f133096bb0b8c98bb92b18c6e714a0563a8a6edf6825c33`
 - `app/package-lock.json`: `cc51f9a82c158b2f308d9816ce825f3188e864937f7b3e1800757d7e2b388a38`
-- `functions/generate-thumbnail/package-lock.json`: `a67ef3d552daca2e5b8d805b69572c264260c94a8565eb84998fbf0b9a2c47ad`
+- `functions/generate-thumbnail/package-lock.json`: `3b496bc2e9973ad6248611fc524fbd0f416e12a6a6e2db65e534d06295d0c48f`
 
 ## License summary
 
@@ -25,7 +25,7 @@ Lockfile SHA-256 values:
 | `(MIT OR CC0-1.0)` | 1 |
 | `(MIT OR GPL-3.0-or-later)` | 1 |
 | `0BSD` | 1 |
-| `Apache-2.0` | 157 |
+| `Apache-2.0` | 178 |
 | `Apache-2.0 AND LGPL-3.0-or-later` | 3 |
 | `Apache-2.0 AND LGPL-3.0-or-later AND MIT` | 1 |
 | `BlueOak-1.0.0` | 5 |
@@ -429,6 +429,26 @@ reviewed metadata override.
 | `@typescript-eslint/typescript-estree` | `8.62.1` | `MIT` | app | development | lockfile |
 | `@typescript-eslint/utils` | `8.62.1` | `MIT` | app | development | lockfile |
 | `@typescript-eslint/visitor-keys` | `8.62.1` | `MIT` | app | development | lockfile |
+| `@typescript/typescript-aix-ppc64` | `7.0.2` | `Apache-2.0` | functions/generate-thumbnail | development | lockfile |
+| `@typescript/typescript-darwin-arm64` | `7.0.2` | `Apache-2.0` | functions/generate-thumbnail | development | lockfile |
+| `@typescript/typescript-darwin-x64` | `7.0.2` | `Apache-2.0` | functions/generate-thumbnail | development | lockfile |
+| `@typescript/typescript-freebsd-arm64` | `7.0.2` | `Apache-2.0` | functions/generate-thumbnail | development | lockfile |
+| `@typescript/typescript-freebsd-x64` | `7.0.2` | `Apache-2.0` | functions/generate-thumbnail | development | lockfile |
+| `@typescript/typescript-linux-arm` | `7.0.2` | `Apache-2.0` | functions/generate-thumbnail | development | lockfile |
+| `@typescript/typescript-linux-arm64` | `7.0.2` | `Apache-2.0` | functions/generate-thumbnail | development | lockfile |
+| `@typescript/typescript-linux-loong64` | `7.0.2` | `Apache-2.0` | functions/generate-thumbnail | development | lockfile |
+| `@typescript/typescript-linux-mips64el` | `7.0.2` | `Apache-2.0` | functions/generate-thumbnail | development | lockfile |
+| `@typescript/typescript-linux-ppc64` | `7.0.2` | `Apache-2.0` | functions/generate-thumbnail | development | lockfile |
+| `@typescript/typescript-linux-riscv64` | `7.0.2` | `Apache-2.0` | functions/generate-thumbnail | development | lockfile |
+| `@typescript/typescript-linux-s390x` | `7.0.2` | `Apache-2.0` | functions/generate-thumbnail | development | lockfile |
+| `@typescript/typescript-linux-x64` | `7.0.2` | `Apache-2.0` | functions/generate-thumbnail | development | lockfile |
+| `@typescript/typescript-netbsd-arm64` | `7.0.2` | `Apache-2.0` | functions/generate-thumbnail | development | lockfile |
+| `@typescript/typescript-netbsd-x64` | `7.0.2` | `Apache-2.0` | functions/generate-thumbnail | development | lockfile |
+| `@typescript/typescript-openbsd-arm64` | `7.0.2` | `Apache-2.0` | functions/generate-thumbnail | development | lockfile |
+| `@typescript/typescript-openbsd-x64` | `7.0.2` | `Apache-2.0` | functions/generate-thumbnail | development | lockfile |
+| `@typescript/typescript-sunos-x64` | `7.0.2` | `Apache-2.0` | functions/generate-thumbnail | development | lockfile |
+| `@typescript/typescript-win32-arm64` | `7.0.2` | `Apache-2.0` | functions/generate-thumbnail | development | lockfile |
+| `@typescript/typescript-win32-x64` | `7.0.2` | `Apache-2.0` | functions/generate-thumbnail | development | lockfile |
 | `@unrs/resolver-binding-android-arm-eabi` | `1.12.2` | `MIT` | app | development | lockfile |
 | `@unrs/resolver-binding-android-arm64` | `1.12.2` | `MIT` | app | development | lockfile |
 | `@unrs/resolver-binding-darwin-arm64` | `1.12.2` | `MIT` | app | development | lockfile |
@@ -1126,7 +1146,8 @@ reviewed metadata override.
 | `typed-array-byte-offset` | `1.0.4` | `MIT` | app | development | lockfile |
 | `typed-array-length` | `1.0.8` | `MIT` | app | development | lockfile |
 | `typed-query-selector` | `2.12.2` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
-| `typescript` | `6.0.3` | `Apache-2.0` | app, functions/generate-thumbnail | runtime | lockfile |
+| `typescript` | `6.0.3` | `Apache-2.0` | app | runtime | lockfile |
+| `typescript` | `7.0.2` | `Apache-2.0` | functions/generate-thumbnail | development | lockfile |
 | `typescript-eslint` | `8.62.1` | `MIT` | app | development | lockfile |
 | `unbox-primitive` | `1.1.0` | `MIT` | app | development | lockfile |
 | `undici-types` | `8.3.0` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
