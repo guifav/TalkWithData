@@ -8,8 +8,8 @@ on:
         required: true
         type: string
       owner_authorization_url:
-        description: Permanent GitHub issue or comment URL recorded in PROVENANCE.md
-        required: true
+        description: Permanent GitHub issue comment URL recorded in PROVENANCE.md. Required only when dry_run is false.
+        required: false
         type: string
       dry_run:
         description: Build release artifacts without publishing tag or GitHub Release
@@ -47,9 +47,10 @@ jobs:
       - name: Verify release readiness
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
         run: |
           node scripts/check-release-readiness.mjs \
-            --version "${{ inputs.version }}" \
+            --version "$VERSION" \
             --require-merged-main \
             --require-ci-success \
             --required-workflow "CI" \
@@ -60,7 +61,9 @@ jobs:
         run: npm run build && npm run package:release
 
       - name: Prepare release artifacts
-        run: node scripts/prepare-release.mjs --version "${{ inputs.version }}"
+        env:
+          VERSION: ${{ inputs.version }}
+        run: node scripts/prepare-release.mjs --version "$VERSION"
 
       - name: Upload release candidate artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v7.0.1
@@ -71,31 +74,42 @@ jobs:
           retention-days: 14
 
       - name: Publish GitHub Release
-        if: inputs.dry_run != true
+        if: ${{ inputs.dry_run == false }}
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
+          OWNER_AUTHORIZATION_URL: ${{ inputs.owner_authorization_url }}
+          TAG: v${{ inputs.version }}
         run: |
+          set -euo pipefail
           node scripts/check-release-readiness.mjs \
             --version "$VERSION" \
-            --owner-authorization-url "${{ inputs.owner_authorization_url }}" \
+            --owner-authorization-url "$OWNER_AUTHORIZATION_URL" \
             --require-complete-checklist \
             --require-owner-authorization \
             --require-merged-main \
             --require-ci-success \
+            --require-tag-absent \
+            --require-github-release-absent \
             --required-workflow "CI" \
             --required-workflow "Dependency pin review"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag --annotate "v$VERSION" --message "Talk With Data v$VERSION"
-          git push origin "v$VERSION"
-          gh release create "v$VERSION" \
-            "dist/release/v$VERSION"/* \
-            --title "Talk With Data v$VERSION" \
-            --notes-file "dist/release/v$VERSION/RELEASE_NOTES.md"
+
+          rollback_partial_release() {
+            gh release delete "$TAG" --yes --cleanup-tag >/dev/null 2>&1 || true
+            git push --delete origin "$TAG" >/dev/null 2>&1 || true
+          }
+          trap rollback_partial_release ERR
+
+          gh release create "$TAG" \
+            "dist/release/$TAG"/* \
+            --target "$GITHUB_SHA" \
+            --title "Talk With Data $TAG" \
+            --notes-file "dist/release/$TAG/RELEASE_NOTES.md"
+          trap - ERR
+
           node scripts/check-release-readiness.mjs \
             --version "$VERSION" \
-            --owner-authorization-url "${{ inputs.owner_authorization_url }}" \
+            --owner-authorization-url "$OWNER_AUTHORIZATION_URL" \
             --require-complete-checklist \
             --require-owner-authorization \
             --require-merged-main \

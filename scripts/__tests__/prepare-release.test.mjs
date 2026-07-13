@@ -5,13 +5,13 @@ import { formatChecksums, renderReleaseNotes } from "../prepare-release.mjs";
 
 test("release notes include version, commit, range, gates, and reviewed commits", () => {
   const notes = renderReleaseNotes({
-    version: "0.1.0",
+    version: "0.2.0",
     commit: "abc123",
     previousTag: "",
     commits: ["abc123 docs: add release process"],
   });
 
-  assert.match(notes, /# Talk With Data v0\.1\.0/);
+  assert.match(notes, /# Talk With Data v0\.2\.0/);
   assert.match(notes, /Source commit: `abc123`/);
   assert.match(notes, /full public history/);
   assert.match(notes, /Owner authorization in PROVENANCE\.md is required/);

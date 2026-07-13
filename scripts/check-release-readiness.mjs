@@ -23,7 +23,9 @@ export function parseArgs(argv) {
     else if (value === "--require-complete-checklist") args.requireCompleteChecklist = true;
     else if (value === "--require-owner-authorization") args.requireOwnerAuthorization = true;
     else if (value === "--require-tag") args.requireTag = true;
+    else if (value === "--require-tag-absent") args.requireTagAbsent = true;
     else if (value === "--require-github-release") args.requireGithubRelease = true;
+    else if (value === "--require-github-release-absent") args.requireGithubReleaseAbsent = true;
     else throw new Error(`Unknown argument: ${value}`);
   }
   return args;
@@ -35,10 +37,10 @@ export function assertSemver(version) {
   }
 }
 
-export function assertGithubIssueOrCommentUrl(url) {
-  const pattern = /^https:\/\/github\.com\/guifav\/TalkWithData\/issues\/\d+(#issuecomment-\d+)?$/;
+export function assertGithubIssueCommentUrl(url) {
+  const pattern = /^https:\/\/github\.com\/guifav\/TalkWithData\/issues\/\d+#issuecomment-\d+$/;
   if (!pattern.test(url ?? "")) {
-    throw new Error("Owner authorization URL must be a permanent TalkWithData GitHub issue or comment URL");
+    throw new Error("Owner authorization URL must be a permanent TalkWithData GitHub issue comment URL");
   }
 }
 
@@ -65,6 +67,9 @@ function packageVersionManifest() {
     "app/package.json": readJson("app/package.json").version,
     "app/package-lock.json": readJson("app/package-lock.json").version,
     "app/package-lock root": readJson("app/package-lock.json").packages[""].version,
+    "app/migrator/package.json": readJson("app/migrator/package.json").version,
+    "app/migrator/package-lock.json": readJson("app/migrator/package-lock.json").version,
+    "app/migrator/package-lock root": readJson("app/migrator/package-lock.json").packages[""].version,
     "functions/generate-thumbnail/package.json": readJson("functions/generate-thumbnail/package.json").version,
     "functions/generate-thumbnail/package-lock.json": readJson("functions/generate-thumbnail/package-lock.json").version,
     "functions/generate-thumbnail/package-lock root": readJson("functions/generate-thumbnail/package-lock.json").packages[""].version,
@@ -94,8 +99,26 @@ function assertTag(version) {
   if (head !== tag) throw new Error(`Tag v${version} does not point to HEAD`);
 }
 
+function assertTagAbsent(version) {
+  try {
+    run("git", ["rev-parse", "--verify", "--quiet", `refs/tags/v${version}`]);
+  } catch {
+    return;
+  }
+  throw new Error(`Tag v${version} already exists`);
+}
+
 function assertGithubRelease(version) {
   run("gh", ["release", "view", `v${version}`, "--json", "tagName,url"]);
+}
+
+function assertGithubReleaseAbsent(version) {
+  try {
+    assertGithubRelease(version);
+  } catch {
+    return;
+  }
+  throw new Error(`GitHub Release v${version} already exists`);
 }
 
 function assertCiSuccess(requiredWorkflows) {
@@ -141,7 +164,7 @@ export function runReadiness(options) {
   }
 
   if (options.requireOwnerAuthorization) {
-    assertGithubIssueOrCommentUrl(options.ownerAuthorizationUrl);
+    assertGithubIssueCommentUrl(options.ownerAuthorizationUrl);
     const provenance = readFileSync(path.join(root, "PROVENANCE.md"), "utf8");
     if (provenance.includes("Status: **not yet received**")) {
       throw new Error("PROVENANCE.md still marks owner authorization as not received");
@@ -150,11 +173,13 @@ export function runReadiness(options) {
       throw new Error("PROVENANCE.md does not contain the owner authorization URL");
     }
   } else if (options.ownerAuthorizationUrl) {
-    assertGithubIssueOrCommentUrl(options.ownerAuthorizationUrl);
+    assertGithubIssueCommentUrl(options.ownerAuthorizationUrl);
   }
 
   if (options.requireMergedMain) assertMergedMain();
   if (options.requireCiSuccess) assertCiSuccess(options.requiredWorkflows);
+  if (options.requireTagAbsent) assertTagAbsent(options.version);
+  if (options.requireGithubReleaseAbsent) assertGithubReleaseAbsent(options.version);
   if (options.requireTag) assertTag(options.version);
   if (options.requireGithubRelease) assertGithubRelease(options.version);
 }

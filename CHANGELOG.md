@@ -6,9 +6,10 @@ This project uses SemVer. The application package version, release tag, and
 GitHub Release must all use the same `vMAJOR.MINOR.PATCH` version and point to
 the same merged `main` commit.
 
-## [0.1.0] - Pending owner authorization
+## [0.2.0] - Pending owner authorization
 
-First public release candidate.
+First automated public release candidate. The earlier `v0.1.0` tag remains
+part of public history and must not be reused.
 
 ### Added
 
@@ -35,8 +36,9 @@ First public release candidate.
 1. Add user-facing changes under `Unreleased` while development is in progress.
 2. Before a release, move reviewed entries into the target version section.
 3. Keep the version in `app/package.json`,
+   `app/migrator/package.json`,
    `functions/generate-thumbnail/package.json`, their lockfiles, the Git tag,
-   and the GitHub Release aligned.
+   and the GitHub Release aligned. Never reuse an existing `v*` tag.
 4. Run `node scripts/check-release-readiness.mjs --version <version>
    --require-complete-checklist --require-owner-authorization
    --owner-authorization-url <url>` before publishing.

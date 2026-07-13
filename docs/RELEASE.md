@@ -1,18 +1,22 @@
 # Release Process
 
 Talk With Data releases are source-controlled, versioned, and provenance-gated.
-The first public release version is `0.1.0`.
+The first automated public release version is `0.2.0`. The earlier `v0.1.0`
+tag already exists in public history and must not be reused.
 
 ## Versioning Policy
 
 - Use SemVer: `MAJOR.MINOR.PATCH`.
 - The Git tag is `vMAJOR.MINOR.PATCH`.
 - `app/package.json`, `app/package-lock.json`,
+  `app/migrator/package.json`, `app/migrator/package-lock.json`,
   `functions/generate-thumbnail/package.json`, and
   `functions/generate-thumbnail/package-lock.json` must all carry the same
   version.
 - The Git tag and GitHub Release must point to the exact same merged `main`
   commit.
+- Existing `v*` tags are immutable release history. Publish a new version
+  instead of reusing or moving an existing tag.
 - Release candidates can be prepared before publication, but publication is
   blocked until the owner authorization gate and checklist are complete.
 
@@ -27,9 +31,11 @@ these are true:
 3. `CHANGELOG.md` contains an entry for the requested version.
 4. `docs/RELEASE_CHECKLIST.md` contains no unchecked items.
 5. `PROVENANCE.md` no longer says `Status: **not yet received**`.
-6. The owner authorization URL is a permanent GitHub issue or comment URL and
-   is present in `PROVENANCE.md`.
-7. The generated release notes and checksums are attached to the GitHub Release.
+6. The owner authorization URL is a permanent GitHub issue comment URL and is
+   present in `PROVENANCE.md`.
+7. The requested Git tag and GitHub Release do not already exist before
+   publication.
+8. The generated release notes and checksums are attached to the GitHub Release.
 
 The gate is implemented by `scripts/check-release-readiness.mjs`. Release notes,
 the source archive, optional thumbnail function package archive, and
@@ -41,9 +47,9 @@ Use the `Release` GitHub Actions workflow from `main`.
 
 Inputs:
 
-- `version`: SemVer without a leading `v`, for example `0.1.0`.
-- `owner_authorization_url`: the permanent GitHub issue or comment URL recorded
-  in `PROVENANCE.md`.
+- `version`: SemVer without a leading `v`, for example `0.2.0`.
+- `owner_authorization_url`: the permanent GitHub issue comment URL recorded in
+  `PROVENANCE.md`. It is required only when `dry_run` is false.
 - `dry_run`: leave enabled to produce release artifacts without creating a tag
   or GitHub Release. Dry runs do not require the owner authorization gate.
 
@@ -52,11 +58,10 @@ licenses, creates release notes and checksums, uploads a release candidate
 artifact, then only when `dry_run` is false:
 
 1. verifies the completed checklist and owner authorization URL;
-2. creates annotated tag `v<version>` on the checked-out `main` commit;
-3. pushes the tag;
-4. creates the GitHub Release from that tag;
-5. attaches generated artifacts and `CHECKSUMS.txt`; and
-6. verifies that the tag and release exist for the same commit.
+2. verifies that the requested tag and GitHub Release do not already exist;
+3. creates the GitHub Release from the checked-out `main` commit;
+4. attaches generated artifacts and `CHECKSUMS.txt`; and
+5. verifies that the tag and release exist for the same commit.
 
 ## Reviewed History Notes
 
@@ -82,3 +87,12 @@ If a bad release is published:
 
 Do not overwrite release assets in place. Publish a new version with a new
 checksum manifest.
+
+If the workflow fails after creating a tag or release, the publish step attempts
+to delete the partial GitHub Release and its tag before exiting. If automatic
+cleanup fails, delete the partial release with `gh release delete v<version>
+--yes --cleanup-tag`, confirm `gh release view v<version>` and `git ls-remote
+--tags origin v<version>` no longer find it, then rerun the same version only
+after the failed publication left no public artifact. If any artifact was
+downloaded or announced externally, treat it as published and ship a corrective
+new version instead.
