@@ -6,6 +6,12 @@ export default defineConfig([
   ...nextVitals,
   ...nextTs,
   {
+    settings: {
+      react: {
+        // Evita o autodetect do eslint-plugin-react, que usa API removida no ESLint 10.
+        version: "19.2.7",
+      },
+    },
     rules: {
       // React Compiler rules are too strict for the imported legacy codebase.
       // Keep ESLint active, but downgrade the compiler migration to follow-up work.
