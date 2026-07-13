@@ -22,6 +22,12 @@ const auth = {
   name: "Owner",
 };
 
+function toBlobPart(buffer: Buffer): Uint8Array<ArrayBuffer> {
+  const bytes = new Uint8Array(buffer.length);
+  bytes.set(buffer);
+  return bytes;
+}
+
 vi.mock("@/lib/api-auth", () => ({
   verifyRequest: routeMocks.verifyRequest,
 }));
@@ -265,7 +271,7 @@ describe("local storage routes", () => {
     zip.addFile("site/assets/main.css", Buffer.from("body { color: teal; }"));
     const form = new FormData();
     form.set("title", "Local multi-page dashboard");
-    form.set("file", new File([zip.toBuffer()], "dashboard.zip"));
+    form.set("file", new File([toBlobPart(zip.toBuffer())], "dashboard.zip"));
 
     const uploadResponse = await uploadDashboard(
       new NextRequest("http://localhost/api/upload", { method: "POST", body: form })
@@ -307,7 +313,7 @@ describe("local storage routes", () => {
     zip.addFile("index.html", Buffer.from("<html><body>new package</body></html>"));
     zip.addFile("assets/main.css", Buffer.from("body { color: green; }"));
     const form = new FormData();
-    form.set("file", new File([zip.toBuffer()], "dashboard.zip"));
+    form.set("file", new File([toBlobPart(zip.toBuffer())], "dashboard.zip"));
 
     const response = await replaceDashboard(
       new NextRequest(`http://localhost/api/dashboards/${id}/replace`, {
@@ -391,7 +397,7 @@ describe("local storage routes", () => {
     zip.addFile("index.html", Buffer.from("<html><body>never live</body></html>"));
     zip.addFile("assets/main.css", Buffer.from("body { color: red; }"));
     const form = new FormData();
-    form.set("file", new File([zip.toBuffer()], "dashboard.zip"));
+    form.set("file", new File([toBlobPart(zip.toBuffer())], "dashboard.zip"));
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
     const response = await replaceDashboard(

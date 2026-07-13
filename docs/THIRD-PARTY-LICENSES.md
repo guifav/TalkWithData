@@ -14,7 +14,7 @@ It is an engineering inventory, not legal advice.
 Lockfile SHA-256 values:
 
 - `app/migrator/package-lock.json`: `11ae535f69c102bb5f133096bb0b8c98bb92b18c6e714a0563a8a6edf6825c33`
-- `app/package-lock.json`: `8ed12b5e8c36e37fe8a28957ecc60a420b7153b58fd4f64442ad296fdd26ee16`
+- `app/package-lock.json`: `3e43434ff9dee2b53dd9f66c28135f2caaa904c02963a52f2c83912130eed1c3`
 - `functions/generate-thumbnail/package-lock.json`: `3b496bc2e9973ad6248611fc524fbd0f416e12a6a6e2db65e534d06295d0c48f`
 
 ## License summary
@@ -127,12 +127,12 @@ reviewed metadata override.
 | `@firebase/analytics` | `0.10.22` | `Apache-2.0` | app | runtime | lockfile |
 | `@firebase/analytics-compat` | `0.2.28` | `Apache-2.0` | app | runtime | lockfile |
 | `@firebase/analytics-types` | `0.8.4` | `Apache-2.0` | app | runtime | lockfile |
-| `@firebase/app` | `0.15.0` | `Apache-2.0` | app | runtime | lockfile |
+| `@firebase/app` | `0.15.1` | `Apache-2.0` | app | runtime | lockfile |
 | `@firebase/app-check` | `0.12.0` | `Apache-2.0` | app | runtime | lockfile |
 | `@firebase/app-check-compat` | `0.4.5` | `Apache-2.0` | app | runtime | lockfile |
 | `@firebase/app-check-interop-types` | `0.3.4` | `Apache-2.0` | app | runtime | lockfile |
 | `@firebase/app-check-types` | `0.5.4` | `Apache-2.0` | app | runtime | lockfile |
-| `@firebase/app-compat` | `0.5.14` | `Apache-2.0` | app | runtime | lockfile |
+| `@firebase/app-compat` | `0.5.15` | `Apache-2.0` | app | runtime | lockfile |
 | `@firebase/app-types` | `0.9.5` | `Apache-2.0` | app | runtime | lockfile |
 | `@firebase/auth` | `1.13.3` | `Apache-2.0` | app | runtime | lockfile |
 | `@firebase/auth-compat` | `0.6.8` | `Apache-2.0` | app | runtime | lockfile |
@@ -159,8 +159,8 @@ reviewed metadata override.
 | `@firebase/performance` | `0.7.12` | `Apache-2.0` | app | runtime | lockfile |
 | `@firebase/performance-compat` | `0.2.25` | `Apache-2.0` | app | runtime | lockfile |
 | `@firebase/performance-types` | `0.2.4` | `Apache-2.0` | app | runtime | lockfile |
-| `@firebase/remote-config` | `0.8.5` | `Apache-2.0` | app | runtime | lockfile |
-| `@firebase/remote-config-compat` | `0.2.26` | `Apache-2.0` | app | runtime | lockfile |
+| `@firebase/remote-config` | `0.9.0` | `Apache-2.0` | app | runtime | lockfile |
+| `@firebase/remote-config-compat` | `0.2.27` | `Apache-2.0` | app | runtime | lockfile |
 | `@firebase/remote-config-types` | `0.5.1` | `Apache-2.0` | app | runtime | lockfile |
 | `@firebase/rules-unit-testing` | `5.0.1` | `Apache-2.0` | app | development | lockfile |
 | `@firebase/storage` | `0.14.3` | `Apache-2.0` | app | runtime | lockfile |
@@ -479,7 +479,7 @@ reviewed metadata override.
 | `accepts` | `2.0.0` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `acorn` | `8.17.0` | `MIT` | app | development | lockfile |
 | `acorn-jsx` | `5.3.2` | `MIT` | app | development | lockfile |
-| `adm-zip` | `0.5.18` | `MIT` | app | runtime | lockfile |
+| `adm-zip` | `0.6.0` | `MIT` | app | runtime | lockfile |
 | `agent-base` | `6.0.2` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `agent-base` | `7.1.4` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `ajv` | `6.15.0` | `MIT` | app | development | lockfile |
@@ -686,7 +686,7 @@ reviewed metadata override.
 | `finalhandler` | `2.1.1` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `find-up` | `5.0.0` | `MIT` | app | development | lockfile |
 | `find-up-simple` | `1.0.1` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
-| `firebase` | `12.15.0` | `Apache-2.0` | app | runtime | lockfile |
+| `firebase` | `12.16.0` | `Apache-2.0` | app | runtime | lockfile |
 | `firebase-admin` | `14.1.0` | `Apache-2.0` | app | runtime | lockfile |
 | `flat-cache` | `4.0.1` | `MIT` | app | development | lockfile |
 | `flatted` | `3.4.2` | `ISC` | app | development | lockfile |
@@ -884,7 +884,7 @@ reviewed metadata override.
 | `lru-cache` | `5.1.1` | `ISC` | app | development | lockfile |
 | `lru-memoizer` | `3.0.0` | `MIT` | app | runtime | lockfile |
 | `lru.min` | `1.1.4` | `MIT` | app, app/migrator | runtime | lockfile |
-| `lucide-react` | `1.23.0` | `ISC` | app | runtime | lockfile |
+| `lucide-react` | `1.24.0` | `ISC` | app | runtime | lockfile |
 | `magic-string` | `0.30.21` | `MIT` | app | development | lockfile |
 | `magicast` | `0.5.3` | `MIT` | app | runtime | lockfile |
 | `make-dir` | `4.0.0` | `MIT` | app | development | lockfile |
@@ -1119,7 +1119,7 @@ reviewed metadata override.
 | `ts-api-utils` | `2.5.0` | `MIT` | app | development | lockfile |
 | `tsconfig-paths` | `3.15.0` | `MIT` | app | development | lockfile |
 | `tslib` | `2.8.1` | `0BSD` | app | runtime | lockfile |
-| `tsx` | `4.23.0` | `MIT` | app | development | lockfile |
+| `tsx` | `4.23.1` | `MIT` | app | development | lockfile |
 | `tw-animate-css` | `1.4.0` | `MIT` | app | development | lockfile |
 | `type-check` | `0.4.0` | `MIT` | app | development | lockfile |
 | `type-fest` | `4.41.0` | `(MIT OR CC0-1.0)` | functions/generate-thumbnail | runtime | lockfile |
