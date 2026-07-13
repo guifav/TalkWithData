@@ -14,7 +14,7 @@ It is an engineering inventory, not legal advice.
 Lockfile SHA-256 values:
 
 - `app/migrator/package-lock.json`: `11ae535f69c102bb5f133096bb0b8c98bb92b18c6e714a0563a8a6edf6825c33`
-- `app/package-lock.json`: `cc51f9a82c158b2f308d9816ce825f3188e864937f7b3e1800757d7e2b388a38`
+- `app/package-lock.json`: `7807d53b8674ef972488ba902ba611f907f7f2349028622807c59b4a5a04f61d`
 - `functions/generate-thumbnail/package-lock.json`: `3b496bc2e9973ad6248611fc524fbd0f416e12a6a6e2db65e534d06295d0c48f`
 
 ## License summary
@@ -580,7 +580,7 @@ reviewed metadata override.
 | `crc32-stream` | `4.0.3` | `MIT` | app | runtime | lockfile |
 | `cross-spawn` | `7.0.6` | `MIT` | app, app/migrator, functions/generate-thumbnail | runtime | lockfile |
 | `csstype` | `3.2.3` | `MIT` | app, app/migrator | runtime | lockfile |
-| `csv-parse` | `5.6.0` | `MIT` | app | runtime | lockfile |
+| `csv-parse` | `7.0.1` | `MIT` | app | runtime | lockfile |
 | `d3-array` | `3.2.4` | `ISC` | app | runtime | lockfile |
 | `d3-color` | `3.1.0` | `ISC` | app | runtime | lockfile |
 | `d3-ease` | `3.0.1` | `BSD-3-Clause` | app | runtime | lockfile |
