@@ -42,6 +42,10 @@ These are likely next work areas after the policy and release-readiness blockers
 These ideas need more design, evidence, or maintainer capacity before they are
 commitments:
 
+- The use-case directions recorded in
+  [docs/USE-CASES-ROADMAP.md](docs/USE-CASES-ROADMAP.md), including external
+  client distribution, additional governed source adapters, and embed
+  hardening.
 - Hosted demo data for neutral screenshots and walkthroughs.
 - Additional data-source adapters beyond CSV buckets.
 - Expanded observability for self-hosted production instances.
