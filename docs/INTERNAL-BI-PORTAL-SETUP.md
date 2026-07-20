@@ -70,7 +70,7 @@ below deserve extra attention in this use case; the full contract lives in
 | `DASHBOARD_SESSION_SECRET` | Signs dashboard and embed session tokens. |
 | `STORAGE_PROVIDER`, plus `LOCAL_STORAGE_ROOT` or `STORAGE_BUCKET_NAME` | Dashboard HTML storage. `local` works for single-instance deployments; governed CSV sources still read GCS. |
 | `ANTHROPIC_API_KEY` or another provider key | Enables chat. Defaults come from `AI_DEFAULT_PROVIDER` and `AI_DEFAULT_MODEL`; per-user configuration comes later in the admin panel. |
-| `TWD_QUERY_TIMEOUT_MS`, `TWD_MAX_ROWS`, `TWD_READ_MAX_BYTES`, `TWD_ENGINE_LRU_BYTES` | Data source guardrails. Defaults: 10 second timeout, 1,000 row cap, 50 MiB object read limit, 64 MB in-memory source cache. |
+| `TWD_QUERY_TIMEOUT_MS`, `TWD_MAX_ROWS`, `TWD_READ_MAX_BYTES`, `TWD_ENGINE_LRU_BYTES` | Data source guardrails. Defaults: 10 second timeout, 1,000 row cap, 50 MiB object read limit, 64 MiB in-memory source cache. |
 | `TWD_ORG_ID` | Optional label recorded on data sources created through the admin UI. |
 
 ## Step 2: bootstrap the first superadmin
@@ -85,8 +85,10 @@ superadmin deliberately:
    Firestore collection with the field `role` set to `superadmin`. The
    document ID is the email with `@` replaced by `_at_` and every `.`
    replaced by `_`. For `ops@example.com`, the ID is `ops_at_example_com`.
-2. The person signs in. The application consumes the pending role, applies it
-   to their user document, and deletes the pending record.
+2. The person signs in. The pending record is deleted as soon as it is read,
+   then the role is applied to their user document. If the role update fails
+   after that point, the assignment was consumed without being applied:
+   recreate the pending record or set the role in the Firebase console.
 
 If the person has already signed in, edit their `users/{uid}` document in the
 Firebase console and set `role` to `superadmin` instead.
@@ -139,7 +141,7 @@ Rules that follow from the engine's behavior:
 **Size the extracts deliberately.** Extracts should be curated slices, not
 warehouse dumps. A single object read is capped at 50 MiB by default
 (`TWD_READ_MAX_BYTES`). Each distinct content version of a CSV is parsed
-into an in-memory DuckDB table and cached (64 MB total by default, tunable
+into an in-memory DuckDB table and cached (64 MiB total by default, tunable
 with `TWD_ENGINE_LRU_BYTES`), and query results are capped at 1,000 rows by
 default. The feature is built for answering questions over curated data, not
 for bulk export.
@@ -250,7 +252,7 @@ fail-closed paths without needing Firebase or GCP credentials.
   rotates.
 - **Limits.** Tune `TWD_QUERY_TIMEOUT_MS`, `TWD_MAX_ROWS`,
   `TWD_READ_MAX_BYTES`, and `TWD_ENGINE_LRU_BYTES` for your deployment
-  size. Defaults: 10 seconds, 1,000 rows, 50 MiB per object read, 64 MB of
+  size. Defaults: 10 seconds, 1,000 rows, 50 MiB per object read, 64 MiB of
   cache.
 - **Observability.** Structured, redacted events with correlation IDs are
   documented in [OBSERVABILITY.md](OBSERVABILITY.md).
