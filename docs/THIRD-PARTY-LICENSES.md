@@ -6,7 +6,7 @@ It is an engineering inventory, not legal advice.
 
 ## Snapshot
 
-- Locked package versions: 1138
+- Locked package versions: 1137
 - Unique package names: 1050
 - Unresolved licenses: 0
 - Any `UNKNOWN` entry is a release blocker until evidence is reviewed and recorded.
@@ -15,7 +15,7 @@ Lockfile SHA-256 values:
 
 - `app/migrator/package-lock.json`: `11ae535f69c102bb5f133096bb0b8c98bb92b18c6e714a0563a8a6edf6825c33`
 - `app/package-lock.json`: `9d22b38452982961368a0dfa72cd78fd7fb43fb133523911ef0dcdf3fa9a631d`
-- `functions/generate-thumbnail/package-lock.json`: `3b496bc2e9973ad6248611fc524fbd0f416e12a6a6e2db65e534d06295d0c48f`
+- `functions/generate-thumbnail/package-lock.json`: `3f819cea41b68fe33c1be87e16d20bd8bb9c00224f2086a543342625b09a5aa0`
 
 ## License summary
 
@@ -36,7 +36,7 @@ Lockfile SHA-256 values:
 | `CC0-1.0` | 3 |
 | `ISC` | 56 |
 | `LGPL-3.0-or-later` | 10 |
-| `MIT` | 829 |
+| `MIT` | 828 |
 | `MIT AND ISC` | 1 |
 | `MPL-2.0` | 13 |
 | `Unlicense` | 2 |
@@ -1063,8 +1063,7 @@ reviewed metadata override.
 | `spdx-correct` | `3.2.0` | `Apache-2.0` | functions/generate-thumbnail | runtime | lockfile |
 | `spdx-exceptions` | `2.5.0` | `CC-BY-3.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `spdx-expression-parse` | `3.0.1` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
-| `spdx-expression-parse` | `4.0.0` | `MIT` | functions/generate-thumbnail | development | lockfile |
-| `spdx-expression-parse` | `5.0.0` | `MIT` | app | development | lockfile |
+| `spdx-expression-parse` | `5.0.0` | `MIT` | app, functions/generate-thumbnail | development | lockfile |
 | `spdx-license-ids` | `3.0.23` | `CC0-1.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `spdx-license-list` | `6.11.0` | `CC0-1.0` | app, functions/generate-thumbnail | development | lockfile |
 | `split2` | `4.2.0` | `ISC` | app | runtime | lockfile |
