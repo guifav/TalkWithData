@@ -10,6 +10,8 @@ Hub open-source de dashboards com IA. Envie, organize, pesquise e incorpore dash
 
 Talk With Data ajuda equipes a publicar pacotes HTML de dashboards, pesquisar conteudo, explorar dados com IA, conectar ferramentas MCP e compartilhar visualizacoes com autenticacao ou tokens de embed. Superadmins tambem podem conectar buckets de CSV como fontes de dados governadas, para perguntas em linguagem natural com respostas sempre restritas as linhas que cada pessoa pode ver.
 
+O Talk With Data e feito para uso interno de uma unica organizacao: o proprio time entra com o dominio Google Workspace da empresa e conversa com os dados da propria empresa. Um deployment atende uma organizacao. Hoje nao e um produto white-label nem multi-tenant para atender clientes externos. O cenario principal esta documentado de ponta a ponta no [guia de configuracao do portal interno de BI](docs/INTERNAL-BI-PORTAL-SETUP.md), em ingles, e as direcoes alem desse conceito estao registradas no [roadmap de casos de uso](docs/USE-CASES-ROADMAP.md).
+
 A interface atual usa ingles como idioma padrao para a audiencia internacional de OSS. Este README em PT-BR e uma traducao da documentacao, nao um locale da interface. PT-BR e outros idiomas na aplicacao exigem uma implementacao explicita de i18n.
 
 ## Visao do produto
@@ -157,6 +159,8 @@ Consulte [DEPLOYMENT.md](docs/DEPLOYMENT.md) para Docker, Google Cloud Run, Fire
 Consulte [Operational Observability](docs/OBSERVABILITY.md) para nomes de eventos, garantias de redaction, IDs de correlacao e troubleshooting sanitizado.
 
 Consulte [Dados, privacidade e retencao](docs/DATA-PRIVACY.md) para o inventario as-built canonico, comportamento padrao de retencao e delecao, premissas de controle de acesso e responsabilidades do self-hoster.
+
+Consulte o [guia de configuracao do portal interno de BI](docs/INTERNAL-BI-PORTAL-SETUP.md), em ingles, para a configuracao de ponta a ponta do caso de uso principal, do desenho dos extratos de BI ate a validacao do escopo por linha e a operacao.
 
 Consulte o [walkthrough de CSV governado](docs/CSV-WALKTHROUGH.md) para a demonstracao canonica e neutra, em ingles, de onboarding da fonte, grants, escopo de linhas por viewer, falhas fechadas e a fronteira read-only do DuckDB.
 
