@@ -6,15 +6,15 @@ It is an engineering inventory, not legal advice.
 
 ## Snapshot
 
-- Locked package versions: 1139
-- Unique package names: 1051
+- Locked package versions: 1138
+- Unique package names: 1050
 - Unresolved licenses: 0
 - Any `UNKNOWN` entry is a release blocker until evidence is reviewed and recorded.
 
 Lockfile SHA-256 values:
 
 - `app/migrator/package-lock.json`: `11ae535f69c102bb5f133096bb0b8c98bb92b18c6e714a0563a8a6edf6825c33`
-- `app/package-lock.json`: `1f075af2f66e74a74ba2e56191f576abbaa291a9e004c8456a3fb31b094dd860`
+- `app/package-lock.json`: `9d22b38452982961368a0dfa72cd78fd7fb43fb133523911ef0dcdf3fa9a631d`
 - `functions/generate-thumbnail/package-lock.json`: `3b496bc2e9973ad6248611fc524fbd0f416e12a6a6e2db65e534d06295d0c48f`
 
 ## License summary
@@ -36,7 +36,7 @@ Lockfile SHA-256 values:
 | `CC0-1.0` | 3 |
 | `ISC` | 56 |
 | `LGPL-3.0-or-later` | 10 |
-| `MIT` | 830 |
+| `MIT` | 829 |
 | `MIT AND ISC` | 1 |
 | `MPL-2.0` | 13 |
 | `Unlicense` | 2 |
@@ -168,10 +168,10 @@ reviewed metadata override.
 | `@firebase/storage-types` | `0.8.4` | `Apache-2.0` | app | runtime | lockfile |
 | `@firebase/util` | `1.15.1` | `Apache-2.0` | app | runtime | lockfile |
 | `@firebase/webchannel-wrapper` | `1.0.6` | `Apache-2.0` | app | runtime | lockfile |
-| `@floating-ui/core` | `1.7.5` | `MIT` | app | runtime | lockfile |
-| `@floating-ui/dom` | `1.7.6` | `MIT` | app | runtime | lockfile |
-| `@floating-ui/react-dom` | `2.1.8` | `MIT` | app | runtime | lockfile |
-| `@floating-ui/utils` | `0.2.11` | `MIT` | app | runtime | lockfile |
+| `@floating-ui/core` | `1.8.0` | `MIT` | app | runtime | lockfile |
+| `@floating-ui/dom` | `1.8.0` | `MIT` | app | runtime | lockfile |
+| `@floating-ui/react-dom` | `2.1.9` | `MIT` | app | runtime | lockfile |
+| `@floating-ui/utils` | `0.2.12` | `MIT` | app | runtime | lockfile |
 | `@google-cloud/firestore` | `8.6.0` | `Apache-2.0` | app, functions/generate-thumbnail | runtime | lockfile |
 | `@google-cloud/functions-framework` | `5.0.5` | `Apache-2.0` | functions/generate-thumbnail | runtime | lockfile |
 | `@google-cloud/paginator` | `5.0.2` | `Apache-2.0` | app, functions/generate-thumbnail | runtime | lockfile |
@@ -271,61 +271,61 @@ reviewed metadata override.
 | `@puppeteer/browsers` | `3.0.6` | `Apache-2.0` | functions/generate-thumbnail | runtime | lockfile |
 | `@radix-ui/number` | `1.1.2` | `MIT` | app | runtime | lockfile |
 | `@radix-ui/primitive` | `1.1.3` | `MIT` | app, app/migrator | runtime | lockfile |
-| `@radix-ui/primitive` | `1.1.5` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-accessible-icon` | `1.1.11` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-accordion` | `1.2.16` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-alert-dialog` | `1.1.19` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-arrow` | `1.1.11` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-aspect-ratio` | `1.1.11` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-avatar` | `1.2.2` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-checkbox` | `1.3.7` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-collapsible` | `1.1.16` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/primitive` | `1.1.6` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-accessible-icon` | `1.1.12` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-accordion` | `1.2.17` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-alert-dialog` | `1.1.20` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-arrow` | `1.1.12` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-aspect-ratio` | `1.1.12` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-avatar` | `1.2.3` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-checkbox` | `1.3.8` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-collapsible` | `1.1.17` | `MIT` | app | runtime | lockfile |
 | `@radix-ui/react-collection` | `1.1.12` | `MIT` | app | runtime | lockfile |
 | `@radix-ui/react-compose-refs` | `1.1.2` | `MIT` | app, app/migrator | runtime | lockfile |
 | `@radix-ui/react-compose-refs` | `1.1.3` | `MIT` | app | runtime | lockfile |
 | `@radix-ui/react-context` | `1.2.0` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-context-menu` | `2.3.3` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-dialog` | `1.1.19` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-context-menu` | `2.3.4` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-dialog` | `1.1.20` | `MIT` | app | runtime | lockfile |
 | `@radix-ui/react-direction` | `1.1.2` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-dismissable-layer` | `1.1.15` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-dropdown-menu` | `2.1.20` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-dismissable-layer` | `1.1.16` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-dropdown-menu` | `2.1.21` | `MIT` | app | runtime | lockfile |
 | `@radix-ui/react-focus-guards` | `1.1.4` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-focus-scope` | `1.1.12` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-form` | `0.1.12` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-hover-card` | `1.1.19` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-focus-scope` | `1.1.13` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-form` | `0.1.13` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-hover-card` | `1.1.20` | `MIT` | app | runtime | lockfile |
 | `@radix-ui/react-id` | `1.1.2` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-label` | `2.1.11` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-menu` | `2.1.20` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-menubar` | `1.1.20` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-navigation-menu` | `1.2.18` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-one-time-password-field` | `0.1.12` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-password-toggle-field` | `0.1.7` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-popover` | `1.1.19` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-popper` | `1.3.3` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-portal` | `1.1.13` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-presence` | `1.1.7` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-label` | `2.1.12` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-menu` | `2.1.21` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-menubar` | `1.1.21` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-navigation-menu` | `1.2.19` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-one-time-password-field` | `0.1.13` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-password-toggle-field` | `0.1.8` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-popover` | `1.1.20` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-popper` | `1.3.4` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-portal` | `1.1.14` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-presence` | `1.1.8` | `MIT` | app | runtime | lockfile |
 | `@radix-ui/react-primitive` | `2.1.3` | `MIT` | app, app/migrator | runtime | lockfile |
 | `@radix-ui/react-primitive` | `2.1.7` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-progress` | `1.1.12` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-radio-group` | `1.4.3` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-roving-focus` | `1.1.15` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-scroll-area` | `1.2.14` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-select` | `2.3.3` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-separator` | `1.1.11` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-slider` | `1.4.3` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-progress` | `1.1.13` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-radio-group` | `1.4.4` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-roving-focus` | `1.1.16` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-scroll-area` | `1.2.15` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-select` | `2.3.4` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-separator` | `1.1.12` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-slider` | `1.4.4` | `MIT` | app | runtime | lockfile |
 | `@radix-ui/react-slot` | `1.2.3` | `MIT` | app, app/migrator | runtime | lockfile |
 | `@radix-ui/react-slot` | `1.3.0` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-switch` | `1.3.3` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-tabs` | `1.1.17` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-toast` | `1.2.19` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-switch` | `1.3.4` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-tabs` | `1.1.18` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-toast` | `1.2.20` | `MIT` | app | runtime | lockfile |
 | `@radix-ui/react-toggle` | `1.1.10` | `MIT` | app, app/migrator | runtime | lockfile |
-| `@radix-ui/react-toggle` | `1.1.14` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-toggle-group` | `1.1.15` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-toolbar` | `1.1.15` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-tooltip` | `1.2.12` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-toggle` | `1.1.15` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-toggle-group` | `1.1.16` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-toolbar` | `1.1.16` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-tooltip` | `1.2.13` | `MIT` | app | runtime | lockfile |
 | `@radix-ui/react-use-callback-ref` | `1.1.2` | `MIT` | app | runtime | lockfile |
 | `@radix-ui/react-use-controllable-state` | `1.2.2` | `MIT` | app, app/migrator | runtime | lockfile |
-| `@radix-ui/react-use-controllable-state` | `1.2.3` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-use-controllable-state` | `1.2.4` | `MIT` | app | runtime | lockfile |
 | `@radix-ui/react-use-effect-event` | `0.0.2` | `MIT` | app, app/migrator | runtime | lockfile |
 | `@radix-ui/react-use-effect-event` | `0.0.3` | `MIT` | app | runtime | lockfile |
 | `@radix-ui/react-use-escape-keydown` | `1.1.3` | `MIT` | app | runtime | lockfile |
@@ -335,7 +335,7 @@ reviewed metadata override.
 | `@radix-ui/react-use-previous` | `1.1.2` | `MIT` | app | runtime | lockfile |
 | `@radix-ui/react-use-rect` | `1.1.2` | `MIT` | app | runtime | lockfile |
 | `@radix-ui/react-use-size` | `1.1.2` | `MIT` | app | runtime | lockfile |
-| `@radix-ui/react-visually-hidden` | `1.2.7` | `MIT` | app | runtime | lockfile |
+| `@radix-ui/react-visually-hidden` | `1.2.8` | `MIT` | app | runtime | lockfile |
 | `@radix-ui/rect` | `1.1.2` | `MIT` | app | runtime | lockfile |
 | `@reduxjs/toolkit` | `2.12.0` | `MIT` | app | runtime | lockfile |
 | `@rolldown/binding-android-arm64` | `1.1.4` | `MIT` | app | development | lockfile |
@@ -359,21 +359,21 @@ reviewed metadata override.
 | `@standard-schema/spec` | `1.1.0` | `MIT` | app, app/migrator | runtime | lockfile |
 | `@standard-schema/utils` | `0.3.0` | `MIT` | app | runtime | lockfile |
 | `@swc/helpers` | `0.5.15` | `Apache-2.0` | app | runtime | lockfile |
-| `@tailwindcss/node` | `4.3.2` | `MIT` | app | development | lockfile |
-| `@tailwindcss/oxide` | `4.3.2` | `MIT` | app | development | lockfile |
-| `@tailwindcss/oxide-android-arm64` | `4.3.2` | `MIT` | app | development | lockfile |
-| `@tailwindcss/oxide-darwin-arm64` | `4.3.2` | `MIT` | app | development | lockfile |
-| `@tailwindcss/oxide-darwin-x64` | `4.3.2` | `MIT` | app | development | lockfile |
-| `@tailwindcss/oxide-freebsd-x64` | `4.3.2` | `MIT` | app | development | lockfile |
-| `@tailwindcss/oxide-linux-arm-gnueabihf` | `4.3.2` | `MIT` | app | development | lockfile |
-| `@tailwindcss/oxide-linux-arm64-gnu` | `4.3.2` | `MIT` | app | development | lockfile |
-| `@tailwindcss/oxide-linux-arm64-musl` | `4.3.2` | `MIT` | app | development | lockfile |
-| `@tailwindcss/oxide-linux-x64-gnu` | `4.3.2` | `MIT` | app | development | lockfile |
-| `@tailwindcss/oxide-linux-x64-musl` | `4.3.2` | `MIT` | app | development | lockfile |
-| `@tailwindcss/oxide-wasm32-wasi` | `4.3.2` | `MIT` | app | development | lockfile |
-| `@tailwindcss/oxide-win32-arm64-msvc` | `4.3.2` | `MIT` | app | development | lockfile |
-| `@tailwindcss/oxide-win32-x64-msvc` | `4.3.2` | `MIT` | app | development | lockfile |
-| `@tailwindcss/postcss` | `4.3.2` | `MIT` | app | development | lockfile |
+| `@tailwindcss/node` | `4.3.3` | `MIT` | app | development | lockfile |
+| `@tailwindcss/oxide` | `4.3.3` | `MIT` | app | development | lockfile |
+| `@tailwindcss/oxide-android-arm64` | `4.3.3` | `MIT` | app | development | lockfile |
+| `@tailwindcss/oxide-darwin-arm64` | `4.3.3` | `MIT` | app | development | lockfile |
+| `@tailwindcss/oxide-darwin-x64` | `4.3.3` | `MIT` | app | development | lockfile |
+| `@tailwindcss/oxide-freebsd-x64` | `4.3.3` | `MIT` | app | development | lockfile |
+| `@tailwindcss/oxide-linux-arm-gnueabihf` | `4.3.3` | `MIT` | app | development | lockfile |
+| `@tailwindcss/oxide-linux-arm64-gnu` | `4.3.3` | `MIT` | app | development | lockfile |
+| `@tailwindcss/oxide-linux-arm64-musl` | `4.3.3` | `MIT` | app | development | lockfile |
+| `@tailwindcss/oxide-linux-x64-gnu` | `4.3.3` | `MIT` | app | development | lockfile |
+| `@tailwindcss/oxide-linux-x64-musl` | `4.3.3` | `MIT` | app | development | lockfile |
+| `@tailwindcss/oxide-wasm32-wasi` | `4.3.3` | `MIT` | app | development | lockfile |
+| `@tailwindcss/oxide-win32-arm64-msvc` | `4.3.3` | `MIT` | app | development | lockfile |
+| `@tailwindcss/oxide-win32-x64-msvc` | `4.3.3` | `MIT` | app | development | lockfile |
+| `@tailwindcss/postcss` | `4.3.3` | `MIT` | app | development | lockfile |
 | `@tootallnate/once` | `2.0.1` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
 | `@tybys/wasm-util` | `0.10.2` | `MIT` | app | development | lockfile |
 | `@tybys/wasm-util` | `0.10.3` | `MIT` | app | development | lockfile |
@@ -622,7 +622,7 @@ reviewed metadata override.
 | `empathic` | `2.0.0` | `MIT` | app, app/migrator | runtime | lockfile |
 | `encodeurl` | `2.0.0` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `end-of-stream` | `1.4.5` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
-| `enhanced-resolve` | `5.21.6` | `MIT` | app | development | lockfile |
+| `enhanced-resolve` | `5.24.3` | `MIT` | app | development | lockfile |
 | `env-paths` | `3.0.0` | `MIT` | app, app/migrator | runtime | lockfile |
 | `es-abstract` | `1.24.2` | `MIT` | app | development | lockfile |
 | `es-abstract-get` | `1.0.0` | `MIT` | app | development | lockfile |
@@ -666,7 +666,6 @@ reviewed metadata override.
 | `express` | `5.2.1` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `exsolve` | `1.1.0` | `MIT` | app, app/migrator | runtime | lockfile |
 | `extend` | `3.0.2` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
-| `farmhash-modern` | `1.1.0` | `MIT` | app | runtime | lockfile |
 | `fast-check` | `3.23.2` | `MIT` | app, app/migrator | runtime | lockfile |
 | `fast-csv` | `4.3.6` | `MIT` | app | runtime | lockfile |
 | `fast-deep-equal` | `3.1.3` | `MIT` | app, app/migrator, functions/generate-thumbnail | runtime | lockfile |
@@ -687,7 +686,7 @@ reviewed metadata override.
 | `find-up` | `5.0.0` | `MIT` | app | development | lockfile |
 | `find-up-simple` | `1.0.1` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `firebase` | `12.16.0` | `Apache-2.0` | app | runtime | lockfile |
-| `firebase-admin` | `14.1.0` | `Apache-2.0` | app | runtime | lockfile |
+| `firebase-admin` | `14.2.0` | `Apache-2.0` | app | runtime | lockfile |
 | `flat-cache` | `4.0.1` | `MIT` | app | development | lockfile |
 | `flatted` | `3.4.2` | `ISC` | app | development | lockfile |
 | `for-each` | `0.3.5` | `MIT` | app, functions/generate-thumbnail | runtime | lockfile |
@@ -884,7 +883,7 @@ reviewed metadata override.
 | `lru-cache` | `5.1.1` | `ISC` | app | development | lockfile |
 | `lru-memoizer` | `3.0.0` | `MIT` | app | runtime | lockfile |
 | `lru.min` | `1.1.4` | `MIT` | app, app/migrator | runtime | lockfile |
-| `lucide-react` | `1.24.0` | `ISC` | app | runtime | lockfile |
+| `lucide-react` | `1.25.0` | `ISC` | app | runtime | lockfile |
 | `magic-string` | `0.30.21` | `MIT` | app | development | lockfile |
 | `magicast` | `0.5.3` | `MIT` | app | runtime | lockfile |
 | `make-dir` | `4.0.0` | `MIT` | app | development | lockfile |
@@ -992,7 +991,7 @@ reviewed metadata override.
 | `pure-rand` | `6.1.0` | `MIT` | app, app/migrator | runtime | lockfile |
 | `qs` | `6.15.3` | `BSD-3-Clause` | functions/generate-thumbnail | runtime | lockfile |
 | `queue-microtask` | `1.2.3` | `MIT` | app | development | lockfile |
-| `radix-ui` | `1.6.2` | `MIT` | app | runtime | lockfile |
+| `radix-ui` | `1.6.4` | `MIT` | app | runtime | lockfile |
 | `range-parser` | `1.3.0` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `raw-body` | `3.0.2` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `rc9` | `3.0.1` | `MIT` | app, app/migrator | runtime | lockfile |
@@ -1099,7 +1098,7 @@ reviewed metadata override.
 | `supports-color` | `7.2.0` | `MIT` | app | development | lockfile |
 | `supports-preserve-symlinks-flag` | `1.0.0` | `MIT` | app | development | lockfile |
 | `tailwind-merge` | `3.6.0` | `MIT` | app | runtime | lockfile |
-| `tailwindcss` | `4.3.2` | `MIT` | app | development | lockfile |
+| `tailwindcss` | `4.3.3` | `MIT` | app | development | lockfile |
 | `tapable` | `2.3.3` | `MIT` | app | development | lockfile |
 | `tar-fs` | `3.1.3` | `MIT` | functions/generate-thumbnail | runtime | lockfile |
 | `tar-stream` | `2.2.0` | `MIT` | app | runtime | lockfile |
