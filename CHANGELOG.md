@@ -8,7 +8,9 @@ the same merged `main` commit.
 
 ## [Unreleased]
 
-- No unreleased changes yet.
+- Documented the single-organization internal-use positioning in both
+  READMEs, added the internal BI portal setup guide, and added the use case
+  roadmap.
 
 ## [0.2.0] - Pending owner authorization
 
