@@ -114,7 +114,7 @@ Copy `app/.env.example` to `app/.env`, then replace placeholders with project va
 | `TWD_CREDENTIAL_ENC_KEY` | Data sources | 32-byte base64 AES-256-GCM key for external data-source credentials, which are stored encrypted at rest. Required in production when a data source stores a credential. |
 | `TWD_INSPECTION_TOKEN_SECRET` | Optional | Dedicated secret for signed admin data-source inspection tokens. Falls back to `DASHBOARD_SESSION_SECRET`. |
 | `TWD_ORG_ID` | Optional | Organization id tagged onto data sources created through the admin UI. |
-| `TWD_QUERY_TIMEOUT_MS`, `TWD_MAX_ROWS`, `TWD_ENGINE_LRU_BYTES` | Optional | Data-source query guardrails (timeout, row cap, engine cache size). Sensible defaults apply if unset. |
+| `TWD_QUERY_TIMEOUT_MS`, `TWD_MAX_ROWS`, `TWD_READ_MAX_BYTES`, `TWD_ENGINE_LRU_BYTES` | Optional | Data-source query guardrails (timeout, row cap, object read limit, engine cache size). Sensible defaults apply if unset. |
 | `APP_URL` | Recommended | Public base URL used for links and token generation. |
 | `ANTHROPIC_API_KEY` | AI features | API key for Anthropic models. |
 | `OPENAI_API_KEY` | Optional | API key for the OpenAI provider. |
