@@ -29,15 +29,18 @@ problem and is intentionally out of scope today; see the
 3. A superadmin registers each prefix as a governed data source, choosing the
    owner column and granting access to users or departments.
 4. Team members sign in with the company Google account and chat with the
-   data. Every question becomes a single read-only SQL statement executed in
-   an in-memory DuckDB sandbox against a view filtered to the viewer's rows.
+   data. Each data access is a single-statement, read-only SQL query executed
+   in an in-memory DuckDB sandbox against a view filtered to the viewer's
+   rows; one question may trigger several such queries.
 5. Optionally, the team publishes dashboards (single HTML files or ZIP
    packages) to the same hub, shared by team, email, or department.
 
-Data flows only between systems you operate: your BI export, your bucket,
-your deployment, your Firebase project, and your PostgreSQL instance. The AI
-provider you configure receives the conversation and the query results that
-the signed-in viewer is allowed to see.
+Data at rest stays in systems you operate: your BI export, your bucket, your
+deployment, your Firebase project, and your PostgreSQL instance. Two kinds of
+external processors see data in motion: the AI provider you configure
+receives the conversation and the query results that the signed-in viewer is
+allowed to see, and MCP servers, if you enable them, receive the tool calls
+you route to them.
 
 ## Prerequisites
 
@@ -71,8 +74,8 @@ below deserve extra attention in this use case; the full contract lives in
 ## Step 2: bootstrap the first superadmin
 
 Roles are `user`, `admin`, and `superadmin`. They are assigned server-side:
-clients cannot write the `role` field, and every first login defaults to
-`user`. Data sources, departments, and the other governance features are
+clients cannot write the `role` field, and a first login receives `user`
+unless a pending role pre-approves an elevation. Data sources, departments, and the other governance features are
 superadmin-only, so create your first superadmin deliberately:
 
 1. Before that person's first login, create a document in the `pendingRoles`
@@ -95,26 +98,28 @@ This is where your team spends its judgment. The application governs access;
 the export defines what exists to be accessed.
 
 **One dataset per prefix.** Each governed source reads the first `.csv`
-object found among the first 25 objects of its configured prefix. Give every
-dataset an exclusive prefix so the selection is deterministic:
+object found under its configured prefix, and admin header inspection looks
+only at the first 25 objects while locating it. Give every dataset an
+exclusive prefix so both selections stay deterministic:
 
 ```text
 gs://example-twd-sources/sales-pipeline/pipeline.csv
 gs://example-twd-sources/billing-summary/billing.csv
 ```
 
-**Stable, unique headers.** Headers are normalized before comparison, and two
-headers that normalize to the same identity, such as `owner-email` and
-`owner_email`, are rejected fail-closed. Keep header names stable across
-export runs; renaming columns is a configuration change (see the runbook).
+**Stable, unique headers.** Headers are normalized before comparison. At
+onboarding, header inspection rejects any two headers that normalize to the
+same identity, such as `owner-email` and `owner_email`, and at load time a
+collision with the owner column identity fails closed. Keep header names
+stable across export runs; renaming columns is a configuration change (see
+the runbook).
 
-**The owner column.** Choose the column that identifies who owns each row:
-
-- Identity `email`: values are lowercased and trimmed, then matched against
-  the signed-in user's email. Use the exact corporate addresses that exist in
-  your Google Workspace.
-- Identity `uid`: values must contain Firebase UIDs. Prefer `email` unless
-  your export pipeline already synchronizes UIDs.
+**The owner column.** Choose the column that identifies who owns each row.
+Sources created through the admin UI match owner values against the
+signed-in user's email: both sides are lowercased and trimmed, so use the
+exact corporate addresses that exist in your Google Workspace. (The engine
+also defines a UID-based identity, but it is not configurable through the
+admin UI today.)
 
 Rules that follow from the engine's behavior:
 
@@ -172,7 +177,7 @@ Sign in as a superadmin and open **Admin > Data Sources**:
 | Service account JSON | Contents of the key file | Write-only onboarding input |
 
 Select **Inspect headers**, confirm the returned headers, choose the owner
-column and its identity, add grants (next step), then create the source.
+column, add grants (next step), then create the source.
 
 The [governed CSV walkthrough](CSV-WALKTHROUGH.md) reproduces this flow end
 to end with a neutral fixture and lists the expected fail-closed behaviors.
