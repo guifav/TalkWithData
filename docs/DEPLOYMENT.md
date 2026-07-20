@@ -326,7 +326,7 @@ Use `app/.env.example` as the source template. The table below describes deploym
 | `TWD_CREDENTIAL_ENC_KEY` | Data sources | 32-byte base64 | AES-256-GCM key for external data-source credentials, which are stored encrypted at rest. Required in production when a data source stores a credential. |
 | `TWD_INSPECTION_TOKEN_SECRET` | Optional | secret | Signs admin data-source inspection tokens. Falls back to `DASHBOARD_SESSION_SECRET`. |
 | `TWD_ORG_ID` | Optional | id | Organization id tagged onto data sources created through the admin UI. |
-| `TWD_QUERY_TIMEOUT_MS`, `TWD_MAX_ROWS`, `TWD_ENGINE_LRU_BYTES` | Optional | `10000`, `1000`, `67108864` | Data-source query guardrails (timeout, row cap, engine cache bytes). |
+| `TWD_QUERY_TIMEOUT_MS`, `TWD_MAX_ROWS`, `TWD_READ_MAX_BYTES`, `TWD_ENGINE_LRU_BYTES` | Optional | `10000`, `1000`, `52428800`, `67108864` | Data-source query guardrails (timeout, row cap, object read bytes, engine cache bytes). |
 
 ### External data-source credential onboarding
 
