@@ -24,26 +24,24 @@ These items are required before the first tagged public release:
 
 ## Planned next
 
-These are likely next work areas after the policy and release-readiness blockers:
-
-- Pin mutable GitHub Actions and deployment images.
-- Add Firestore rules testing in CI.
-- Test Prisma migrations against an empty PostgreSQL database.
-- Add Docker image smoke tests.
-- Improve coverage for security-critical routes and modules.
-- Add Playwright coverage for login, upload, view, and embed flows.
-- Wire the local-filesystem storage adapter into upload and serving paths, or
-  clearly remove it from the supported runtime contract.
-- Move AI provider keys to encrypted server-only storage.
-- Add a supported onboarding path for encrypted data-source credentials.
+The previously planned hardening items shipped; see the
+[changelog](CHANGELOG.md) and the merged pull requests for the record:
+pinned CI actions and images, Firestore rules and
+Prisma migration testing in CI, Docker image smoke tests, security-critical
+coverage, Playwright journeys, wired local dashboard storage, encrypted
+server-only AI provider keys, and encrypted data-source credential
+onboarding. New committed work areas are added here as they are accepted.
 
 ## Ideas, not commitments
 
 These ideas need more design, evidence, or maintainer capacity before they are
 commitments:
 
+- The use-case directions recorded in
+  [docs/USE-CASES-ROADMAP.md](docs/USE-CASES-ROADMAP.md), including external
+  client distribution, additional governed source adapters, and embed
+  hardening.
 - Hosted demo data for neutral screenshots and walkthroughs.
-- Additional data-source adapters beyond CSV buckets.
 - Expanded observability for self-hosted production instances.
 - Richer admin analytics and audit trails.
 - More automated release provenance and artifact attestations.

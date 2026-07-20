@@ -14,6 +14,8 @@ Open-source dashboard hub with AI. Upload, organize, search, and embed dashboard
 
 Talk With Data helps teams publish dashboard HTML packages, search across content, explore data with AI, connect MCP tools, and share dashboards through authenticated or embedded views. Superadmins can also connect CSV buckets as governed data sources, so users ask questions in natural language and every answer stays scoped to the rows they are allowed to see.
 
+Talk With Data is built for internal use by a single organization: your own team signs in with your company Google Workspace domain and talks with your company's own data. One deployment serves one organization. It is not a white-label or multi-tenant product for serving external clients today. The primary scenario is documented end to end in the [internal BI portal setup guide](docs/INTERNAL-BI-PORTAL-SETUP.md), and directions beyond this concept are recorded in the [use case roadmap](docs/USE-CASES-ROADMAP.md).
+
 The current application UI defaults to English for the international OSS audience. The PT-BR README is a documentation translation, not a UI locale. PT-BR and additional interface languages require an explicit i18n implementation.
 
 ## Product tour
@@ -179,6 +181,8 @@ See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for Docker, Google Cloud Run, Firebase s
 See [Operational Observability](docs/OBSERVABILITY.md) for structured event names, redaction guarantees, log levels, correlation IDs, and sanitized troubleshooting.
 
 See [Data, Privacy, and Retention](docs/DATA-PRIVACY.md) for the as-built data inventory, default retention and deletion behavior, access-control assumptions, and self-hoster responsibilities.
+
+See the [Internal BI portal setup guide](docs/INTERNAL-BI-PORTAL-SETUP.md) for the end-to-end configuration of the primary use case, from BI extract design to row-scope validation and operations.
 
 See the [Governed CSV walkthrough](docs/CSV-WALKTHROUGH.md) for a neutral, as-built demonstration of source onboarding, grants, per-viewer row scope, fail-closed behavior, and the read-only DuckDB boundary.
 
