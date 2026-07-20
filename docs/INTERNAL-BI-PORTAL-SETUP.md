@@ -35,12 +35,14 @@ problem and is intentionally out of scope today; see the
 5. Optionally, the team publishes dashboards (single HTML files or ZIP
    packages) to the same hub, shared by team, email, or department.
 
-Data at rest stays in systems you operate: your BI export, your bucket, your
-deployment, your Firebase project, and your PostgreSQL instance. Two kinds of
-external processors see data in motion: the AI provider you configure
-receives the conversation and the query results that the signed-in viewer is
-allowed to see, and MCP servers, if you enable them, receive the tool calls
-you route to them.
+The deployment's own stores are services you operate: your BI export, your
+bucket, your deployment, your Firebase project, and your PostgreSQL
+instance. Two kinds of external processors also receive data: the AI
+provider you configure receives the conversation and the query results that
+the signed-in viewer is allowed to see, and MCP servers, if you enable them,
+receive the tool calls you route to them. What those processors retain is
+governed by their terms, not by this application; account for them in your
+privacy review ([DATA-PRIVACY.md](DATA-PRIVACY.md)).
 
 ## Prerequisites
 
@@ -68,15 +70,16 @@ below deserve extra attention in this use case; the full contract lives in
 | `DASHBOARD_SESSION_SECRET` | Signs dashboard and embed session tokens. |
 | `STORAGE_PROVIDER`, plus `LOCAL_STORAGE_ROOT` or `STORAGE_BUCKET_NAME` | Dashboard HTML storage. `local` works for single-instance deployments; governed CSV sources still read GCS. |
 | `ANTHROPIC_API_KEY` or another provider key | Enables chat. Defaults come from `AI_DEFAULT_PROVIDER` and `AI_DEFAULT_MODEL`; per-user configuration comes later in the admin panel. |
-| `TWD_QUERY_TIMEOUT_MS`, `TWD_MAX_ROWS`, `TWD_ENGINE_LRU_BYTES` | Data source guardrails. Defaults: 10 second timeout, 1,000 row cap, 64 MB in-memory source cache. |
+| `TWD_QUERY_TIMEOUT_MS`, `TWD_MAX_ROWS`, `TWD_READ_MAX_BYTES`, `TWD_ENGINE_LRU_BYTES` | Data source guardrails. Defaults: 10 second timeout, 1,000 row cap, 50 MiB object read limit, 64 MB in-memory source cache. |
 | `TWD_ORG_ID` | Optional label recorded on data sources created through the admin UI. |
 
 ## Step 2: bootstrap the first superadmin
 
 Roles are `user`, `admin`, and `superadmin`. They are assigned server-side:
 clients cannot write the `role` field, and a first login receives `user`
-unless a pending role pre-approves an elevation. Data sources, departments, and the other governance features are
-superadmin-only, so create your first superadmin deliberately:
+unless a pending role pre-approves an elevation. Data sources, departments,
+and the other governance features are superadmin-only, so create your first
+superadmin deliberately:
 
 1. Before that person's first login, create a document in the `pendingRoles`
    Firestore collection with the field `role` set to `superadmin`. The
@@ -108,8 +111,8 @@ gs://example-twd-sources/billing-summary/billing.csv
 ```
 
 **Stable, unique headers.** Headers are normalized before comparison. At
-onboarding, header inspection rejects any two headers that normalize to the
-same identity, such as `owner-email` and `owner_email`, and at load time a
+onboarding, two headers that normalize to the same identity, such as
+`owner-email` and `owner_email`, block saving the source, and at load time a
 collision with the owner column identity fails closed. Keep header names
 stable across export runs; renaming columns is a configuration change (see
 the runbook).
@@ -128,15 +131,16 @@ Rules that follow from the engine's behavior:
   rows, never everything.
 - The owner column is removed from the filtered view. Queries can neither
   select it nor return it.
-- One owner per row. If several people must see the same fact, either
-  duplicate the row once per authorized viewer in the export, or publish a
-  separate dataset for that audience (for example, a management rollup CSV
-  granted only to managers).
+- One owner per row. If several people must see the same fact, the export
+  must repeat that row once per authorized viewer's owner key. Grants never
+  widen rows: a management rollup dataset works because each rollup row is
+  repeated per manager email, not because the source is granted to managers.
 
 **Size the extracts deliberately.** Extracts should be curated slices, not
-warehouse dumps. Each distinct content version of a CSV is parsed into an
-in-memory DuckDB table and cached (64 MB total by default, tunable with
-`TWD_ENGINE_LRU_BYTES`), and query results are capped at 1,000 rows by
+warehouse dumps. A single object read is capped at 50 MiB by default
+(`TWD_READ_MAX_BYTES`). Each distinct content version of a CSV is parsed
+into an in-memory DuckDB table and cached (64 MB total by default, tunable
+with `TWD_ENGINE_LRU_BYTES`), and query results are capped at 1,000 rows by
 default. The feature is built for answering questions over curated data, not
 for bulk export.
 
@@ -244,9 +248,10 @@ fail-closed paths without needing Firebase or GCP credentials.
   `TWD_CREDENTIAL_ENC_KEY` itself makes previously stored ciphertext
   unreadable, so plan to re-onboard every source credential when that key
   rotates.
-- **Limits.** Tune `TWD_QUERY_TIMEOUT_MS`, `TWD_MAX_ROWS`, and
-  `TWD_ENGINE_LRU_BYTES` for your deployment size. Defaults: 10 seconds,
-  1,000 rows, 64 MB.
+- **Limits.** Tune `TWD_QUERY_TIMEOUT_MS`, `TWD_MAX_ROWS`,
+  `TWD_READ_MAX_BYTES`, and `TWD_ENGINE_LRU_BYTES` for your deployment
+  size. Defaults: 10 seconds, 1,000 rows, 50 MiB per object read, 64 MB of
+  cache.
 - **Observability.** Structured, redacted events with correlation IDs are
   documented in [OBSERVABILITY.md](OBSERVABILITY.md).
 - **Privacy and retention.** The operator is the data controller of the

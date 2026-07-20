@@ -24,8 +24,9 @@ These items are required before the first tagged public release:
 
 ## Planned next
 
-The previously planned hardening items shipped and are recorded in the
-[changelog](CHANGELOG.md): pinned CI actions and images, Firestore rules and
+The previously planned hardening items shipped; see the
+[changelog](CHANGELOG.md) and the merged pull requests for the record:
+pinned CI actions and images, Firestore rules and
 Prisma migration testing in CI, Docker image smoke tests, security-critical
 coverage, Playwright journeys, wired local dashboard storage, encrypted
 server-only AI provider keys, and encrypted data-source credential

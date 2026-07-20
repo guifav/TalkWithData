@@ -56,12 +56,14 @@ channel of record.
 
 **What exists today.** Single HTML and ZIP package upload, search across
 extracted text, categories, shared folders, per-dashboard versions capped at
-10 with FIFO cleanup, thumbnails, and view analytics.
+10 with FIFO cleanup for single-file dashboards (ZIP package replacement
+keeps no version history), thumbnails, and view analytics.
 
 **Missing pieces.**
 
 - Publishing conventions: draft and published states, review before
   team-wide visibility.
+- Version history for ZIP package replacements.
 - Retention and archival policies beyond the 10-version cap.
 - Bulk import and export tooling.
 - Notifications when a followed dashboard is updated.
