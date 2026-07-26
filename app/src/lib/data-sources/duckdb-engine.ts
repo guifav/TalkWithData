@@ -18,7 +18,11 @@ import type {
 
 export interface LoadSourceArgs {
   source: DataSource;
-  csvBuffer: Buffer;
+  /**
+   * Loader lazy do CSV: so e invocado em cache miss (etag/configVersion novos
+   * ou processo frio). Em cache hit o download do GCS e totalmente evitado.
+   */
+  loadCsv: () => Promise<Buffer>;
   viewerScope: { ownerKeys: string[] };
   etag: string;
   configVersion: number;
@@ -108,12 +112,15 @@ async function getOrCreateRawSource(args: LoadSourceArgs): Promise<CachedRawSour
 }
 
 async function createRawSource(args: LoadSourceArgs): Promise<CachedRawSource> {
+  // O download so acontece aqui (cache miss); erros de leitura do storage
+  // devem preservar o tipo publico (DataSourceUnavailableError) para o caller.
+  const csvBuffer = await args.loadCsv();
   const instance = await createDuckDbInstance();
   let connection: DuckDBConnection | undefined;
 
   try {
     connection = await instance.connect();
-    const parsed = parseCsvTable(args.csvBuffer);
+    const parsed = parseCsvTable(csvBuffer);
     const resolvedColumns = resolveColumnTypes(
       parsed.columns,
       parsed.rows,
@@ -135,7 +142,7 @@ async function createRawSource(args: LoadSourceArgs): Promise<CachedRawSource> {
       instance,
       rawSafe,
       columns: resolvedColumns,
-      bytes: args.csvBuffer.byteLength,
+      bytes: csvBuffer.byteLength,
       activeUses: 0,
     };
     const cacheKey = rawSourceCacheKey(args);

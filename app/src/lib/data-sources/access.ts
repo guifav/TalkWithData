@@ -19,9 +19,12 @@ export async function canQueryDataSource(
     return { canQuery: true };
   }
 
-  for (const departmentId of uniqueStrings(grants.assignedDepartments)) {
-    const memberUids = await loadDepartmentMemberUids(departmentId);
-    if (memberUids.includes(uid)) {
+  // Uma unica ida ao Firestore (getAll) em vez de um get sequencial por
+  // departamento. Erros degradam para lista vazia (fail-closed: sem acesso).
+  const departmentIds = uniqueStrings(grants.assignedDepartments);
+  if (departmentIds.length > 0) {
+    const memberUidLists = await loadDepartmentsMemberUids(departmentIds);
+    if (memberUidLists.some((memberUids) => memberUids.includes(uid))) {
       return { canQuery: true };
     }
   }
@@ -42,17 +45,17 @@ export async function resolveViewerScope(
   return { ownerKeys: await resolveOwnerEmails(uid ? [uid] : []) };
 }
 
-async function loadDepartmentMemberUids(
-  departmentId: string,
-): Promise<string[]> {
+async function loadDepartmentsMemberUids(
+  departmentIds: string[],
+): Promise<string[][]> {
   try {
-    const doc = await adminDb
-      .collection(DEPARTMENTS_COLLECTION)
-      .doc(departmentId)
-      .get();
-    if (!doc.exists) return [];
-
-    return stringArray(doc.data()?.memberUids);
+    const refs = departmentIds.map((departmentId) =>
+      adminDb.collection(DEPARTMENTS_COLLECTION).doc(departmentId),
+    );
+    const docs = await adminDb.getAll(...refs);
+    return docs.map((doc) =>
+      doc.exists ? stringArray(doc.data()?.memberUids) : [],
+    );
   } catch {
     return [];
   }

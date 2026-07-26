@@ -10,7 +10,11 @@ import {
 } from "@/lib/dataset-chat-prompt";
 import { listDataSources, type DataSourceMetadata } from "@/lib/data-sources/firestore";
 import { canQueryDataSource } from "@/lib/data-sources/access";
-import { queryDataset, dataSourceToRuntime } from "@/lib/data-sources/query";
+import {
+  queryDataset,
+  dataSourceToRuntime,
+  createQuerySession,
+} from "@/lib/data-sources/query";
 import {
   publicErrorMessage,
   publicErrorStatus,
@@ -197,15 +201,28 @@ async function verifyMcpAccess(
   uid: string,
   mcpServerIds: string[]
 ): Promise<Array<{ id: string } & McpServerDoc> | null> {
-  const userDoc = await adminDb.collection("users").doc(uid).get();
+  // Todas as leituras Firestore em paralelo (antes eram sequenciais por
+  // servidor). A semantica fail-closed e identica: qualquer doc ausente,
+  // acesso nao concedido ou servidor inativo nega a requisicao inteira.
+  const [userDoc, accessDocs, serverDocs] = await Promise.all([
+    adminDb.collection("users").doc(uid).get(),
+    Promise.all(
+      mcpServerIds.map((serverId) =>
+        adminDb.collection("mcp_access").doc(serverId).get(),
+      ),
+    ),
+    Promise.all(
+      mcpServerIds.map((serverId) =>
+        adminDb.collection("mcp_servers").doc(serverId).get(),
+      ),
+    ),
+  ]);
   const userDepartment: string | undefined = userDoc.data()?.department;
 
   const servers: Array<{ id: string } & McpServerDoc> = [];
-  for (const serverId of mcpServerIds) {
-    const accessDoc = await adminDb
-      .collection("mcp_access")
-      .doc(serverId)
-      .get();
+  for (let i = 0; i < mcpServerIds.length; i++) {
+    const serverId = mcpServerIds[i];
+    const accessDoc = accessDocs[i];
     if (!accessDoc.exists) return null;
 
     const access = accessDoc.data() as {
@@ -222,10 +239,7 @@ async function verifyMcpAccess(
       return null;
     }
 
-    const serverDoc = await adminDb
-      .collection("mcp_servers")
-      .doc(serverId)
-      .get();
+    const serverDoc = serverDocs[i];
     if (!serverDoc.exists) return null;
 
     const serverData = serverDoc.data() as McpServerDoc;
@@ -308,18 +322,34 @@ export async function POST(request: NextRequest) {
     // query_dataset ainda falha fechado por fonte inexistente no uso real).
     console.error("[Data Chat] listDataSources failed:", err);
   }
+  // Autorizacao de todas as fontes em paralelo, e os resultados semeiam a
+  // QuerySession: as chamadas de query_dataset do loop agentico reutilizam
+  // metadata e auth ja resolvidos em vez de reler o Firestore por tool call.
+  const querySession = createQuerySession();
   const authorizedSources: DataSourceMetadata[] = [];
-  for (const dsMeta of allSources) {
-    try {
-      const ds = dataSourceToRuntime(dsMeta);
-      const authz = await canQueryDataSource(auth.uid, ds);
-      if (authz.canQuery) authorizedSources.push(dsMeta);
-    } catch (err) {
-      console.error(
-        `[Data Chat] canQueryDataSource failed for ${dsMeta.id}:`,
-        err,
-      );
-    }
+  const authChecks = await Promise.all(
+    allSources.map(async (dsMeta) => {
+      try {
+        const ds = dataSourceToRuntime(dsMeta);
+        const authz = await canQueryDataSource(auth.uid, ds);
+        return { dsMeta, authz };
+      } catch (err) {
+        console.error(
+          `[Data Chat] canQueryDataSource failed for ${dsMeta.id}:`,
+          err,
+        );
+        return null;
+      }
+    }),
+  );
+  for (const checked of authChecks) {
+    if (!checked) continue;
+    querySession.dsMeta.set(checked.dsMeta.id, Promise.resolve(checked.dsMeta));
+    querySession.auth.set(
+      `${auth.uid}:${checked.dsMeta.id}`,
+      Promise.resolve(checked.authz),
+    );
+    if (checked.authz.canQuery) authorizedSources.push(checked.dsMeta);
   }
   if (authorizedSources.length > 0) {
     TOOLS.push(QUERY_DATASET_TOOL);
@@ -469,11 +499,14 @@ export async function POST(request: NextRequest) {
 
                 let toolResult: string;
                 try {
-                  const result = await queryDataset({
-                    uid: auth.uid,
-                    dataSourceId,
-                    sql: query,
-                  });
+                  const result = await queryDataset(
+                    {
+                      uid: auth.uid,
+                      dataSourceId,
+                      sql: query,
+                    },
+                    { session: querySession },
+                  );
                   toolResult = JSON.stringify(result);
                 } catch (err) {
                   const status = publicErrorStatus(err);

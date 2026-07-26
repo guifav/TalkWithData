@@ -14,17 +14,26 @@ vi.mock("@/lib/data-sources/firestore", () => ({
   getDataSourceWithCredentials: (id: string) => getDataSourceWithCredentials(id),
 }));
 
+// getCachedGcsStorage vira passthrough no mock: o cache de client real e
+// testado em separado; aqui cada teste controla o retorno de createGcsStorage.
 vi.mock("@/lib/data-sources/storage", () => ({
   createGcsStorage: (opts: object) => createGcsStorage(opts),
+  getCachedGcsStorage: (opts: object) => createGcsStorage(opts),
 }));
 
-import { readDataSourceCsvById } from "@/lib/data-sources/query";
+import {
+  readDataSourceCsvById,
+  queryDataset,
+  __queryCacheReset,
+} from "@/lib/data-sources/query";
 import { DEV_ENC_KEY } from "@/lib/data-sources/credentials";
 import type { DataSource } from "@/lib/data-sources/types";
 
+const resolveViewerScope = vi.fn();
+
 vi.mock("@/lib/data-sources/access", () => ({
   canQueryDataSource: (uid: string, ds: DataSource) => canQueryDataSource(uid, ds),
-  resolveViewerScope: vi.fn(),
+  resolveViewerScope: () => resolveViewerScope(),
 }));
 
 // Chave de desenvolvimento (32 bytes em base64) usada pelo SecretService quando
@@ -69,6 +78,7 @@ function makeMeta(extra: Record<string, unknown> = {}) {
 describe("readDataSourceCsv (P1.7, fluxo real de credencial)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    __queryCacheReset();
     vi.stubEnv("TWD_CREDENTIAL_ENC_KEY", DEV_ENC_KEY);
     getDataSource.mockResolvedValue(makeMeta());
     canQueryDataSource.mockResolvedValue({ canQuery: true });
@@ -155,6 +165,36 @@ describe("readDataSourceCsv (P1.7, fluxo real de credencial)", () => {
     await expect(readDataSourceCsvById("u1", "ds1")).rejects.toThrow(
       /indisponivel para leitura do CSV/,
     );
+  });
+
+  it("pula list() e download em query repetida (metadata + engine cache)", async () => {
+    const meta = makeMeta({ id: "ds-cache-hot" });
+    getDataSource.mockResolvedValue(meta);
+    getDataSourceWithCredentials.mockResolvedValue({
+      ...meta,
+      credentialRef: { kind: "encryptedBlob" as const, ref: "r-hot" },
+      credentialEnc: makeCredentialBlob(FAKE_CREDS),
+    });
+    resolveViewerScope.mockResolvedValue({ ownerKeys: ["ana"] });
+
+    const listSpy = vi.fn(async () => ({
+      objects: [{ name: "exports/data.csv", md5Hash: "h-cache-hot" }],
+    }));
+    const readSpy = vi.fn(async () => ({ content: CSV_BYTES, md5Hash: "h-cache-hot" }));
+    createGcsStorage.mockReturnValue({ list: listSpy, readByKey: readSpy });
+
+    const sql = "SELECT amount FROM view ORDER BY amount";
+    const first = await queryDataset({ uid: "u1", dataSourceId: "ds-cache-hot", sql });
+    expect(first.rows).toEqual([[10]]);
+    // Primeira query: um list() (etag via md5) e um download (engine miss).
+    expect(listSpy).toHaveBeenCalledTimes(1);
+    expect(readSpy).toHaveBeenCalledTimes(1);
+
+    const second = await queryDataset({ uid: "u1", dataSourceId: "ds-cache-hot", sql });
+    expect(second.rows).toEqual([[10]]);
+    // Query repetida: metadata cache pula o list(), engine cache pula o download.
+    expect(listSpy).toHaveBeenCalledTimes(1);
+    expect(readSpy).toHaveBeenCalledTimes(1);
   });
 
   it("bloqueia cedo credentialRef secretManager (ainda nao implementado)", async () => {

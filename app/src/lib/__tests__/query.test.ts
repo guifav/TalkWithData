@@ -14,7 +14,11 @@ import {
   canQueryDataSource,
   resolveViewerScope,
 } from "@/lib/data-sources/access";
-import { queryDataset, type ReadCsvResult } from "@/lib/data-sources/query";
+import {
+  queryDataset,
+  createQuerySession,
+  type ReadCsvResult,
+} from "@/lib/data-sources/query";
 
 const CSV = Buffer.from("owner,amount\nana,10\nbob,20\nx,30\n");
 
@@ -258,6 +262,51 @@ describe("queryDataset (P1.7)", () => {
     );
     expect(result.columns).toEqual(["view"]);
     expect(result.rows).toEqual([[42]]);
+  });
+
+  it("QuerySession dedupa leituras Firestore entre tool calls", async () => {
+    const session = createQuerySession();
+    const sql = "SELECT amount FROM view ORDER BY amount";
+    await queryDataset(
+      { uid: "u1", dataSourceId: "ds1", sql },
+      { readCsv: async () => mockCsv(), session },
+    );
+    await queryDataset(
+      { uid: "u1", dataSourceId: "ds1", sql },
+      { readCsv: async () => mockCsv(), session },
+    );
+
+    expect(getDataSource).toHaveBeenCalledTimes(1);
+    expect(canQueryDataSource).toHaveBeenCalledTimes(1);
+    expect(resolveViewerScope).toHaveBeenCalledTimes(1);
+  });
+
+  it("session semeada com auth negada continua negando sem reler", async () => {
+    const session = createQuerySession();
+    session.auth.set("u2:ds1", Promise.resolve({ canQuery: false }));
+
+    await expect(
+      queryDataset(
+        { uid: "u2", dataSourceId: "ds1", sql: "SELECT * FROM view" },
+        { readCsv: async () => mockCsv(), session },
+      ),
+    ).rejects.toThrow(/Acesso negado/);
+    expect(canQueryDataSource).not.toHaveBeenCalled();
+  });
+
+  it("sem session, cada chamada refaz as leituras (comportamento legado)", async () => {
+    const sql = "SELECT amount FROM view ORDER BY amount";
+    await queryDataset(
+      { uid: "u1", dataSourceId: "ds1", sql },
+      { readCsv: async () => mockCsv() },
+    );
+    await queryDataset(
+      { uid: "u1", dataSourceId: "ds1", sql },
+      { readCsv: async () => mockCsv() },
+    );
+
+    expect(getDataSource).toHaveBeenCalledTimes(2);
+    expect(canQueryDataSource).toHaveBeenCalledTimes(2);
   });
 
   it("nao corrompe dollar-quoted literal contendo 'from view' no rewrite", async () => {

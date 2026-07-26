@@ -26,8 +26,8 @@ vi.mock("@/lib/data-sources/credentials", () => ({
   },
 }));
 
-vi.mock("@/lib/data-sources/storage", () => ({
-  createGcsStorage: () => ({
+vi.mock("@/lib/data-sources/storage", () => {
+  const fakeStorage = () => ({
     list: async () => ({
       objects: [{ name: "exports/data.csv", md5Hash: "h1" }],
     }),
@@ -35,8 +35,12 @@ vi.mock("@/lib/data-sources/storage", () => ({
       content: Buffer.from("owner,amount\nana,10\nbob,20\n"),
       md5Hash: "h1",
     }),
-  }),
-}));
+  });
+  return {
+    createGcsStorage: fakeStorage,
+    getCachedGcsStorage: fakeStorage,
+  };
+});
 
 import { POST } from "@/app/api/ai/query-dataset/route";
 import {

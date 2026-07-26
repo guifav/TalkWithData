@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { DuckDbSandboxError } from "@/lib/data-sources/duckdb-sandbox";
 import {
   __engineCacheReset,
@@ -44,7 +44,7 @@ describe("loadSource", () => {
     const sharedSource = source({ id: "src-cross-viewer" });
     const ana = await loadSource({
       source: sharedSource,
-      csvBuffer: csv,
+      loadCsv: async () => csv,
       viewerScope: { ownerKeys: ["ana@example.com"] },
       etag: "etag-cross-viewer",
       configVersion: 1,
@@ -52,7 +52,7 @@ describe("loadSource", () => {
 
     const bob = await loadSource({
       source: sharedSource,
-      csvBuffer: csv,
+      loadCsv: async () => csv,
       viewerScope: { ownerKeys: ["bob@example.com"] },
       etag: "etag-cross-viewer",
       configVersion: 1,
@@ -109,7 +109,7 @@ describe("loadSource", () => {
     );
     const engine = await loadSource({
       source: source({ id: "src-email-normalization" }),
-      csvBuffer: mixedCaseCsv,
+      loadCsv: async () => mixedCaseCsv,
       viewerScope: { ownerKeys: ["ana@example.com"] },
       etag: "etag-email-normalization",
       configVersion: 1,
@@ -125,7 +125,7 @@ describe("loadSource", () => {
     );
     const engine = await loadSource({
       source: source({ id: "src-owner-header-spaces", ownerColumn: "owner_email" }),
-      csvBuffer: spacedHeaderCsv,
+      loadCsv: async () => spacedHeaderCsv,
       viewerScope: { ownerKeys: ["ana@example.com"] },
       etag: "etag-owner-header-spaces",
       configVersion: 1,
@@ -140,7 +140,7 @@ describe("loadSource", () => {
     __engineCacheReset();
     const engine = await loadSource({
       source: source({ id: "src-no-owner-column", ownerColumn: "" }),
-      csvBuffer: csv,
+      loadCsv: async () => csv,
       viewerScope: { ownerKeys: ["ana@example.com"] },
       etag: "etag-no-owner-column",
       configVersion: 1,
@@ -156,7 +156,7 @@ describe("loadSource", () => {
     );
     const engine = await loadSource({
       source: source({ id: "src-normalized-owner-duplicate" }),
-      csvBuffer: leakyCsv,
+      loadCsv: async () => leakyCsv,
       viewerScope: { ownerKeys: ["ana@example.com"] },
       etag: "etag-normalized-owner-duplicate",
       configVersion: 1,
@@ -170,7 +170,7 @@ describe("loadSource", () => {
   it("retorna zero linhas quando ownerKeys está vazio", async () => {
     const engine = await loadSource({
       source: source({ id: "src-empty-owner-keys" }),
-      csvBuffer: csv,
+      loadCsv: async () => csv,
       viewerScope: { ownerKeys: [] },
       etag: "etag-empty-owner-keys",
       configVersion: 1,
@@ -186,21 +186,21 @@ describe("loadSource", () => {
 
     const first = await loadSource({
       source: cachedSource,
-      csvBuffer: firstCsv,
+      loadCsv: async () => firstCsv,
       viewerScope: { ownerKeys: ["ana@example.com"] },
       etag: "etag-1",
       configVersion: 1,
     });
     const cached = await loadSource({
       source: cachedSource,
-      csvBuffer: secondCsv,
+      loadCsv: async () => secondCsv,
       viewerScope: { ownerKeys: ["ana@example.com"] },
       etag: "etag-1",
       configVersion: 1,
     });
     const reloaded = await loadSource({
       source: cachedSource,
-      csvBuffer: secondCsv,
+      loadCsv: async () => secondCsv,
       viewerScope: { ownerKeys: ["ana@example.com"] },
       etag: "etag-2",
       configVersion: 1,
@@ -217,6 +217,32 @@ describe("loadSource", () => {
     });
   });
 
+  it("nao invoca loadCsv em cache hit (download evitado)", async () => {
+    const cachedSource = source({ id: "src-lazy-load" });
+    const firstLoader = vi.fn(async () => csv);
+    const secondLoader = vi.fn(async () => csv);
+
+    const first = await loadSource({
+      source: cachedSource,
+      loadCsv: firstLoader,
+      viewerScope: { ownerKeys: ["ana@example.com"] },
+      etag: "etag-lazy",
+      configVersion: 1,
+    });
+    await countRows(first.viewName, first.run);
+    expect(firstLoader).toHaveBeenCalledTimes(1);
+
+    const second = await loadSource({
+      source: cachedSource,
+      loadCsv: secondLoader,
+      viewerScope: { ownerKeys: ["ana@example.com"] },
+      etag: "etag-lazy",
+      configVersion: 1,
+    });
+    await countRows(second.viewName, second.run);
+    expect(secondLoader).not.toHaveBeenCalled();
+  });
+
   it("recarrega quando configVersion muda", async () => {
     const cachedSource = source({ id: "src-cache-config" });
     const firstCsv = Buffer.from("owner_email,amount\nana@example.com,10\n");
@@ -224,14 +250,14 @@ describe("loadSource", () => {
 
     const first = await loadSource({
       source: cachedSource,
-      csvBuffer: firstCsv,
+      loadCsv: async () => firstCsv,
       viewerScope: { ownerKeys: ["ana@example.com"] },
       etag: "same-etag",
       configVersion: 1,
     });
     const reloaded = await loadSource({
       source: { ...cachedSource, configVersion: 2 },
-      csvBuffer: secondCsv,
+      loadCsv: async () => secondCsv,
       viewerScope: { ownerKeys: ["ana@example.com"] },
       etag: "same-etag",
       configVersion: 2,
@@ -248,7 +274,7 @@ describe("loadSource", () => {
   it("bloqueia acesso direto à tabela bruta pelo run do modelo", async () => {
     const engine = await loadSource({
       source: source({ id: "src-raw-blocked" }),
-      csvBuffer: csv,
+      loadCsv: async () => csv,
       viewerScope: { ownerKeys: ["ana@example.com"] },
       etag: "etag-raw-blocked",
       configVersion: 1,
@@ -278,7 +304,7 @@ describe("loadSource", () => {
       process.env.TWD_MAX_ROWS = "1";
       const engine = await loadSource({
         source: source({ id: "src-trunc" }),
-        csvBuffer: csv,
+        loadCsv: async () => csv,
         viewerScope: { ownerKeys: ["ana@example.com"] },
         etag: "etag-trunc",
         configVersion: 1,
@@ -302,14 +328,14 @@ describe("loadSource", () => {
       __engineCacheReset();
       await loadSource({
         source: source({ id: "src-lru-a" }),
-        csvBuffer: csv,
+        loadCsv: async () => csv,
         viewerScope: { ownerKeys: ["ana@example.com"] },
         etag: "etag-lru",
         configVersion: 1,
       });
       await loadSource({
         source: source({ id: "src-lru-b" }),
-        csvBuffer: csv,
+        loadCsv: async () => csv,
         viewerScope: { ownerKeys: ["ana@example.com"] },
         etag: "etag-lru",
         configVersion: 1,
@@ -326,14 +352,14 @@ describe("loadSource", () => {
     const sharedSource = source({ id: "src-concurrent" });
     const ana = await loadSource({
       source: sharedSource,
-      csvBuffer: csv,
+      loadCsv: async () => csv,
       viewerScope: { ownerKeys: ["ana@example.com"] },
       etag: "etag-concurrent",
       configVersion: 1,
     });
     const bob = await loadSource({
       source: sharedSource,
-      csvBuffer: csv,
+      loadCsv: async () => csv,
       viewerScope: { ownerKeys: ["bob@example.com"] },
       etag: "etag-concurrent",
       configVersion: 1,
@@ -351,7 +377,7 @@ describe("loadSource", () => {
     const reservedCsv = Buffer.from("select,amount,owner\na,10,x\nb,30,y\n");
     const engine = await loadSource({
       source: source({ id: "src-reserved", ownerColumn: "owner" }),
-      csvBuffer: reservedCsv,
+      loadCsv: async () => reservedCsv,
       viewerScope: { ownerKeys: ["x"] },
       etag: "etag-reserved",
       configVersion: 1,
@@ -368,7 +394,7 @@ describe("loadSource", () => {
     const boolCsv = Buffer.from("owner,flag\nana,1\nbob,0\nx,true\ny,false\n");
     const engine = await loadSource({
       source: source({ id: "src-bool", ownerColumn: "owner" }),
-      csvBuffer: boolCsv,
+      loadCsv: async () => boolCsv,
       viewerScope: { ownerKeys: ["ana", "x"] },
       etag: "etag-bool",
       configVersion: 1,
@@ -386,7 +412,7 @@ describe("loadSource", () => {
     const outlierCsv = Buffer.from("owner,amount\nana,10\nbob,abc\nx,30\n");
     const engine = await loadSource({
       source: source({ id: "src-outlier", ownerColumn: "owner" }),
-      csvBuffer: outlierCsv,
+      loadCsv: async () => outlierCsv,
       viewerScope: { ownerKeys: ["ana", "bob", "x"] },
       etag: "etag-outlier",
       configVersion: 1,
@@ -405,7 +431,7 @@ describe("loadSource", () => {
     const ownerCsv = Buffer.from("owner,amount\n001,10\n1,20\n");
     const engine = await loadSource({
       source: source({ id: "src-owner-text", ownerColumn: "owner" }),
-      csvBuffer: ownerCsv,
+      loadCsv: async () => ownerCsv,
       viewerScope: { ownerKeys: ["001"] },
       etag: "etag-owner-text",
       configVersion: 1,
@@ -420,7 +446,7 @@ describe("loadSource", () => {
     const bigCsv = Buffer.from("owner,big\nana,1\nbob,2147483648\n");
     const engine = await loadSource({
       source: source({ id: "src-bigint", ownerColumn: "owner" }),
-      csvBuffer: bigCsv,
+      loadCsv: async () => bigCsv,
       viewerScope: { ownerKeys: ["ana", "bob"] },
       etag: "etag-bigint",
       configVersion: 1,
@@ -438,7 +464,7 @@ describe("loadSource", () => {
     const dateCsv = Buffer.from("owner,dt\nana,2024-01-01\nbob,not-a-date\n");
     const engine = await loadSource({
       source: source({ id: "src-date", ownerColumn: "owner" }),
-      csvBuffer: dateCsv,
+      loadCsv: async () => dateCsv,
       viewerScope: { ownerKeys: ["ana", "bob"] },
       etag: "etag-date",
       configVersion: 1,

@@ -1,6 +1,8 @@
+import { createHash } from "node:crypto";
 import { Storage } from "@google-cloud/storage";
 
 const DEFAULT_READ_MAX_BYTES = 50 * 1024 * 1024;
+const STORAGE_CLIENT_CACHE_MAX = 20;
 
 export interface ExternalBucketStorage {
   list(
@@ -69,6 +71,41 @@ export function createGcsStorage(opts: {
   }
 
   return new GcsExternalBucketStorage(bucketName, opts.credentials);
+}
+
+// Reusa o client GCS (e o token OAuth interno dele) entre queries: criar um
+// Storage novo a cada chamada custa um token exchange completo com o Google.
+// Chave inclui o hash das credenciais para que rotacao invalide a entrada.
+const storageClientCache = new Map<string, ExternalBucketStorage>();
+
+export function getCachedGcsStorage(opts: {
+  bucketName: string;
+  credentials: object;
+}): ExternalBucketStorage {
+  const credentialsHash = createHash("sha256")
+    .update(JSON.stringify(opts.credentials))
+    .digest("hex");
+  const cacheKey = `${opts.bucketName?.trim()}:${credentialsHash}`;
+
+  const cached = storageClientCache.get(cacheKey);
+  if (cached) {
+    // Refresh LRU: re-insere no fim da ordem de iteracao do Map.
+    storageClientCache.delete(cacheKey);
+    storageClientCache.set(cacheKey, cached);
+    return cached;
+  }
+
+  const created = createGcsStorage(opts);
+  storageClientCache.set(cacheKey, created);
+  if (storageClientCache.size > STORAGE_CLIENT_CACHE_MAX) {
+    const oldestKey = storageClientCache.keys().next().value;
+    if (oldestKey !== undefined) storageClientCache.delete(oldestKey);
+  }
+  return created;
+}
+
+export function __storageClientCacheReset(): void {
+  storageClientCache.clear();
 }
 
 class GcsExternalBucketStorage implements ExternalBucketStorage {
