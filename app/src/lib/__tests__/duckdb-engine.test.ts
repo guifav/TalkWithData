@@ -4,6 +4,7 @@ import { DuckDbSandboxError } from "@/lib/data-sources/duckdb-sandbox";
 import {
   __engineCacheReset,
   __engineCacheStats,
+  getCachedSchema,
   loadSource,
   type DuckDbSource,
 } from "@/lib/data-sources/duckdb-engine";
@@ -215,6 +216,43 @@ describe("loadSource", () => {
     await expect(reloaded.run(`SELECT amount FROM ${reloaded.viewName}`)).resolves.toMatchObject({
       rows: [[99]],
     });
+  });
+
+  it("popula o schema cache sem a ownerColumn e valida configVersion", async () => {
+    const schemaSource = source({ id: "src-schema-cache" });
+    const engine = await loadSource({
+      source: schemaSource,
+      loadCsv: async () => csv,
+      viewerScope: { ownerKeys: ["ana@example.com"] },
+      etag: "etag-schema-cache",
+      configVersion: 1,
+    });
+    await countRows(engine.viewName, engine.run);
+
+    const schema = getCachedSchema("src-schema-cache", 1);
+    expect(schema).not.toBeNull();
+    // ownerColumn (owner_email) NUNCA aparece no schema cacheado.
+    expect(schema?.columns).toEqual([{ name: "amount", type: "integer" }]);
+    expect(schema?.rowCount).toBe(3);
+
+    // configVersion divergente nao serve schema defasado.
+    expect(getCachedSchema("src-schema-cache", 2)).toBeNull();
+
+    __engineCacheReset();
+    expect(getCachedSchema("src-schema-cache", 1)).toBeNull();
+  });
+
+  it("nao cacheia schema quando a fonte nao tem ownerColumn valida", async () => {
+    __engineCacheReset();
+    const engine = await loadSource({
+      source: source({ id: "src-schema-no-owner", ownerColumn: "" }),
+      loadCsv: async () => csv,
+      viewerScope: { ownerKeys: ["ana@example.com"] },
+      etag: "etag-schema-no-owner",
+      configVersion: 1,
+    });
+    await expect(countRows(engine.viewName, engine.run)).rejects.toThrow();
+    expect(getCachedSchema("src-schema-no-owner", 1)).toBeNull();
   });
 
   it("nao invoca loadCsv em cache hit (download evitado)", async () => {

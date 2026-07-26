@@ -56,6 +56,33 @@ const rawSourceCache = new Map<string, CachedRawSource>();
 const rawSourcePromiseCache = new Map<string, Promise<CachedRawSource>>();
 let cachedBytes = 0;
 
+/**
+ * Schema cacheado por fonte, populado quando o raw source e construido.
+ * Contem APENAS as colunas projetadas pela view filtrada (a ownerColumn e
+ * qualquer header equivalente sao excluidos com a MESMA regra de identidade
+ * usada em createFilteredView) — o schema pode ir ao system prompt sem vazar
+ * a coluna de escopo. Validado por configVersion; um CSV trocado com o mesmo
+ * configVersion pode servir schema levemente defasado ate a proxima query
+ * reconstruir o source (aceitavel: o modelo se autocorrige no primeiro erro).
+ */
+export interface CachedSourceSchema {
+  configVersion: number;
+  etag: string;
+  columns: { name: string; type: InferredColumnType }[];
+  rowCount: number;
+}
+
+const schemaCache = new Map<string, CachedSourceSchema>();
+
+export function getCachedSchema(
+  sourceId: string,
+  configVersion: number,
+): CachedSourceSchema | null {
+  const cached = schemaCache.get(sourceId);
+  if (!cached || cached.configVersion !== configVersion) return null;
+  return cached;
+}
+
 export async function loadSource(args: LoadSourceArgs): Promise<DuckDbSource> {
   const viewName = filteredViewName(args.source.id);
   return {
@@ -149,6 +176,7 @@ async function createRawSource(args: LoadSourceArgs): Promise<CachedRawSource> {
     rawSourceCache.set(cacheKey, rawSource);
     cachedBytes += rawSource.bytes;
     enforceCacheLimit(cacheKey);
+    cacheSourceSchema(args, resolvedColumns, parsed.rows.length);
     return rawSource;
   } catch (error) {
     connection?.closeSync();
@@ -159,6 +187,41 @@ async function createRawSource(args: LoadSourceArgs): Promise<CachedRawSource> {
     }
     throw new DuckDbSandboxError(errorMessage(error), error);
   }
+}
+
+/**
+ * Popula o schema cache com a mesma regra fail-closed da view filtrada: so
+ * cacheia quando a ownerColumn existe, casa com exatamente uma coluna e resta
+ * ao menos uma coluna de dados. Fontes mal configuradas nao entram no prompt.
+ */
+function cacheSourceSchema(
+  args: LoadSourceArgs,
+  columns: CsvColumn[],
+  rowCount: number,
+): void {
+  const ownerColumnName = args.source.ownerColumn?.trim();
+  if (!ownerColumnName) return;
+
+  const ownerIdentity = normalizedCsvHeaderIdentity(ownerColumnName);
+  const ownerColumns = columns.filter(
+    (column) => normalizedCsvHeaderIdentity(column.rawName) === ownerIdentity,
+  );
+  if (ownerColumns.length !== 1) return;
+
+  const projected = columns.filter(
+    (column) => normalizedCsvHeaderIdentity(column.rawName) !== ownerIdentity,
+  );
+  if (projected.length === 0) return;
+
+  schemaCache.set(args.source.id, {
+    configVersion: args.configVersion,
+    etag: args.etag,
+    columns: projected.map((column) => ({
+      name: column.safeName,
+      type: column.type,
+    })),
+    rowCount,
+  });
 }
 
 function resolveColumnTypes(
@@ -549,6 +612,7 @@ export function __engineCacheReset(): void {
     rawSource.instance.closeSync();
   }
   rawSourceCache.clear();
+  schemaCache.clear();
   cachedBytes = 0;
 }
 

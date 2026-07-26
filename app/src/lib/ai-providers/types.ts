@@ -12,7 +12,12 @@ export interface AiMessage {
 
 export interface AiChatResult {
   content: string;
-  usage?: { inputTokens: number; outputTokens: number };
+  usage?: {
+    inputTokens: number;
+    outputTokens: number;
+    cacheReadInputTokens?: number;
+    cacheCreationInputTokens?: number;
+  };
   rawContent?: AiContentBlock[];
   stopReason?: string;
 }
@@ -27,6 +32,13 @@ export interface AiChatOptions {
   maxTokens?: number;
   system?: string;
   tools?: AiTool[];
+  /**
+   * Habilita prompt caching no provedor (hoje so o adapter Anthropic honra):
+   * marca o system+tools e o fim da conversa com cache_control ephemeral,
+   * para que loops agenticos releiam o prefixo do cache em vez de reprocessar
+   * o transcript inteiro a cada iteracao.
+   */
+  enableCache?: boolean;
 }
 
 export interface AiAdapter {

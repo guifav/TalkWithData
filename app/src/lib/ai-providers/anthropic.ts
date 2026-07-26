@@ -30,6 +30,44 @@ export function buildAnthropicHeaders(apiKey: string): Record<string, string> {
   };
 }
 
+type CacheableBlock = Record<string, unknown> & {
+  cache_control?: { type: "ephemeral" };
+};
+
+/**
+ * Prompt caching (GA, sem beta header): dois breakpoints ephemeral.
+ * 1) system como bloco com cache_control — cacheia tools+system juntos;
+ * 2) ultimo bloco da ultima mensagem — em loops agenticos cada iteracao le o
+ *    prefixo anterior do cache e grava apenas o incremento novo.
+ * Nunca mutamos as mensagens do caller: clonamos a ultima mensagem.
+ */
+function buildCachedSystem(systemText: string): CacheableBlock[] {
+  return [
+    { type: "text", text: systemText, cache_control: { type: "ephemeral" } },
+  ];
+}
+
+function withCacheBreakpoint(
+  messages: Array<{ role: "user" | "assistant"; content: string | AiContentBlock[] }>,
+): Array<{ role: "user" | "assistant"; content: string | AiContentBlock[] | CacheableBlock[] }> {
+  if (messages.length === 0) return messages;
+  const last = messages[messages.length - 1];
+
+  const blocks: CacheableBlock[] =
+    typeof last.content === "string"
+      ? last.content.length > 0
+        ? [{ type: "text", text: last.content }]
+        : []
+      : last.content.map((block) => ({ ...block }));
+  if (blocks.length === 0) return messages;
+
+  blocks[blocks.length - 1] = {
+    ...blocks[blocks.length - 1],
+    cache_control: { type: "ephemeral" },
+  };
+  return [...messages.slice(0, -1), { role: last.role, content: blocks }];
+}
+
 class AnthropicAdapter implements AiAdapter {
   async chat(messages: AiMessage[], config: AiModelConfig, options: AiChatOptions = {}): Promise<AiChatResult> {
     if (!config.apiKey) {
@@ -39,15 +77,22 @@ class AnthropicAdapter implements AiAdapter {
       );
     }
 
+    const systemText = collectSystem(messages, options);
+    const anthropicMessages = toAnthropicMessages(messages);
     const res = await fetch(ANTHROPIC_API_URL, {
       method: "POST",
       headers: buildAnthropicHeaders(config.apiKey),
       body: JSON.stringify({
         model: config.model,
         max_tokens: options.maxTokens || 16384,
-        system: collectSystem(messages, options),
+        system:
+          systemText !== undefined && options.enableCache
+            ? buildCachedSystem(systemText)
+            : systemText,
         ...(options.tools?.length ? { tools: options.tools } : {}),
-        messages: toAnthropicMessages(messages),
+        messages: options.enableCache
+          ? withCacheBreakpoint(anthropicMessages)
+          : anthropicMessages,
       }),
     });
 
@@ -70,7 +115,12 @@ class AnthropicAdapter implements AiAdapter {
     }
 
     const rawContent = (data.content || []) as AiContentBlock[];
-    const usage = data.usage as { input_tokens?: number; output_tokens?: number } | undefined;
+    const usage = data.usage as {
+      input_tokens?: number;
+      output_tokens?: number;
+      cache_read_input_tokens?: number;
+      cache_creation_input_tokens?: number;
+    } | undefined;
     return {
       content: rawContent
         .filter((block): block is { type: "text"; text: string } => block.type === "text")
@@ -78,7 +128,14 @@ class AnthropicAdapter implements AiAdapter {
         .join("\n"),
       rawContent,
       stopReason: data.stop_reason as string | undefined,
-      usage: usage ? { inputTokens: usage.input_tokens || 0, outputTokens: usage.output_tokens || 0 } : undefined,
+      usage: usage
+        ? {
+            inputTokens: usage.input_tokens || 0,
+            outputTokens: usage.output_tokens || 0,
+            cacheReadInputTokens: usage.cache_read_input_tokens ?? 0,
+            cacheCreationInputTokens: usage.cache_creation_input_tokens ?? 0,
+          }
+        : undefined,
     };
   }
 }

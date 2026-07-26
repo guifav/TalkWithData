@@ -7,7 +7,9 @@ import { type BuiltDataChatPrompt } from "@/lib/data-chat-prompt-fallback";
 import {
   buildDatasetChatSystemPrompt,
   QUERY_DATASET_TOOL,
+  type DataSourceSchemaInfo,
 } from "@/lib/dataset-chat-prompt";
+import { getCachedSchema } from "@/lib/data-sources/duckdb-engine";
 import { listDataSources, type DataSourceMetadata } from "@/lib/data-sources/firestore";
 import { canQueryDataSource } from "@/lib/data-sources/access";
 import {
@@ -355,9 +357,26 @@ export async function POST(request: NextRequest) {
     TOOLS.push(QUERY_DATASET_TOOL);
   }
 
+  // Schemas ja cacheados pelo engine (lookup em memoria, zero I/O): entram no
+  // prompt para o modelo nao gastar turnos com queries de descoberta de coluna.
+  const sourceSchemas = new Map<string, DataSourceSchemaInfo>();
+  for (const dsMeta of authorizedSources) {
+    const cachedSchema = getCachedSchema(dsMeta.id, dsMeta.configVersion);
+    if (cachedSchema) {
+      sourceSchemas.set(dsMeta.id, {
+        columns: cachedSchema.columns,
+        rowCount: cachedSchema.rowCount,
+      });
+    }
+  }
+
   let built: BuiltDataChatPrompt;
   try {
-    built = await buildDatasetChatSystemPrompt(servers, authorizedSources);
+    built = await buildDatasetChatSystemPrompt(
+      servers,
+      authorizedSources,
+      sourceSchemas,
+    );
   } catch (err) {
     console.error("[Data Chat] buildDataChatSystemPrompt failed:", err);
     return new Response(
@@ -422,7 +441,13 @@ export async function POST(request: NextRequest) {
               maxTokens: 16384,
               system: systemPrompt,
               tools: TOOLS,
+              enableCache: true,
             });
+            if (result.usage) {
+              console.log(
+                `[Data Chat] turn ${toolLoopCount} usage: in=${result.usage.inputTokens} out=${result.usage.outputTokens} cacheRead=${result.usage.cacheReadInputTokens ?? 0} cacheWrite=${result.usage.cacheCreationInputTokens ?? 0}`,
+              );
+            }
           } catch (err) {
             const providerErr = err instanceof AiProviderError ? err : null;
             const errorType = providerErr?.type || "unknown_error";
@@ -459,111 +484,122 @@ export async function POST(request: NextRequest) {
           }> = result.rawContent || [];
           const stopReason: string | undefined = result.stopReason;
 
-          const toolResults: ContentBlock[] = [];
-
+          // Passo 1 (sincrono, na ordem dos blocos): emite texto e os eventos
+          // "calling" antes de executar qualquer tool, para o cliente ver os
+          // chips na ordem em que o modelo os pediu.
+          const toolBlocks: Array<{
+            id: string;
+            name: string;
+            input: Record<string, unknown>;
+          }> = [];
           for (const block of content) {
             if (block.type === "text" && block.text) {
               emit({ type: "text", content: block.text });
             } else if (block.type === "tool_use" && block.name && block.id) {
-              const toolName = block.name;
-              const toolInput = block.input || {};
-
-              if (toolName === "save_dashboard_html") {
-                const html = (toolInput.html as string) || "";
-                emit({ type: "html", content: html });
+              toolBlocks.push({
+                id: block.id,
+                name: block.name,
+                input: block.input || {},
+              });
+              if (block.name === "query_dataset") {
                 emit({
                   type: "tool_use",
-                  name: toolName,
-                  status: "done",
-                });
-                toolResults.push({
-                  type: "tool_result",
-                  tool_use_id: block.id,
-                  content:
-                    "Dashboard HTML has been sent to the preview panel. The user can now see it and save it.",
-                });
-              } else if (toolName === "query_dataset") {
-                const dataSourceId =
-                  typeof toolInput.dataSourceId === "string"
-                    ? toolInput.dataSourceId
-                    : "";
-                const query =
-                  typeof toolInput.query === "string" ? toolInput.query : "";
-
-                emit({
-                  type: "tool_use",
-                  name: toolName,
+                  name: block.name,
                   status: "calling",
-                  args: toolInput,
+                  args: block.input || {},
                 });
-
-                let toolResult: string;
-                try {
-                  const result = await queryDataset(
-                    {
-                      uid: auth.uid,
-                      dataSourceId,
-                      sql: query,
-                    },
-                    { session: querySession },
-                  );
-                  toolResult = JSON.stringify(result);
-                } catch (err) {
-                  const status = publicErrorStatus(err);
-                  console.error(
-                    `[Data Chat] query_dataset failed (${status}):`,
-                    err,
-                  );
-                  toolResult = JSON.stringify({
-                    error: publicErrorMessage(err),
-                    status,
-                  });
-                }
-
-                toolResult = summarizeIfNeeded(toolResult);
-
+              } else if (block.name !== "save_dashboard_html") {
                 emit({
                   type: "tool_use",
-                  name: toolName,
-                  status: "done",
-                });
-
-                toolResults.push({
-                  type: "tool_result",
-                  tool_use_id: block.id,
-                  content: toolResult,
-                });
-              } else {
-                emit({
-                  type: "tool_use",
-                  name: toolName,
+                  name: block.name,
                   status: "calling",
-                  mcpServerId: toolToServerId[toolName] || null,
-                  args: toolInput,
-                });
-
-                const endpoint = toolToEndpoint[toolName];
-                let toolResult = endpoint
-                  ? await callMcpTool(toolName, toolInput, endpoint)
-                  : JSON.stringify({ error: `Unknown tool: ${toolName}` });
-
-                // Summarize large results to prevent exceeding Claude's 200K token limit
-                toolResult = summarizeIfNeeded(toolResult);
-
-                emit({
-                  type: "tool_use",
-                  name: toolName,
-                  status: "done",
-                });
-
-                toolResults.push({
-                  type: "tool_result",
-                  tool_use_id: block.id,
-                  content: toolResult,
+                  mcpServerId: toolToServerId[block.name] || null,
+                  args: block.input || {},
                 });
               }
             }
           }
+
+          // Passo 2: executa todos os tool_use do turno em PARALELO. Cada
+          // executor captura o proprio erro (o batch nunca rejeita) e o
+          // Promise.all preserva a ordem original dos blocos, exigida pela
+          // API (tool_results casando com os tool_use do turno).
+          const executeToolBlock = async (block: {
+            id: string;
+            name: string;
+            input: Record<string, unknown>;
+          }): Promise<ContentBlock> => {
+            const toolName = block.name;
+            const toolInput = block.input;
+
+            if (toolName === "save_dashboard_html") {
+              const html = (toolInput.html as string) || "";
+              emit({ type: "html", content: html });
+              emit({ type: "tool_use", name: toolName, status: "done" });
+              return {
+                type: "tool_result",
+                tool_use_id: block.id,
+                content:
+                  "Dashboard HTML has been sent to the preview panel. The user can now see it and save it.",
+              };
+            }
+
+            let toolResult: string;
+            if (toolName === "query_dataset") {
+              const dataSourceId =
+                typeof toolInput.dataSourceId === "string"
+                  ? toolInput.dataSourceId
+                  : "";
+              const query =
+                typeof toolInput.query === "string" ? toolInput.query : "";
+
+              try {
+                const result = await queryDataset(
+                  {
+                    uid: auth.uid,
+                    dataSourceId,
+                    sql: query,
+                  },
+                  { session: querySession },
+                );
+                toolResult = JSON.stringify(result);
+              } catch (err) {
+                const status = publicErrorStatus(err);
+                console.error(
+                  `[Data Chat] query_dataset failed (${status}):`,
+                  err,
+                );
+                toolResult = JSON.stringify({
+                  error: publicErrorMessage(err),
+                  status,
+                });
+              }
+            } else {
+              const endpoint = toolToEndpoint[toolName];
+              try {
+                toolResult = endpoint
+                  ? await callMcpTool(toolName, toolInput, endpoint)
+                  : JSON.stringify({ error: `Unknown tool: ${toolName}` });
+              } catch (err) {
+                toolResult = JSON.stringify({
+                  error: `Tool error: ${err instanceof Error ? err.message : String(err)}`,
+                });
+              }
+            }
+
+            // Summarize large results to prevent exceeding Claude's 200K token limit
+            toolResult = summarizeIfNeeded(toolResult);
+            emit({ type: "tool_use", name: toolName, status: "done" });
+            return {
+              type: "tool_result",
+              tool_use_id: block.id,
+              content: toolResult,
+            };
+          };
+
+          const toolResults: ContentBlock[] = await Promise.all(
+            toolBlocks.map(executeToolBlock),
+          );
 
           if (stopReason === "tool_use" && toolResults.length > 0) {
             messages = [
