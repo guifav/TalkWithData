@@ -47,7 +47,7 @@
     "@google-cloud/storage": "^7.21.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
-    "adm-zip": "^0.6.0",
+    "adm-zip": "^0.6.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "csv-parse": "^7.0.1",
